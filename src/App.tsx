@@ -59,7 +59,7 @@ const LITE_MANIFESTO = "You are CodeFixerX Lite. Efficient Debugging.";
 
 // --- 3. UTILITY COMPONENTS ---
 
-const highlightSyntax = (code) => {
+const highlightSyntax = (code: string) => {
   if (!code) return '';
   let html = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   html = html.replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="text-emerald-400">$1</span>');
@@ -71,7 +71,7 @@ const highlightSyntax = (code) => {
   return html;
 };
 
-const MarkdownRenderer = ({ content }) => {
+const MarkdownRenderer = ({ content }: { content: string }) => {
   if (!content) return null;
   const parts = content.split(/(```[\s\S]*?```)/g);
   return (
@@ -99,7 +99,7 @@ const MarkdownRenderer = ({ content }) => {
   );
 };
 
-const CodeBlock = ({ lang, code }) => {
+const CodeBlock = ({ lang, code }: { lang: string, code: string }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -141,78 +141,49 @@ const CodeBlock = ({ lang, code }) => {
   );
 }
 
-const WebPreview = ({ code, isFullScreen, onClose, onExpand, onShrink }) => {
-  const iframeRef = useRef(null);
+const WebPreview = ({ code, isFullScreen, onClose, onExpand, onShrink }: any) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   useEffect(() => {
     if (iframeRef.current && code) {
-      const doc = iframeRef.current.contentWindow.document;
-      doc.open();
-      
-      // Clean Imports to prevent crashes in browser environment
-      const cleanCode = code
-        .replace(/^import\s+.*?;/gm, '')
-        .replace(/^export\s+default/gm, '');
+      const doc = iframeRef.current.contentWindow?.document;
+      if(doc) {
+          doc.open();
+          const cleanCode = code
+            .replace(/^import\s+.*?;/gm, '')
+            .replace(/^export\s+default/gm, '');
 
-      doc.write(`
-        <!DOCTYPE html>
-        <html lang="en">
-          <head>
-            <meta charset="UTF-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <script src="https://cdn.tailwindcss.com"></script>
-            <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-            <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-            <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+          doc.write(`
+            <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+            <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <style>
-              body { background-color: #ffffff; color: #0f172a; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 0; }
-              #root { min-height: 100vh; display: flex; flex-direction: column; }
-              #error-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(254, 226, 226, 0.95); color: #b91c1c; padding: 20px; font-family: monospace; z-index: 9999; display: none; overflow: auto; }
-              .loading { display: flex; justify-content: center; align-items: center; height: 100vh; color: #64748b; }
+              body{background-color:#ffffff;color:#0f172a;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;margin:0;padding:0;}
+              #root{min-height:100vh;display:flex;flex-direction:column;}
+              #error-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(254,226,226,0.95);color:#b91c1c;padding:20px;font-family:monospace;z-index:9999;display:none;overflow:auto;}
+              .loading{display:flex;justify-content:center;align-items:center;height:100vh;color:#64748b;}
             </style>
-          </head>
-          <body>
-            <div id="error-overlay"></div>
-            <div id="root"><div class="loading">Rendering Preview...</div></div>
-            
-            <script>
-              window.onerror = function(message, source, lineno, colno, error) {
-                const overlay = document.getElementById('error-overlay');
-                overlay.style.display = 'block';
-                overlay.innerHTML = '<h2 style="margin-top:0">Preview Error</h2><pre>' + message + '\\n\\nLine: ' + lineno + '</pre>';
-              };
-            </script>
-
+            </head><body><div id="error-overlay"></div><div id="root"><div class="loading">Rendering Preview...</div></div>
+            <script>window.onerror=function(m,s,l,c,e){const o=document.getElementById('error-overlay');o.style.display='block';o.innerHTML='<h2 style="margin-top:0">Preview Error</h2><pre>'+m+'\\n\\nLine: '+l+'</pre>';};</script>
             <script type="text/babel">
-              // Inject common React hooks to global scope for convenience
-              const { useState, useEffect, useRef, useMemo, useCallback, useContext, createContext } = React;
-              const { createRoot } = ReactDOM;
-
-              try {
-                // User Code Injection
-                ${cleanCode}
-
-                // Attempt to mount App
-                const rootElement = document.getElementById('root');
-                const root = createRoot(rootElement);
-                
-                if (typeof App !== 'undefined') {
-                   root.render(<App />);
-                } else {
-                   // Try to render if simple JSX
-                   // root.render(<div className="p-4 text-center text-gray-500">No 'App' component found. Please verify your code structure.</div>);
-                }
-              } catch (err) {
+            const {useState,useEffect,useRef,useMemo,useCallback,useContext,createContext}=React;
+            const {createRoot}=ReactDOM;
+            try{
+                ${cleanCode} 
+                const rootElement=document.getElementById('root');
+                const root=createRoot(rootElement);
+                if(typeof App!=='undefined'){root.render(<App/>);}
+                else{throw new Error("No 'App' component found. Please name your main component 'App'.");}
+            }catch(err){
                 console.error(err);
-                const overlay = document.getElementById('error-overlay');
-                overlay.style.display = 'block';
-                overlay.innerHTML = '<h2 style="margin-top:0">Render Error</h2><pre>' + err.message + '</pre>';
-              }
-            </script>
-          </body>
-        </html>
-      `);
-      doc.close();
+                const o=document.getElementById('error-overlay');
+                o.style.display='block';
+                o.innerHTML='<h2 style="margin-top:0">Render Error</h2><pre>'+err.message+'</pre>';
+            }
+            </script></body></html>
+          `);
+          doc.close();
+      }
     }
   }, [code]);
 
@@ -235,13 +206,16 @@ const WebPreview = ({ code, isFullScreen, onClose, onExpand, onShrink }) => {
 };
 
 // --- 4. MAIN APP ---
-export default function AleocrophicComplete() {
-  const [user, setUser] = useState(null);
+export default function App() { 
+  const [user, setUser] = useState<any>(null);
   const [view, setView] = useState('language');
   const [langCode, setLangCode] = useState('en');
   const [isPremium, setIsPremium] = useState(false);
   const [currentModule, setCurrentModule] = useState(MODULES[0]);
   
+  // Auth Loading State (CRITICAL FIX FOR REFRESH ISSUE)
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
   // Dev Mode State
   const [isDevMode, setIsDevMode] = useState(false);
   const [devPin, setDevPin] = useState('');
@@ -250,21 +224,21 @@ export default function AleocrophicComplete() {
   const [outputResult, setOutputResult] = useState('');
   const [isInputMinimized, setIsInputMinimized] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<any[]>([]);
   
-  const [previewCode, setPreviewCode] = useState(null);
+  const [previewCode, setPreviewCode] = useState<string | null>(null);
   const [showCompactPreview, setShowCompactPreview] = useState(false);
   const [showFullPreview, setShowFullPreview] = useState(false);
 
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Default open on desktop
+  const [sidebarOpen, setSidebarOpen] = useState(true); 
   const [premiumKey, setPremiumKey] = useState('');
   const [customApiKey, setCustomApiKey] = useState('');
-  const [notif, setNotif] = useState(null);
-  const [portalTab, setPortalTab] = useState('guide'); // Default tab
+  const [notif, setNotif] = useState<{msg: string, type: string} | null>(null);
+  const [portalTab, setPortalTab] = useState('guide'); 
   const [generatedApiKey, setGeneratedApiKey] = useState("GUEST");
 
-  const t = (key) => LANGUAGES[langCode]?.ui[key] || LANGUAGES['en'].ui[key];
-  const notify = (msg, type = 'info') => { setNotif({msg, type}); setTimeout(() => setNotif(null), 3000); };
+  const t = (key: string) => LANGUAGES[langCode]?.ui[key] || LANGUAGES['en'].ui[key];
+  const notify = (msg: string, type = 'info') => { setNotif({msg, type}); setTimeout(() => setNotif(null), 3000); };
 
   // Effects
   useEffect(() => {
@@ -273,12 +247,11 @@ export default function AleocrophicComplete() {
     if (savedLang && LANGUAGES[savedLang]) setLangCode(savedLang);
     if (savedKey) setCustomApiKey(savedKey);
     
-    // Responsive Sidebar Init
     const handleResize = () => {
       if (window.innerWidth < 768) setSidebarOpen(false);
       else setSidebarOpen(true);
     };
-    handleResize(); // Init
+    handleResize(); 
     window.addEventListener('resize', handleResize);
 
     const unsub = onAuthStateChanged(auth, async (u) => { 
@@ -286,6 +259,10 @@ export default function AleocrophicComplete() {
       if(u) { 
         setIsDevMode(false);
         setGeneratedApiKey(`CFX-${u.uid.substring(0,6).toUpperCase()}`);
+        
+        // FORCE DASHBOARD IF USER IS LOGGED IN
+        setView('dashboard');
+
         try {
           const docRef = doc(db, 'users', u.uid);
           const docSnap = await getDoc(docRef);
@@ -299,8 +276,13 @@ export default function AleocrophicComplete() {
         if (!isDevMode) {
           setIsPremium(false);
           setGeneratedApiKey("GUEST");
+          // If auth failed/logout and NOT in dev mode, we can stay on language/login or reset.
+          // But to be safe, if we were expecting auth and failed, we let user decide in login view.
+          if (view === 'dashboard') setView('language'); 
         }
       }
+      // Initialization Done
+      setIsAuthChecking(false);
     });
     return () => {
       unsub();
@@ -321,16 +303,20 @@ export default function AleocrophicComplete() {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider); 
       notify("Identity Verified! 🌸", "success"); 
-      setView('dashboard'); 
-    } catch (e) { 
-      console.error("Popup Error, falling back...", e);
-      // Fallback if popup fails (e.g. restricted env)
-      try {
-        await signInAnonymously(auth);
-        notify("Logged in Anonymously (Popup blocked)", "success");
-        setView('dashboard');
-      } catch(err) {
-        notify("Login Failed Completely.", "error");
+      // setView will be handled by onAuthStateChanged
+    } catch (e: any) { 
+      console.error("Popup Auth Error:", e);
+      if (e.code === 'auth/unauthorized-domain' || e.code === 'auth/popup-blocked') {
+         console.warn("Domain not authorized. Fallback to Anon.");
+         notify(`Domain Blocked (${window.location.hostname}). Falling back to Anonymous.`, "warning");
+         try {
+           await signInAnonymously(auth);
+           notify("Logged in Anonymously.", "success");
+         } catch (anonErr) {
+            notify("Critical Auth Failure.", "error");
+         }
+      } else {
+         notify("Login Failed: " + e.message, "error");
       }
     }
   };
@@ -356,7 +342,7 @@ export default function AleocrophicComplete() {
     } else notify("Invalid Key", "error");
   };
 
-  const handleKeyFileUpload = (e) => {
+  const handleKeyFileUpload = (e: any) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -427,8 +413,22 @@ export default function AleocrophicComplete() {
 
       if (user && !isDevMode) await addDoc(collection(db, 'history'), { userId: user.uid, codeSnippet: inputCode.substring(0,50), module: currentModule.name, response: text, createdAt: serverTimestamp() });
 
-    } catch (e) { notify(`AI Error: ${e.message}`, "error"); } finally { setLoading(false); }
+    } catch (e: any) { notify(`AI Error: ${e.message}`, "error"); } finally { setLoading(false); }
   };
+
+  // --- AUTH LOADING SCREEN ---
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4">
+        <div className="relative mb-8">
+           <div className="absolute inset-0 bg-cyan-500/30 blur-xl rounded-full animate-pulse"></div>
+           <Cpu size={64} className="text-cyan-400 relative z-10 animate-bounce"/>
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2 tracking-wider">INITIALIZING NEURAL LINK</h2>
+        <p className="text-slate-500 text-xs font-mono">Establishing connection to Aleocrophic Core...</p>
+      </div>
+    );
+  }
 
   // Renderers
   if (view === 'language') return (
@@ -612,6 +612,7 @@ export default function AleocrophicComplete() {
                    <button onClick={() => {localStorage.setItem('cfx_api_key', customApiKey); notify("Key Saved!", "success");}} className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 rounded-xl font-bold text-sm">SAVE</button>
                  </div>
                </div>
+               
                {/* DEV MODE TOGGLE */}
                <div className="mt-12 border-t border-slate-800 pt-6">
                   <h4 className="text-xs text-slate-600 font-mono mb-2 uppercase tracking-widest flex items-center gap-2"><Bug size={12}/> Developer Override</h4>
@@ -758,9 +759,24 @@ export default function AleocrophicComplete() {
          )}
          
          {view === 'premium' && (
-           <div className="flex-1 flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/20 to-slate-950"></div><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-amber-500/30 max-w-md w-full text-center shadow-2xl"><Unlock size={40} className="text-amber-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">Unlock Apex</h2><p className="text-slate-400 text-sm mb-6">Enter license key (CFX-APX...)</p><input type="text" value={premiumKey} onChange={(e)=>setPremiumKey(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-center text-white p-3 rounded-xl mb-4 font-mono focus:border-amber-500 outline-none" placeholder="XXXX-XXXX-XXXX"/>
-           <div className="flex items-center gap-2 mb-4"><div className="h-px bg-slate-800 flex-1"></div><span className="text-xs text-slate-500">OR UPLOAD KEY</span><div className="h-px bg-slate-800 flex-1"></div></div><label className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl cursor-pointer transition mb-4 border border-dashed border-slate-600"><Upload size={14}/> Upload key.txt<input type="file" accept=".txt" className="hidden" onChange={handleKeyFileUpload}/></label>
-           <button onClick={() => {if(premiumKey==="CFX-APX-2025R242"){setIsPremium(true);notify("UNLOCKED!","success");setView('dashboard');}else notify("Invalid","error");}} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">AUTHENTICATE</button><div className="mt-4 text-xs text-slate-500">Purchase: <a href="https://lynk.id/zetago-aurum/yjzz3v78oq13" target="_blank" className="text-amber-500 hover:underline">lynk.id/zetago-aurum</a></div></div></div>
+           <div className="flex-1 flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/20 to-slate-950"></div><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-amber-500/30 max-w-md w-full text-center shadow-2xl"><Unlock size={40} className="text-amber-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">Unlock Apex</h2><p className="text-slate-400 text-sm mb-6">Enter license key (CFX-APX...)</p>
+           
+           {/* MANUAL INPUT */}
+           <input type="text" value={premiumKey} onChange={(e)=>setPremiumKey(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-center text-white p-3 rounded-xl mb-4 font-mono focus:border-amber-500 outline-none" placeholder="XXXX-XXXX-XXXX"/>
+           
+           {/* FILE UPLOAD OPTION */}
+           <div className="flex items-center gap-2 mb-4">
+              <div className="h-px bg-slate-800 flex-1"></div>
+              <span className="text-xs text-slate-500">OR UPLOAD KEY</span>
+              <div className="h-px bg-slate-800 flex-1"></div>
+           </div>
+           <label className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl cursor-pointer transition mb-4 border border-dashed border-slate-600">
+              <Upload size={14}/> Upload key.txt
+              <input type="file" accept=".txt" className="hidden" onChange={handleKeyFileUpload}/>
+           </label>
+
+           <button onClick={handleUnlock} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">AUTHENTICATE</button>
+           <div className="mt-4 text-xs text-slate-500">Purchase: <a href="https://lynk.id/zetago-aurum/yjzz3v78oq13" target="_blank" className="text-amber-500 hover:underline">lynk.id/zetago-aurum</a></div></div></div>
          )}
       </main>
 
