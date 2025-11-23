@@ -25,7 +25,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 // --- GLOBAL API KEY PLACEHOLDER ---
-const defaultApiKey = "AIzaSyAk94JpjT7qpIduHTIjX70LY6iRF7u9-t0"; 
+const defaultApiKey = "AIzaSyAKYz2zc53K6ZgHAa5bmC0vuv8P-zLOWzY"; 
 // --- 2. DATA & TRANSLATIONS (FULL COMPLETE) ---
 const LANGUAGES: Record<string, any> = {
   en: { 
