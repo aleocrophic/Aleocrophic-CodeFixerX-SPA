@@ -285,7 +285,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Core Team
 - **Rayhan Dzaky Al Mubarok** - Founder & Lead Architect
-- **NyxShade Interactive** - Development Studio
+- **Aleocrophic** - Development Studio
 
 ### Special Thanks
 - **Takanashi Hoshino** - Spiritual Support (Blue Archive)
