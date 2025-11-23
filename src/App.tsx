@@ -821,8 +821,16 @@ export default function App() {
  
                <div className="hidden md:flex items-center gap-2 text-slate-500"><span className={`w-2 h-2 rounded-full ${isPremium ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span> ACTIVE</div> 
                {view !== 'settings' && view !== 'premium' && <button onClick={handleNewSession} className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1.5 rounded text-cyan-400 transition cursor-pointer"><RefreshCw size={12}/> <span className="hidden sm:inline">{tText('newChat')}</span></button>} 
-               {/* NEW: Toggle History Button */} 
-               {view === 'dashboard' && <button onClick={() => setHistorySidebarOpen(!historySidebarOpen)} className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1.5 rounded text-slate-400 hover:text-white transition cursor-pointer" title="Toggle History Sidebar"><Sidebar size={14}/> <span className="hidden sm:inline">HISTORY</span></button>} 
+               {/* NEW: Toggle History Button (NOW WORKS ON CHAT & DASHBOARD) */} 
+               {(view === 'dashboard' || view === 'chat') && ( 
+                 <button  
+                   onClick={() => view === 'dashboard' ? setHistorySidebarOpen(!historySidebarOpen) : setChatHistoryOpen(!chatHistoryOpen)}  
+                   className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1.5 rounded text-slate-400 hover:text-white transition cursor-pointer"  
+                   title="Toggle History Sidebar" 
+                 > 
+                   <Sidebar size={14}/> <span className="hidden sm:inline">HISTORY</span> 
+                 </button> 
+               )} 
             </div> 
          </header> 
  
@@ -956,7 +964,6 @@ export default function App() {
                        </div> 
                     </div> 
                    )} 
-                   <button onClick={() => setChatHistoryOpen(!chatHistoryOpen)} className="absolute right-6 top-6 lg:hidden z-30 bg-slate-800 p-2 rounded-full border border-slate-700 text-slate-400 shadow-lg"><PanelRight size={20}/></button> 
                  </div> 
                ) : ( 
                  <div className="flex items-center justify-center h-full p-6"><div className="max-w-md w-full bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-slate-700 text-center shadow-2xl"><Lock size={40} className="text-slate-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">Premium Feature</h2><p className="text-slate-400 text-sm mb-6">Free Chat is available for Apex users only.</p><button onClick={() => (user||isDevMode) ? setView('premium') : setView('login')} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">UNLOCK APEX</button></div></div> 
