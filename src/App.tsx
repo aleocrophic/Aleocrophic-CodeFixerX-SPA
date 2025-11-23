@@ -8,7 +8,7 @@ import {
   FileCode, Play, CheckCircle, Search,  
   Menu, X, ChevronRight, Command, LogIn, Info,  
   Server, Globe, Copyright, FileText, Eye, Maximize2, Minimize2,  
-  Settings, Box, Activity, Languages, BookOpen, Key, Database, Layers, Clipboard, AlertTriangle, Heart, Briefcase, Laptop, Bug, Upload, Brain, MessageSquare, PlusCircle, RefreshCw, Send, ShoppingCart, Edit2, Trash2, PanelRight, ExternalLink, Github, Wifi, WifiOff, Fingerprint 
+  Settings, Box, Activity, Languages, BookOpen, Key, Database, Layers, Clipboard, AlertTriangle, Heart, Briefcase, Laptop, Bug, Upload, Brain, MessageSquare, PlusCircle, RefreshCw, Send, ShoppingCart, Edit2, Trash2, PanelRight, ExternalLink, Github, Wifi, WifiOff, Fingerprint, Sidebar, SidebarClose, SidebarOpen 
 } from 'lucide-react'; 
  
 // --- 1. FIREBASE CONFIGURATION --- 
@@ -27,7 +27,7 @@ const auth = getAuth(app);
 const db = getFirestore(app); 
  
 // --- 🚫 SECURITY UPDATE: NO DEFAULT API KEY --- 
-const defaultApiKey = ""; // REMOVED FOR SECURITY 
+const defaultApiKey = ""; 
  
 // --- 2. DATA & TRANSLATIONS (FULL COMPLETE 7 LANGUAGES) --- 
  
@@ -279,7 +279,7 @@ const LITE_MANIFESTO = "You are CodeFixerX Lite. Efficient Debugging.";
  
 // --- 3. UTILITY COMPONENTS --- 
  
-// FIX: Robust Syntax Highlighter (Prevents double-escaping and self-destruction) 
+// FIX: Robust Syntax Highlighter (Safe Tokenization Method) 
 const highlightSyntax = (code) => { 
   if (!code) return ''; 
    
@@ -289,37 +289,39 @@ const highlightSyntax = (code) => {
     .replace(/</g, "&lt;") 
     .replace(/>/g, "&gt;"); 
  
-  // 2. Use placeholders for strings and comments to avoid matching keywords inside them 
+  // Store placeholders 
   const placeholders = []; 
-  const addPlaceholder = (match) => { 
-    placeholders.push(match); 
-    return `%%%PH${placeholders.length - 1}%%%`; 
+  const addPlaceholder = (content, type) => { 
+    placeholders.push({ content, type }); 
+    return `%%%PH_${placeholders.length - 1}%%%`; 
   }; 
  
-  // Replace strings and comments with placeholders 
+  // 2. Tokenize Strings & Comments FIRST (Protection Layer) 
   safeCode = safeCode 
-    .replace(/(".*?"|'.*?'|`.*?`)/g, addPlaceholder) // Strings 
-    .replace(/(\/\/.*$)/gm, addPlaceholder);          // Comments 
+    .replace(/(".*?"|'.*?'|`.*?`)/g, match => addPlaceholder(match, 'string')) // Strings 
+    .replace(/(\/\/.*$)/gm, match => addPlaceholder(match, 'comment'))          // Single line comments 
+    .replace(/(\/\*[\s\S]*?\*\/)/g, match => addPlaceholder(match, 'comment')); // Multi line comments 
  
-  // 3. Highlight Keywords and Numbers 
-  const keywords = "\\b(const|let|var|function|return|if|else|for|while|class|import|from|export|default|async|await|try|catch|switch|case|new|this|typeof|interface|type|extends|implements|public|private|protected|static|readonly|constructor)\\b"; 
+  // 3. Highlight Keywords (Now safe from strings/comments) 
+  // Removed aggressive number regex that matched Tailwind classes like '400' 
+  const keywords = "\\b(const|let|var|function|return|if|else|for|while|class|import|from|export|default|async|await|try|catch|switch|case|new|this|typeof|interface|type|extends|implements|public|private|protected|static|readonly|constructor|def|print|class|self|init)\\b"; 
    
   safeCode = safeCode 
-    .replace(new RegExp(keywords, 'g'), '<span class="text-pink-400 font-semibold">$1</span>') 
-    .replace(/(\w+)(?=\()/g, '<span class="text-cyan-400">$1</span>') // Function calls 
-    .replace(/\b(\d+)\b/g, '<span class="text-orange-400">$1</span>'); // Numbers 
+    .replace(new RegExp(keywords, 'g'), match => addPlaceholder(match, 'keyword')); 
+   
+  // 4. Highlight Function Calls 
+  safeCode = safeCode.replace(/(\w+)(?=\()/g, match => addPlaceholder(match, 'function')); 
  
-  // 4. Restore placeholders with colors 
-  safeCode = safeCode.replace(/%%%PH(\d+)%%%/g, (_, index) => { 
-    const content = placeholders[parseInt(index)]; 
-    if (content.startsWith('//')) { 
-      return `<span class="text-slate-500 italic">${content}</span>`; 
-    } else { 
-      return `<span class="text-emerald-400">${content}</span>`; 
-    } 
+  // 5. Restore Placeholders with HTML Spans 
+  // We do this at the end so regex never runs on HTML tags 
+  return safeCode.replace(/%%%PH_(\d+)%%%/g, (_, index) => { 
+    const item = placeholders[parseInt(index)]; 
+    if (item.type === 'string') return `<span class="text-emerald-400">${item.content}</span>`; 
+    if (item.type === 'comment') return `<span class="text-slate-500 italic">${item.content}</span>`; 
+    if (item.type === 'keyword') return `<span class="text-pink-400 font-semibold">${item.content}</span>`; 
+    if (item.type === 'function') return `<span class="text-cyan-400">${item.content}</span>`; 
+    return item.content; 
   }); 
- 
-  return safeCode; 
 }; 
  
 // Updated Markdown Renderer 
@@ -389,12 +391,12 @@ const CodeBlock = ({ lang, code, copyLabel, copiedLabel }) => {
 // --- 4. MAIN APP --- 
 export default function App() {  
   const [user, setUser] = useState(null); 
-  const [view, setView] = useState('apikey_gate'); // DEFAULT VIEW IS NOW SECURITY GATE 
+  const [view, setView] = useState('apikey_gate'); 
   const [langCode, setLangCode] = useState('en'); 
   const [isPremium, setIsPremium] = useState(false); 
   const [currentModule, setCurrentModule] = useState(MODULES[0]); 
   const [aiModel, setAiModel] = useState(AI_MODELS[0].id); 
-  const [apiStatus, setApiStatus] = useState('idle'); // idle, loading, success, error 
+  const [apiStatus, setApiStatus] = useState('idle'); 
    
   const [isAuthChecking, setIsAuthChecking] = useState(true); 
   const [isDevMode, setIsDevMode] = useState(false); 
@@ -411,64 +413,67 @@ export default function App() {
   const [chatInput, setChatInput] = useState(''); 
   const [chatLoading, setChatLoading] = useState(false); 
   const [chatHistoryOpen, setChatHistoryOpen] = useState(false); 
-  const chatInputRef = useRef(null); // Ref for auto-expand 
+  const chatInputRef = useRef(null); 
  
   const [sidebarOpen, setSidebarOpen] = useState(false);  
   const [premiumKey, setPremiumKey] = useState(''); 
   const [customApiKey, setCustomApiKey] = useState(''); 
-  const [gateApiKey, setGateApiKey] = useState(''); // New state for Gate input 
+  const [gateApiKey, setGateApiKey] = useState(''); 
   const [loginApiKey, setLoginApiKey] = useState('');  
   const [notif, setNotif] = useState(null); 
   const [portalTab, setPortalTab] = useState('about');  
   const [generatedApiKey, setGeneratedApiKey] = useState("GUEST"); 
   const [hoshinoImgError, setHoshinoImgError] = useState(false); 
  
+  // NEW: History Sidebar Toggle State 
+  const [historySidebarOpen, setHistorySidebarOpen] = useState(true); 
+ 
   // SAFE TRANSLATION HELPERS 
   const getLangObj = () => LANGUAGES[langCode] || LANGUAGES['en']; 
    
-  // Safe string getter 
   const tText = (key) => { 
      const lang = getLangObj(); 
      return lang.ui[key] || key; 
   }; 
  
-  // Safe object getter (for portal content) 
   const tData = (key) => { 
     const lang = getLangObj(); 
-    // Correctly access nested portalContent safely 
     return lang.ui?.portalContent?.[key] || key; 
   } 
    
   const notify = (msg, type = 'info') => { setNotif({msg, type}); setTimeout(() => setNotif(null), 3000); }; 
  
-  // Effects 
   useEffect(() => { 
     const savedLang = localStorage.getItem('cfx_lang'); 
-    // SECURITY CHECK: API Key 
     const savedKey = localStorage.getItem('cfx_api_key'); 
     const savedModel = localStorage.getItem('cfx_ai_model'); 
     const savedPremium = localStorage.getItem('cfx_is_premium');  
  
     if (savedLang && LANGUAGES[savedLang]) setLangCode(savedLang); 
      
-    // LOGIC: If Key Exists, allow entry. If not, force Gate. 
     if (savedKey && savedKey.trim().length > 10) { 
         setCustomApiKey(savedKey); 
-        // Only set view to language if we haven't already determined user flow 
-        // This is handled by AuthStateChanged mostly 
     } else { 
         setView('apikey_gate'); 
     } 
  
     if (savedModel) setAiModel(savedModel); 
-    if (savedPremium === 'true') setIsPremium(true); // LOCAL STORAGE PERSISTENCE 
+    if (savedPremium === 'true') setIsPremium(true); 
      
-    const handleResize = () => { if (window.innerWidth < 768) setSidebarOpen(false); else setSidebarOpen(true); }; 
+    // Default close history on mobile 
+    const handleResize = () => { 
+         if (window.innerWidth < 1024) { 
+             setSidebarOpen(false); 
+             setHistorySidebarOpen(false); 
+         } else { 
+             setSidebarOpen(true); 
+             setHistorySidebarOpen(true); 
+         } 
+    }; 
     handleResize(); window.addEventListener('resize', handleResize); 
  
     const unsub = onAuthStateChanged(auth, async (u) => {  
       setUser(u);  
-      // CHECK KEY AGAIN ON AUTH CHANGE 
       const currentKey = localStorage.getItem('cfx_api_key'); 
       if (!currentKey || currentKey.trim() === "") { 
           setView('apikey_gate'); 
@@ -489,19 +494,17 @@ export default function App() {
             if (data.language && LANGUAGES[data.language]) setLangCode(data.language); 
             if (data.isPremium) { 
                 setIsPremium(true); 
-                localStorage.setItem('cfx_is_premium', 'true'); // Sync local 
+                localStorage.setItem('cfx_is_premium', 'true'); 
             } 
             if (data.aiModel) setAiModel(data.aiModel); 
           } 
         } catch (e) {} 
       } else { 
         if (!isDevMode) {  
-            // Only reset premium if NOT in dev mode AND not stored locally 
             if(localStorage.getItem('cfx_is_premium') !== 'true') { 
                setIsPremium(false); 
             } 
             setGeneratedApiKey("GUEST");  
-            // If logged out but key exists, show language select or login 
              if(view === 'dashboard') setView('language'); 
         } 
       } 
@@ -517,7 +520,6 @@ export default function App() {
      
     const unsub = onSnapshot(q, (snap) => { 
       const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
-      // Client-side Sorting (Newest First) 
       fetched.sort((a, b) => { 
         const timeA = a.createdAt?.seconds || 0; 
         const timeB = b.createdAt?.seconds || 0; 
@@ -525,14 +527,11 @@ export default function App() {
       }); 
       setHistory(fetched); 
     }, (error) => { 
-        console.error("Firestore History Error:", error); // Log error silently 
+        console.error("Firestore History Error:", error); 
     }); 
     return () => unsub(); 
   }, [user, view]);  
  
-  // HANDLERS 
- 
-  // NEW: Handle Gate API Key Submit 
   const handleGateSubmit = () => { 
       if (!gateApiKey.trim() || gateApiKey.length < 10) { 
           notify("Invalid API Key Format", "error"); 
@@ -541,7 +540,7 @@ export default function App() {
       localStorage.setItem('cfx_api_key', gateApiKey.trim()); 
       setCustomApiKey(gateApiKey.trim()); 
       notify("Security Check Passed! 🛡️", "success"); 
-      setView('language'); // Proceed to Language Selection 
+      setView('language'); 
   }; 
  
   const handleLogin = async () => { 
@@ -569,7 +568,6 @@ export default function App() {
     notify(`Neural Engine Switched: ${AI_MODELS.find(m => m.id === modelId)?.name}`, 'success'); 
   } 
  
-  // DEFINED: New Session Handler 
   const handleNewSession = () => { 
     if (view === 'chat') { 
       setChatMessages([]); 
@@ -613,11 +611,10 @@ export default function App() {
   }; 
  
   const handleAnalyze = async () => { 
-    // SECURITY: Require User API Key - NO DEFAULT FALLBACK 
     const apiKeyToUse = customApiKey; 
     if (!apiKeyToUse) { 
         notify("CRITICAL: API Key Missing. Security Protocol Engaged.", "error"); 
-        setView('apikey_gate'); // KICK TO GATE 
+        setView('apikey_gate'); 
         return; 
     } 
  
@@ -658,7 +655,7 @@ export default function App() {
     } catch (e) {  
         notify(`AI Error: ${e.message}`, "error");  
         setApiStatus('error'); 
-        if (e.message.includes("API KEY")) setView('apikey_gate'); // Kick if invalid 
+        if (e.message.includes("API KEY")) setView('apikey_gate'); 
     } finally { setLoading(false); } 
   }; 
  
@@ -676,7 +673,6 @@ export default function App() {
     setChatInput(''); 
     setChatLoading(true); setApiStatus('loading'); 
     
-    // Reset height of textarea 
     if(chatInputRef.current) { 
         chatInputRef.current.style.height = 'auto'; 
     } 
@@ -710,7 +706,7 @@ export default function App() {
     } catch(e) {  
         notify("Chat Error: " + e.message, "error");  
         setApiStatus('error'); 
-        if (e.message.includes("API KEY")) setView('apikey_gate'); // Kick if invalid 
+        if (e.message.includes("API KEY")) setView('apikey_gate'); 
     } finally { setChatLoading(false); } 
   }; 
  
@@ -726,10 +722,9 @@ export default function App() {
     } 
     localStorage.setItem('cfx_api_key', customApiKey); 
     notify("Custom Key Saved & Ready!", "success"); 
-    setApiStatus('idle'); // Reset status 
+    setApiStatus('idle'); 
   } 
  
-  // FIX: Shift+Enter Handler 
   const handleChatInputKeyDown = (e) => { 
     if (e.key === 'Enter' && !e.shiftKey) { 
       e.preventDefault(); 
@@ -737,10 +732,8 @@ export default function App() {
     } 
   }; 
  
-  // --- RENDER AUTH LOADING --- 
   if (isAuthChecking) return (<div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4"><div className="relative mb-8"><div className="absolute inset-0 bg-cyan-500/30 blur-xl rounded-full animate-pulse"></div><Cpu size={64} className="text-cyan-400 relative z-10 animate-bounce"/></div><h2 className="text-2xl font-bold text-white mb-2 tracking-wider">INITIALIZING NEURAL LINK</h2></div>); 
  
-  // --- API KEY GATE (NEW) --- 
   if (view === 'apikey_gate') return ( 
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"> 
        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80')] bg-cover opacity-10 blur-sm"></div> 
@@ -765,17 +758,14 @@ export default function App() {
     </div> 
   ); 
  
-  // --- LANGUAGE SELECTION --- 
   if (view === 'language') return (<div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519608487953-e999c86e7455?q=80')] bg-cover opacity-10 animate-pulse"></div><div className="z-10 max-w-5xl w-full bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl p-8 shadow-2xl text-center"><h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">CodeFixerX</h1><p className="text-slate-400 text-sm tracking-[0.3em] uppercase mb-12">Aleocrophic Systems</p><div className="grid grid-cols-2 md:grid-cols-4 gap-4">{Object.entries(LANGUAGES).map(([code, data]) => (<button key={code} onClick={() => { setLangCode(code); setView('login'); }} className="p-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500 rounded-2xl transition-all group flex flex-col items-center"><span className="text-4xl mb-3 block group-hover:scale-110 transition-transform">{data.flag}</span><span className="text-slate-300 font-bold group-hover:text-white">{data.label}</span></button>))}</div></div></div>); 
  
-  // --- LOGIN VIEW --- 
   if (view === 'login') return ( 
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"> 
        <button onClick={() => setView('language')} className="absolute top-6 left-6 text-slate-400 hover:text-white flex gap-2 z-20"><ChevronRight className="rotate-180"/> Back</button> 
        <div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-slate-700 max-w-sm w-full text-center shadow-2xl relative"> 
          <div className="w-20 h-20 bg-cyan-900/30 rounded-full flex items-center justify-center mx-auto mb-6"><Cpu size={40} className="text-cyan-400"/></div> 
          <h2 className="text-2xl font-bold text-white mb-2">{tText('login')}</h2> 
-         {/* Removed Input Key here because Gatekeeper handles it */} 
          <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-lg mb-4 text-xs text-emerald-300 flex items-center gap-2"><CheckCircle size={14}/> API Key Secured & Ready.</div> 
          <button onClick={handleLogin} className="w-full py-3 bg-white text-slate-900 font-bold rounded-xl flex justify-center gap-2 hover:bg-slate-200 transition mb-3"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="G"/> Google Auth</button> 
          <button onClick={handleGuestAccess} className="w-full py-3 bg-slate-800 text-slate-400 hover:text-white text-sm font-bold rounded-xl transition">{tText('saveEnter')}</button> 
@@ -783,15 +773,12 @@ export default function App() {
     </div> 
   ); 
  
-  // --- MAIN DASHBOARD (CLEAN LAYOUT REFACTOR) --- 
   return ( 
     <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-200 font-sans selection:bg-cyan-500/30"> 
       {notif && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-lg border animate-bounce ${notif.type==='success'?'bg-emerald-500/20 border-emerald-500 text-emerald-300':'bg-red-500/20 border-red-500 text-red-300'}`}>{notif.msg}</div>} 
  
-      {/* SIDEBAR OVERLAY FOR MOBILE */} 
       {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm" onClick={()=>setSidebarOpen(false)}></div>} 
  
-      {/* SIDEBAR */} 
       <aside className={` 
           fixed inset-y-0 left-0 z-50 bg-slate-900/95 backdrop-blur border-r border-slate-800 flex flex-col transition-all duration-300 w-72 
           ${sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'} 
@@ -819,17 +806,14 @@ export default function App() {
          </div> 
       </aside> 
  
-      {/* MAIN CONTENT AREA */} 
       <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-950"> 
          
-         {/* STICKY NAVBAR */} 
          <header className="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/90 backdrop-blur sticky top-0 z-30 shadow-md shrink-0"> 
             <div className="flex items-center gap-4"> 
                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden text-slate-400 hover:text-white transition-colors mr-2 p-2 bg-slate-800/50 rounded-lg"><Menu/></button> 
                <div className="flex items-center gap-2 text-slate-400 text-sm overflow-hidden whitespace-nowrap"><LayoutDashboard size={16} className="shrink-0"/> <ChevronRight size={14} className="shrink-0"/> <span className={`truncate ${isPremium ? "text-amber-400 font-bold" : "text-cyan-400 font-bold"}`}>{view === 'portal' ? tText('portalLabel') : view === 'premium' ? tText('upgrade') : view === 'settings' ? tText('settings') : view === 'chat' ? tText('chat') : currentModule.name}</span></div> 
             </div> 
             <div className="flex items-center gap-2 sm:gap-4 text-xs font-mono"> 
-               {/* STATUS INDICATOR (NEW) */} 
                <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-slate-900 border border-slate-800"> 
                   {apiStatus === 'loading' ? <RefreshCw size={12} className="animate-spin text-cyan-500"/> : apiStatus === 'error' ? <WifiOff size={12} className="text-red-500"/> : <Wifi size={12} className="text-emerald-500"/>} 
                   <span className={`hidden sm:inline font-bold ${apiStatus==='error'?'text-red-400':apiStatus==='loading'?'text-cyan-400':'text-emerald-400'}`}>{apiStatus === 'loading' ? 'SYNC...' : apiStatus === 'error' ? 'OFFLINE' : 'ONLINE'}</span> 
@@ -837,17 +821,16 @@ export default function App() {
  
                <div className="hidden md:flex items-center gap-2 text-slate-500"><span className={`w-2 h-2 rounded-full ${isPremium ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span> ACTIVE</div> 
                {view !== 'settings' && view !== 'premium' && <button onClick={handleNewSession} className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1.5 rounded text-cyan-400 transition cursor-pointer"><RefreshCw size={12}/> <span className="hidden sm:inline">{tText('newChat')}</span></button>} 
+               {/* NEW: Toggle History Button */} 
+               {view === 'dashboard' && <button onClick={() => setHistorySidebarOpen(!historySidebarOpen)} className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1.5 rounded text-slate-400 hover:text-white transition cursor-pointer" title="Toggle History Sidebar"><Sidebar size={14}/> <span className="hidden sm:inline">HISTORY</span></button>} 
             </div> 
          </header> 
  
-         {/* SCROLLABLE CONTENT */} 
          <main className="flex-1 overflow-y-auto custom-scrollbar relative"> 
             
-            {/* VIEW: DASHBOARD */} 
             {view === 'dashboard' && ( 
                 <div className="p-4 flex flex-col lg:flex-row gap-6 min-h-full"> 
                    <div className="flex-1 flex flex-col gap-4"> 
-                      {/* INPUT AREA */} 
                       <div  
                          onClick={() => isInputMinimized && setIsInputMinimized(false)} 
                          className={`bg-slate-900 rounded-2xl border border-slate-800 flex flex-col shadow-xl overflow-hidden transition-all duration-500 ease-in-out ${isInputMinimized ? 'h-16 cursor-pointer hover:border-cyan-500 hover:bg-slate-800' : 'flex-1 min-h-[250px]'}`} 
@@ -881,20 +864,28 @@ export default function App() {
                       )} 
                    </div> 
                     
-                   {/* HISTORY SIDEBAR (DESKTOP) */} 
-                   <div className="hidden lg:flex w-64 bg-slate-900 rounded-2xl border border-slate-800 flex-col overflow-hidden shrink-0 h-full shadow-lg"> 
-                      <div className="p-4 border-b border-slate-800 flex items-center justify-between"><span className="text-xs font-bold text-slate-400 flex items-center gap-2"><History size={14}/> {tText('history')}</span></div> 
-                      <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar"> 
-                        {!user && !isDevMode ? <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs p-4 text-center"><Lock size={20} className="mb-2"/><p>Guest Mode.</p></div> : history.length === 0 ? <div className="text-center text-slate-600 text-xs mt-4">No logs yet.</div> :  
-                          history.map(h => ( 
-                            <div key={h.id} onClick={() => {setInputCode(h.codeSnippet); setOutputResult(h.response); setIsInputMinimized(true);}} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group"> 
-                              <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-cyan-500 uppercase truncate">{h.module}</span></div> 
-                              <div className="text-xs text-slate-400 truncate font-mono">{h.codeSnippet}</div> 
-                            </div> 
-                          )) 
-                        } 
-                      </div> 
-                   </div> 
+                   {/* HISTORY SIDEBAR (TOGGLEABLE) */} 
+                   {historySidebarOpen && ( 
+                    <div className="fixed inset-0 lg:static lg:inset-auto z-50 flex justify-end lg:block"> 
+                        <div className="absolute inset-0 bg-black/60 lg:hidden backdrop-blur-sm" onClick={() => setHistorySidebarOpen(false)}></div> 
+                        <div className="w-72 lg:w-64 bg-slate-900 rounded-l-2xl lg:rounded-2xl border-l lg:border border-slate-800 flex flex-col overflow-hidden shrink-0 h-full shadow-2xl lg:shadow-lg relative z-10 animate-fadeInRight"> 
+                          <div className="p-4 border-b border-slate-800 flex items-center justify-between"> 
+                              <span className="text-xs font-bold text-slate-400 flex items-center gap-2"><History size={14}/> {tText('history')}</span> 
+                              <button onClick={() => setHistorySidebarOpen(false)} className="lg:hidden text-slate-400"><X size={14}/></button> 
+                          </div> 
+                          <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar"> 
+                            {!user && !isDevMode ? <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs p-4 text-center"><Lock size={20} className="mb-2"/><p>Guest Mode.</p></div> : history.length === 0 ? <div className="text-center text-slate-600 text-xs mt-4">No logs yet.</div> :  
+                              history.map(h => ( 
+                                <div key={h.id} onClick={() => {setInputCode(h.codeSnippet); setOutputResult(h.response); setIsInputMinimized(true); if(window.innerWidth < 1024) setHistorySidebarOpen(false); }} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group"> 
+                                  <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-cyan-500 uppercase truncate">{h.module}</span></div> 
+                                  <div className="text-xs text-slate-400 truncate font-mono">{h.codeSnippet}</div> 
+                                </div> 
+                              )) 
+                            } 
+                          </div> 
+                        </div> 
+                    </div> 
+                   )} 
                 </div> 
             )} 
  
@@ -923,9 +914,8 @@ export default function App() {
                          value={chatInput}  
                          onChange={(e)=> { 
                             setChatInput(e.target.value); 
-                            // AUTO EXPAND LOGIC 
                             e.target.style.height = 'auto'; 
-                            e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`; // Max height limit 
+                            e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`; 
                          }}  
                          onKeyDown={handleChatInputKeyDown}  
                          placeholder={tText('chatPlaceholder')}  
@@ -987,7 +977,7 @@ export default function App() {
                </div> 
             )} 
  
-            {/* VIEW: PORTAL (UPDATED & IMPLEMENTED) */} 
+            {/* VIEW: PORTAL */} 
             {view === 'portal' && ( 
                 <div className="p-4 md:p-12 pb-20 max-w-5xl mx-auto animate-fadeIn"> 
                     {/* Portal Navigation */} 
