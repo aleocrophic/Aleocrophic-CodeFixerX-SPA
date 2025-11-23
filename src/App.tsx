@@ -42,7 +42,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'Modules', system: 'System', tools: 'AI Tools', welcome: 'Welcome', guest: 'Guest Mode',
       authRequired: 'Auth Required', unlock: 'Unlock', enterKey: 'Enter License Key', orUpload: 'OR UPLOAD KEY', authenticate: 'AUTHENTICATE',
       purchase: 'Purchase', devOverride: 'Developer Override', access: 'ACCESS', customKey: 'Gemini API Key',
-      chatPlaceholder: 'Type a message... (Shift+Enter for new line)', chatStart: 'Start chatting with CodeFixerX!', edit: 'Edit',
+      chatPlaceholder: 'Type a message...', chatStart: 'Start chatting with CodeFixerX!', edit: 'Edit',
       privacy: 'Privacy Policy', terms: 'Terms of Service', about: 'About Us', infra: 'Infrastructure', guide: 'User Guide',
       roleUser: 'User', roleAI: 'CodeFixerX', buyKey: 'BUY KEY NOW', dontHaveKey: "DON'T HAVE A KEY?",
       originTitle: 'Origin of Aleocrophic', specialThanks: 'Special Thanks', coreInfra: 'Core Infrastructure',
@@ -70,7 +70,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'Modul', system: 'Sistem', tools: 'Alat AI', welcome: 'Selamat Datang', guest: 'Mode Tamu',
       authRequired: 'Butuh Login', unlock: 'Buka', enterKey: 'Masukkan Kunci Lisensi', orUpload: 'ATAU UPLOAD KUNCI', authenticate: 'AUTENTIKASI',
       purchase: 'Beli', devOverride: 'Akses Pengembang', access: 'AKSES', customKey: 'API Key Gemini',
-      chatPlaceholder: 'Ketik pesan... (Shift+Enter baris baru)', chatStart: 'Mulai mengobrol dengan CodeFixerX!', edit: 'Ubah',
+      chatPlaceholder: 'Ketik pesan...', chatStart: 'Mulai mengobrol dengan CodeFixerX!', edit: 'Ubah',
       privacy: 'Kebijakan Privasi', terms: 'Syarat Layanan', about: 'Tentang Kami', infra: 'Infrastruktur', guide: 'Panduan Pengguna',
       roleUser: 'Pengguna', roleAI: 'CodeFixerX', buyKey: 'BELI KUNCI SEKARANG', dontHaveKey: "BELUM PUNYA KUNCI?",
       originTitle: 'Asal Usul Aleocrophic', specialThanks: 'Terima Kasih Khusus', coreInfra: 'Infrastruktur Inti',
@@ -98,7 +98,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'モジュール', system: 'システム', tools: 'AIツール', welcome: 'ようこそ', guest: 'ゲスト',
       authRequired: '認証が必要', unlock: '解除', enterKey: 'ライセンスキーを入力', orUpload: 'またはキーをアップロード', authenticate: '認証する',
       purchase: '購入', devOverride: '開発者オーバーライド', access: 'アクセス', customKey: 'Gemini APIキー',
-      chatPlaceholder: 'メッセージを入力... (Shift+Enterで改行)', chatStart: 'CodeFixerXとチャットを開始！', edit: '編集',
+      chatPlaceholder: 'メッセージを入力...', chatStart: 'CodeFixerXとチャットを開始！', edit: '編集',
       privacy: 'プライバシーポリシー', terms: '利用規約', about: '私たちについて', infra: 'インフラストラクチャ', guide: 'ユーザーマニュアル',
       roleUser: 'ユーザー', roleAI: 'CodeFixerX', buyKey: '今すぐキーを購入', dontHaveKey: "キーをお持ちでないですか？",
       originTitle: 'Aleocrophicの起源', specialThanks: '特別感謝', coreInfra: 'コアインフラストラクチャ',
@@ -117,7 +117,6 @@ const LANGUAGES: Record<string, any> = {
       }
     } 
   },
-  // ... (Other languages structure maintained same as previous valid response)
   ar: { 
     label: 'العربية', flag: '🇸🇦', 
     ui: { 
@@ -127,7 +126,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'وحدات', system: 'نظام', tools: 'أدوات الذكاء الاصطناعي', welcome: 'أهلا بك', guest: 'زائر',
       authRequired: 'مطلوب المصادقة', unlock: 'فتح', enterKey: 'أدخل مفتاح الترخيص', orUpload: 'أو تحميل المفتاح', authenticate: 'توثيق',
       purchase: 'شراء', devOverride: 'تجاوز المطور', access: 'وصول', customKey: 'مفتاح Gemini API',
-      chatPlaceholder: 'أكتب رسالة... (Shift+Enter للسطر الجديد)', chatStart: 'ابدأ الدردشة مع CodeFixerX!', edit: 'تعديل',
+      chatPlaceholder: 'أكتب رسالة...', chatStart: 'ابدأ الدردشة مع CodeFixerX!', edit: 'تعديل',
       privacy: 'سياسة الخصوصية', terms: 'شروط الخدمة', about: 'معلومات عنا', infra: 'بنية تحتية', guide: 'دليل المستخدم',
       roleUser: 'مستخدم', roleAI: 'CodeFixerX', buyKey: 'شراء المفتاح الآن', dontHaveKey: "ليس لديك مفتاح؟",
       originTitle: 'أصل Aleocrophic', specialThanks: 'شكر خاص', coreInfra: 'البنية التحتية الأساسية',
@@ -155,7 +154,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'Модули', system: 'Система', tools: 'AI Инструменты', welcome: 'Добро пожаловать', guest: 'Гость',
       authRequired: 'Требуется вход', unlock: 'Открыть', enterKey: 'Введите ключ', orUpload: 'ИЛИ ЗАГРУЗИТЬ', authenticate: 'АУТЕНТИФИКАЦИЯ',
       purchase: 'Купить', devOverride: 'Режим разработчика', access: 'ДОСТУП', customKey: 'API ключ Gemini',
-      chatPlaceholder: 'Введите сообщение... (Shift+Enter для новой строки)', chatStart: 'Начать чат с CodeFixerX!', edit: 'Изменить',
+      chatPlaceholder: 'Введите сообщение...', chatStart: 'Начать чат с CodeFixerX!', edit: 'Изменить',
       privacy: 'Конфиденциальность', terms: 'Условия', about: 'О нас', infra: 'Инфраструктура', guide: 'Руководство',
       roleUser: 'Пользователь', roleAI: 'CodeFixerX', buyKey: 'КУПИТЬ КЛЮЧ', dontHaveKey: "НЕТ КЛЮЧА?",
       originTitle: 'Происхождение Aleocrophic', specialThanks: 'Особая благодарность', coreInfra: 'Базовая инфраструктура',
@@ -183,7 +182,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'Module', system: 'System', tools: 'KI-Tools', welcome: 'Willkommen', guest: 'Gast',
       authRequired: 'Anmeldung erforderlich', unlock: 'Entsperren', enterKey: 'Lizenzschlüssel eingeben', orUpload: 'ODER SCHLÜSSEL HOCHLADEN', authenticate: 'AUTHENTIFIZIEREN',
       purchase: 'Kaufen', devOverride: 'Entwicklerzugriff', access: 'ZUGRIFF', customKey: 'Gemini API-Schlüssel',
-      chatPlaceholder: 'Nachricht eingeben... (Umschalt+Eingabe für neue Zeile)', chatStart: 'Chat mit CodeFixerX starten!', edit: 'Bearbeiten',
+      chatPlaceholder: 'Nachricht eingeben...', chatStart: 'Chat mit CodeFixerX starten!', edit: 'Bearbeiten',
       privacy: 'Datenschutz', terms: 'Nutzungsbedingungen', about: 'Über uns', infra: 'Infrastruktur', guide: 'Benutzerhandbuch',
       roleUser: 'Benutzer', roleAI: 'CodeFixerX', buyKey: 'SCHLÜSSEL KAUFEN', dontHaveKey: "KEINEN SCHLÜSSEL?",
       originTitle: 'Ursprung von Aleocrophic', specialThanks: 'Besonderer Dank', coreInfra: 'Kerninfrastruktur',
@@ -211,7 +210,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'Módulos', system: 'Sistema', tools: 'Herramientas IA', welcome: 'Bienvenido', guest: 'Invitado',
       authRequired: 'Autenticación requerida', unlock: 'Desbloquear', enterKey: 'Introducir clave', orUpload: 'O SUBIR CLAVE', authenticate: 'AUTENTICAR',
       purchase: 'Comprar', devOverride: 'Acceso Desarrollador', access: 'ACCESO', customKey: 'Clave API Gemini',
-      chatPlaceholder: 'Escribe un mensaje... (Shift+Enter para nueva línea)', chatStart: '¡Empieza a chatear con CodeFixerX!', edit: 'Editar',
+      chatPlaceholder: 'Escribe un mensaje...', chatStart: '¡Empieza a chatear con CodeFixerX!', edit: 'Editar',
       privacy: 'Privacidad', terms: 'Términos', about: 'Sobre nosotros', infra: 'Infraestructura', guide: 'Manual de usuario',
       roleUser: 'Usuario', roleAI: 'CodeFixerX', buyKey: 'COMPRAR CLAVE', dontHaveKey: "¿NO TIENES CLAVE?",
       originTitle: 'Origen de Aleocrophic', specialThanks: 'Agradecimientos', coreInfra: 'Infraestructura Principal',
@@ -233,105 +232,20 @@ const LANGUAGES: Record<string, any> = {
 };
 
 const MODULES = [
-  // --- LITE & APEX (Indices 0-5) ---
-  { 
-    id: 'debug', 
-    name: 'Omni Debugger', 
-    icon: <Code />, 
-    premium: false, 
-    desc: 'Fix syntax/logic errors.',
-    systemPrompt: "You are the Omni Code Debugger. Analyze the provided code for syntax errors, logical flaws, memory leaks, and runtime issues. Return the fixed code with comments explaining the corrections. Focus on correctness and stability."
-  },
-  { 
-    id: 'dep', 
-    name: 'Dependency Scanner', 
-    icon: <Search />, 
-    premium: false, 
-    desc: 'Analyze libs & vulnerabilities.',
-    systemPrompt: "You are the Dependency Scanner. Analyze the imports and dependencies in the code. Identify deprecated packages, security risks, or heavy libraries that could be optimized. Suggest lighter or more secure alternatives."
-  },
-  { 
-    id: 'sec', 
-    name: 'Security Auditor', 
-    icon: <Shield />, 
-    premium: false, 
-    desc: 'Fix SQLi, XSS, RCE.',
-    systemPrompt: "You are the Cybersecurity Auditor. Conduct a deep security scan on the code. Look for SQL Injection, XSS, CSRF, RCE, weak cryptography, and hardcoded secrets. Provide a secure refactored version and explain the vulnerabilities found."
-  },
-  { 
-    id: 'perf', 
-    name: 'Optimizer', 
-    icon: <Zap />, 
-    premium: false, 
-    desc: 'Boost speed & scalability.',
-    systemPrompt: "You are the Performance Optimizer. Refactor the code to improve execution speed, reduce memory usage, and enhance scalability. Look for O(n^2) loops, redundant computations, and unoptimized queries. Provide the optimized code."
-  },
-  { 
-    id: 'explain', 
-    name: 'Code Explainer', 
-    icon: <FileCode />, 
-    premium: false, 
-    desc: 'Deep explanations.',
-    systemPrompt: "You are the Interactive Code Explainer. Break down the provided code into simple, digestible parts. Explain the logic flow, variable purposes, and algorithmic approach. Use analogies where appropriate. Do not just rewrite the code, explain *why* it works."
-  },
-  { 
-    id: 'pair', 
-    name: 'Pair Programmer', 
-    icon: <User />, 
-    premium: false, 
-    desc: 'Real-time collab.',
-    systemPrompt: "You are an AI Pair Programmer. Act as a senior developer colleague. Suggest completions, refactorings, or alternative approaches to the user's current code snippet. Maintain a collaborative and helpful tone."
-  },
+  { id: 'debug', name: 'Omni Debugger', icon: <Code />, premium: false, desc: 'Fix syntax/logic errors.', systemPrompt: "You are the Omni Code Debugger. Analyze the provided code for syntax errors, logical flaws, memory leaks, and runtime issues. Return the fixed code with comments explaining the corrections. Focus on correctness and stability." },
+  { id: 'dep', name: 'Dependency Scanner', icon: <Search />, premium: false, desc: 'Analyze libs & vulnerabilities.', systemPrompt: "You are the Dependency Scanner. Analyze the imports and dependencies in the code. Identify deprecated packages, security risks, or heavy libraries that could be optimized. Suggest lighter or more secure alternatives." },
+  { id: 'sec', name: 'Security Auditor', icon: <Shield />, premium: false, desc: 'Fix SQLi, XSS, RCE.', systemPrompt: "You are the Cybersecurity Auditor. Conduct a deep security scan on the code. Look for SQL Injection, XSS, CSRF, RCE, weak cryptography, and hardcoded secrets. Provide a secure refactored version and explain the vulnerabilities found." },
+  { id: 'perf', name: 'Optimizer', icon: <Zap />, premium: false, desc: 'Boost speed & scalability.', systemPrompt: "You are the Performance Optimizer. Refactor the code to improve execution speed, reduce memory usage, and enhance scalability. Look for O(n^2) loops, redundant computations, and unoptimized queries. Provide the optimized code." },
+  { id: 'explain', name: 'Code Explainer', icon: <FileCode />, premium: false, desc: 'Deep explanations.', systemPrompt: "You are the Interactive Code Explainer. Break down the provided code into simple, digestible parts. Explain the logic flow, variable purposes, and algorithmic approach. Use analogies where appropriate. Do not just rewrite the code, explain *why* it works." },
+  { id: 'pair', name: 'Pair Programmer', icon: <User />, premium: false, desc: 'Real-time collab.', systemPrompt: "You are an AI Pair Programmer. Act as a senior developer colleague. Suggest completions, refactorings, or alternative approaches to the user's current code snippet. Maintain a collaborative and helpful tone." },
   
   // --- APEX EXCLUSIVE (Indices 6-11) ---
-  { 
-    id: 'legacy', 
-    name: 'Legacy Resurrection', 
-    icon: <History />, 
-    premium: true, 
-    desc: 'Modernize old stacks.',
-    systemPrompt: "You are the Legacy Code Resurrection Engine. Your task is to modernize outdated code (e.g., COBOL, old PHP, jQuery, VB6) into modern standards (e.g., React, Go, Rust, Python 3.10+). Preserve business logic but upgrade the syntax, libraries, and security practices."
-  },
-  { 
-    id: 'cicd', 
-    name: 'CI/CD Integrator', 
-    icon: <Cpu />, 
-    premium: true, 
-    desc: 'Pipeline automation.',
-    systemPrompt: "You are the CI/CD Integrator. Generate robust pipeline configurations (GitHub Actions YAML, GitLab CI, Jenkinsfile, Dockerfile) for the provided code. Ensure automated testing, linting, security scanning, and deployment steps are included."
-  },
-  { 
-    id: 'custom', 
-    name: 'Custom Commander', 
-    icon: <Terminal />, 
-    premium: true, 
-    desc: 'Execute commands.',
-    systemPrompt: "You are the Custom Command Executor. Follow the specific instructions provided by the user regarding the code. You are versatile and adaptable. If the user asks for a specific refactor pattern (e.g., SOLID, DRY, KISS), apply it rigorously."
-  },
-  { 
-    id: 'sim', 
-    name: 'Adv. Simulation', 
-    icon: <Play />, 
-    premium: true, 
-    desc: 'Sandbox run.',
-    systemPrompt: "You are the Advanced Simulation Environment. Simulate the execution of the provided code. Predict the output for various edge cases. If it's UI code, describe the visual result. If it's logic, trace the variable states. Find logic bugs that static analysis might miss."
-  },
-  { 
-    id: 'docs', 
-    name: 'Dynamic Docs', 
-    icon: <FileText />, 
-    premium: true, 
-    desc: 'Auto documentation.',
-    systemPrompt: "You are the Dynamic Documentation Generator. Create comprehensive documentation for the code, including JSDoc/Docstrings, API endpoint definitions (Swagger/OpenAPI), and usage examples. Make it professional and ready for a README.md."
-  },
-  { 
-    id: 'exp', 
-    name: 'Experimental UI', 
-    icon: <Sparkles />, 
-    premium: true, 
-    desc: 'UI Auto-Design.',
-    systemPrompt: "You are the Experimental UI Generator. Generate stunning, modern, and responsive web interfaces using React, Tailwind CSS, and Lucide React icons. IMPORTANT: Provide the FULL code in a single file. Ensure it is visually impressive (Glassmorphism, Neobrutalism, or Minimalist)."
-  },
+  { id: 'legacy', name: 'Legacy Resurrection', icon: <History />, premium: true, desc: 'Modernize old stacks.', systemPrompt: "You are the Legacy Code Resurrection Engine. Your task is to modernize outdated code (e.g., COBOL, old PHP, jQuery, VB6) into modern standards (e.g., React, Go, Rust, Python 3.10+). Preserve business logic but upgrade the syntax, libraries, and security practices." },
+  { id: 'cicd', name: 'CI/CD Integrator', icon: <Cpu />, premium: true, desc: 'Pipeline automation.', systemPrompt: "You are the CI/CD Integrator. Generate robust pipeline configurations (GitHub Actions YAML, GitLab CI, Jenkinsfile, Dockerfile) for the provided code. Ensure automated testing, linting, security scanning, and deployment steps are included." },
+  { id: 'custom', name: 'Custom Commander', icon: <Terminal />, premium: true, desc: 'Execute commands.', systemPrompt: "You are the Custom Command Executor. Follow the specific instructions provided by the user regarding the code. You are versatile and adaptable. If the user asks for a specific refactor pattern (e.g., SOLID, DRY, KISS), apply it rigorously." },
+  { id: 'sim', name: 'Adv. Simulation', icon: <Play />, premium: true, desc: 'Sandbox run.', systemPrompt: "You are the Advanced Simulation Environment. Simulate the execution of the provided code. Predict the output for various edge cases. If it's UI code, describe the visual result. If it's logic, trace the variable states. Find logic bugs that static analysis might miss." },
+  { id: 'docs', name: 'Dynamic Docs', icon: <FileText />, premium: true, desc: 'Auto documentation.', systemPrompt: "You are the Dynamic Documentation Generator. Create comprehensive documentation for the code, including JSDoc/Docstrings, API endpoint definitions (Swagger/OpenAPI), and usage examples. Make it professional and ready for a README.md." },
+  { id: 'exp', name: 'Experimental UI', icon: <Sparkles />, premium: true, desc: 'UI Auto-Design.', systemPrompt: "You are the Experimental UI Generator. Generate stunning, modern, and responsive web interfaces using React, Tailwind CSS, and Lucide React icons. IMPORTANT: Provide the FULL code in a single file. Ensure it is visually impressive (Glassmorphism, Neobrutalism, or Minimalist)." },
 ];
 
 const AI_MODELS = [
@@ -346,37 +260,35 @@ const LITE_MANIFESTO = "You are CodeFixerX Lite. Efficient Debugging.";
 
 // --- 3. UTILITY COMPONENTS ---
 
-// FIX: Robust Syntax Highlighter (Prevents double-escaping and self-destruction)
+// FIX: Safer Syntax Highlighter - Removes numbers highlighting to prevent '400' tailwind conflict
 const highlightSyntax = (code: string) => {
   if (!code) return '';
   
-  // 1. Escape HTML entities first to prevent XSS and interference
+  // 1. Escape HTML entities first
   let safeCode = code
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  // 2. Use placeholders for strings and comments to avoid matching keywords inside them
+  // 2. Placeholder strategy for strings & comments
   const placeholders: string[] = [];
   const addPlaceholder = (match: string) => {
     placeholders.push(match);
     return `%%%PH${placeholders.length - 1}%%%`;
   };
 
-  // Replace strings and comments with placeholders
   safeCode = safeCode
     .replace(/(".*?"|'.*?'|`.*?`)/g, addPlaceholder) // Strings
     .replace(/(\/\/.*$)/gm, addPlaceholder);          // Comments
 
-  // 3. Highlight Keywords and Numbers
+  // 3. Highlight Keywords ONLY (Removed number highlighting to fix Tailwind issues)
   const keywords = "\\b(const|let|var|function|return|if|else|for|while|class|import|from|export|default|async|await|try|catch|switch|case|new|this|typeof|interface|type|extends|implements|public|private|protected|static|readonly|constructor)\\b";
   
   safeCode = safeCode
     .replace(new RegExp(keywords, 'g'), '<span class="text-pink-400 font-semibold">$1</span>')
-    .replace(/(\w+)(?=\()/g, '<span class="text-cyan-400">$1</span>') // Function calls
-    .replace(/\b(\d+)\b/g, '<span class="text-orange-400">$1</span>'); // Numbers
+    .replace(/(\w+)(?=\()/g, '<span class="text-cyan-400">$1</span>'); // Function calls
 
-  // 4. Restore placeholders with colors
+  // 4. Restore placeholders
   safeCode = safeCode.replace(/%%%PH(\d+)%%%/g, (_, index) => {
     const content = placeholders[parseInt(index)];
     if (content.startsWith('//')) {
@@ -498,7 +410,6 @@ export default function App() {
   // Safe object getter (for portal content)
   const tData = (key: string) => {
     const lang = getLangObj();
-    // Access nested portalContent safely
     return lang.ui?.portalContent?.[key] || key;
   }
   
@@ -509,9 +420,12 @@ export default function App() {
     const savedLang = localStorage.getItem('cfx_lang');
     const savedKey = localStorage.getItem('cfx_api_key');
     const savedModel = localStorage.getItem('cfx_ai_model');
+    const savedPremium = localStorage.getItem('cfx_is_premium'); // PERSIST PREMIUM
+
     if (savedLang && LANGUAGES[savedLang]) setLangCode(savedLang);
     if (savedKey) setCustomApiKey(savedKey);
     if (savedModel) setAiModel(savedModel);
+    if (savedPremium === 'true') setIsPremium(true); // RESTORE PREMIUM
     
     const handleResize = () => { if (window.innerWidth < 768) setSidebarOpen(false); else setSidebarOpen(true); };
     handleResize(); window.addEventListener('resize', handleResize);
@@ -529,12 +443,22 @@ export default function App() {
           if (docSnap.exists()) {
             const data = docSnap.data();
             if (data.language && LANGUAGES[data.language]) setLangCode(data.language);
-            if (data.isPremium) setIsPremium(true);
+            if (data.isPremium) {
+               setIsPremium(true);
+               localStorage.setItem('cfx_is_premium', 'true'); // Sync to local
+            }
             if (data.aiModel) setAiModel(data.aiModel);
           }
         } catch (e) {}
       } else {
-        if (!isDevMode) { setIsPremium(false); setGeneratedApiKey("GUEST"); if(view === 'dashboard') setView('language'); }
+        if (!isDevMode) { 
+          // If not logged in and not dev mode, check local storage for premium, else reset
+          if(localStorage.getItem('cfx_is_premium') !== 'true') {
+              setIsPremium(false); 
+          }
+          setGeneratedApiKey("GUEST"); 
+          if(view === 'dashboard') setView('language'); 
+        }
       }
       setIsAuthChecking(false);
     });
@@ -548,7 +472,6 @@ export default function App() {
     
     const unsub = onSnapshot(q, (snap) => {
       const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      // Client-side Sorting (Newest First)
       fetched.sort((a: any, b: any) => {
         const timeA = a.createdAt?.seconds || 0;
         const timeB = b.createdAt?.seconds || 0;
@@ -556,7 +479,7 @@ export default function App() {
       });
       setHistory(fetched);
     }, (error) => {
-        console.error("Firestore History Error:", error); // Log error silently
+        console.error("Firestore History Error:", error); 
     });
     return () => unsub();
   }, [user, view]); 
@@ -609,7 +532,10 @@ export default function App() {
   const handleUnlock = async () => {
     const cleanKey = premiumKey.trim();
     if (cleanKey === "CFX-APX-2025R242") { 
-      setIsPremium(true); notify("APEX UNLOCKED", "success"); setView('dashboard');
+      setIsPremium(true); 
+      localStorage.setItem('cfx_is_premium', 'true'); // PERSIST
+      notify("APEX UNLOCKED", "success"); 
+      setView('dashboard');
       if(user) await setDoc(doc(db, 'users', user.uid), { isPremium: true }, { merge: true });
     } else notify("Invalid Key", "error");
   };
@@ -713,19 +639,11 @@ export default function App() {
     } catch(e) { notify("Chat Error", "error"); } finally { setChatLoading(false); }
   };
 
-  // FIX: Shift+Enter Handler
-  const handleChatInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleChatSend();
-    }
-  };
-
   const copyChat = (text: string) => {
     navigator.clipboard.writeText(text);
     notify(tText('copied'), "success");
   }
-
+  
   const handleSaveCustomKey = () => {
     if (!customApiKey.trim()) {
       notify("Invalid Key!", "error");
@@ -734,6 +652,18 @@ export default function App() {
     localStorage.setItem('cfx_api_key', customApiKey);
     notify("Custom Key Saved & Ready!", "success");
   }
+
+  // FIX: Mobile Enter Key Handler
+  const handleChatKeyDown = (e: React.KeyboardEvent) => {
+    // Desktop: Enter = Send, Shift+Enter = New Line
+    // Mobile: Enter = New Line (Default), Send Button = Send
+    if (window.innerWidth >= 768) {
+       if (e.key === 'Enter' && !e.shiftKey) {
+         e.preventDefault();
+         handleChatSend();
+       }
+    }
+  };
 
   // --- RENDER AUTH LOADING ---
   if (isAuthChecking) return (<div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4"><div className="relative mb-8"><div className="absolute inset-0 bg-cyan-500/30 blur-xl rounded-full animate-pulse"></div><Cpu size={64} className="text-cyan-400 relative z-10 animate-bounce"/></div><h2 className="text-2xl font-bold text-white mb-2 tracking-wider">INITIALIZING NEURAL LINK</h2></div>);
@@ -760,8 +690,9 @@ export default function App() {
 
       {/* SIDEBAR */}
       <aside className={`
-          fixed inset-y-0 left-0 z-50 bg-slate-900/95 backdrop-blur border-r border-slate-800 flex flex-col transition-transform duration-300 
-          ${sidebarOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden'}
+          fixed inset-y-0 left-0 z-50 bg-slate-900/95 backdrop-blur border-r border-slate-800 flex flex-col transition-all duration-300 
+          ${sidebarOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full w-72 md:translate-x-0 md:w-0 md:overflow-hidden'}
+          md:relative md:translate-x-0
         `}>
          <div className="p-6 border-b border-slate-800 flex justify-between items-center min-w-[18rem]">
             <div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-lg ${isPremium ? 'bg-amber-500' : 'bg-cyan-600'}`}>{isPremium ? <Sparkles className="text-white"/> : <Code className="text-white"/>}</div><div><h2 className="font-bold leading-none tracking-tight">CodeFixerX</h2><span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{isPremium ? 'Apex' : 'Lite'}</span></div></div>
@@ -781,7 +712,7 @@ export default function App() {
          </div>
          <div className="p-4 border-t border-slate-800 bg-slate-900 min-w-[18rem]">
             {!isPremium && <button onClick={() => (user || isDevMode) ? setView('premium') : setView('login')} className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs font-bold rounded-lg transition shadow-lg shadow-amber-500/20 mb-2 flex items-center justify-center gap-2"><Unlock size={12}/> {tText('upgrade')}</button>}
-            {user || isDevMode ? (<div className="flex items-center gap-3 px-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${isDevMode ? 'bg-red-900 border-red-500 text-red-200' : 'bg-cyan-900 border-cyan-700 text-cyan-200'}`}>{isDevMode ? 'DEV' : user.email[0].toUpperCase()}</div><div className="flex-1 overflow-hidden"><div className="text-xs font-bold truncate">{isDevMode ? 'Developer' : user.displayName}</div><div className="text-[10px] text-slate-500">{isDevMode ? 'System Root' : 'Online'}</div></div><button onClick={() => signOut(auth)}><LogOut size={16} className="text-slate-500 hover:text-red-400"/></button></div>) : (<button onClick={() => setView('login')} className="w-full flex justify-center gap-2 bg-slate-800 py-3 rounded-xl text-sm font-bold hover:bg-slate-700 border border-slate-700"><LogIn size={16}/> {tText('login')}</button>)}
+            {user || isDevMode ? (<div className="flex items-center gap-3 px-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${isDevMode ? 'bg-red-900 border-red-500 text-red-200' : 'bg-cyan-900 border-cyan-700 text-cyan-200'}`}>{isDevMode ? 'DEV' : user.email[0].toUpperCase()}</div><div className="flex-1 overflow-hidden"><div className="text-xs font-bold truncate">{isDevMode ? 'Developer' : user.displayName}</div><div className="text-[10px] text-slate-500">{isDevMode ? 'System Root' : 'Online'}</div></div><button onClick={() => { localStorage.removeItem('cfx_is_premium'); signOut(auth); }}><LogOut size={16} className="text-slate-500 hover:text-red-400"/></button></div>) : (<button onClick={() => setView('login')} className="w-full flex justify-center gap-2 bg-slate-800 py-3 rounded-xl text-sm font-bold hover:bg-slate-700 border border-slate-700"><LogIn size={16}/> {tText('login')}</button>)}
          </div>
       </aside>
 
@@ -795,7 +726,8 @@ export default function App() {
             <div className="flex flex-wrap justify-end gap-4 text-[10px] md:text-xs font-mono w-full md:w-auto">
                <div className="flex items-center gap-2 text-slate-500"><span className={`w-2 h-2 rounded-full ${isPremium ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span> ACTIVE</div>
                <div className="text-slate-500">VER: {isPremium ? <span className="text-amber-500">vX.APEX</span> : <span className="text-cyan-500">vX.LITE</span>}</div>
-               {view !== 'settings' && view !== 'premium' && <button onClick={handleNewSession} className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1 rounded text-cyan-400 transition cursor-pointer"><RefreshCw size={12}/> {tText('newChat')}</button>}
+               {/* NEW SESSION BUTTON RESTORED */}
+               {(view === 'dashboard' || view === 'chat') && <button onClick={view === 'dashboard' ? handleNewSession : () => {setChatMessages([]); notify(tText('newChat'), "success");}} className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1 rounded text-cyan-400 transition cursor-pointer"><RefreshCw size={12}/> {tText('newChat')}</button>}
                {customApiKey && <div className="flex items-center gap-1 border border-slate-800 rounded px-2 py-0.5 bg-slate-900"><Key size={10} className="text-amber-500"/><span className="text-slate-400">CUSTOM KEY</span></div>}
             </div>
          </header>
@@ -876,7 +808,7 @@ export default function App() {
                    <textarea 
                      value={chatInput} 
                      onChange={(e)=>setChatInput(e.target.value)} 
-                     onKeyDown={handleChatInputKeyDown} 
+                     onKeyDown={handleChatKeyDown} 
                      placeholder={tText('chatPlaceholder')} 
                      className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 p-3 rounded-xl focus:border-cyan-500 outline-none resize-none h-[50px] max-h-32"
                    />
@@ -896,7 +828,6 @@ export default function App() {
                         history.filter(h => h.type === 'chat').map(h => (
                           <div key={h.id} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group"
                                onClick={() => {
-                                   // FIX: LOAD CHAT SESSION
                                    setChatMessages([
                                        { role: 'user', text: h.codeSnippet }, // Input was stored in codeSnippet
                                        { role: 'ai', text: h.response }       // Response was stored in response
