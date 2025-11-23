@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
-import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import { 
   Code, Shield, Zap, Terminal, Cpu, Sparkles, 
   History, LogOut, User, Lock, Unlock, LayoutDashboard, 
   FileCode, Play, CheckCircle, Search, 
-  Menu, X, ChevronRight, Command, LogIn, Info, 
-  Server, Globe, Copyright, FileText, Eye, Maximize2, Minimize2, 
-  Settings, Box, Activity, Languages, BookOpen, Key, Database, Layers, Clipboard, AlertTriangle, Heart, Briefcase, Laptop, Bug, Upload, Brain, MessageSquare, PlusCircle, RefreshCw, Send, ShoppingCart, Edit2, Trash2, PanelRight
+  Menu, X, ChevronRight, LogIn, 
+  Server, Globe, FileText, Eye, Maximize2, Minimize2, 
+  Settings, Languages, BookOpen, Key, Database, Clipboard, Heart, MessageSquare, Send, ShoppingCart, Edit2, PanelRight, ExternalLink,
+  AlertTriangle, Layers, Box
 } from 'lucide-react';
+
 // --- 1. FIREBASE CONFIGURATION ---
 const firebaseConfig = {
   apiKey: "AIzaSyBpXhfpTR7KGfW5ESH_Z-9Wc8QyJ9YHxv8",
@@ -20,295 +22,262 @@ const firebaseConfig = {
   appId: "1:369353956112:web:7aff645b1724ec80bfa395",
   measurementId: "G-QTHRQNXJKF"
 };
+
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const googleProvider = new GoogleAuthProvider();
-// --- GLOBAL API KEY PLACEHOLDER ---
-const defaultApiKey = "AIzaSyAKYz2zc53K6ZgHAa5bmC0vuv8P-zLOWzY"; 
-// --- 2. DATA & TRANSLATIONS (FULL COMPLETE) ---
+
+// --- 2. CONSTANTS & DATA ---
+const defaultApiKey = ""; 
+
+// --- FINE-TUNED MODULES (SYSTEM PROMPTS) ---
+const MODULES = [
+  { 
+    id: 'debug', name: 'Omni Debugger', icon: <Code />, premium: false, 
+    desc: 'Deep logic & syntax repair.', 
+    systemPrompt: "ROLE: Principal Software Engineer. TASK: Analyze code for syntax errors, logical fallacies, race conditions, and memory leaks. CONTEXT: Do not just fix the error; explain the root cause. If the code works but is fragile, refactor it using defensive programming patterns. OUTPUT: Return the corrected code with comprehensive comments explaining the fix." 
+  },
+  { 
+    id: 'dep', name: 'Dependency Scanner', icon: <Search />, premium: false, 
+    desc: 'Audit libs & vulnerabilities.', 
+    systemPrompt: "ROLE: DevSecOps Specialist. TASK: Analyze imports/dependencies. Identify deprecated packages, known CVE vulnerabilities, and license conflicts. ACTION: Suggest modern, secure, and lightweight alternatives. If a library is overkill (e.g., Lodash for simple array logic), suggest native implementation." 
+  },
+  { 
+    id: 'sec', name: 'Security Auditor', icon: <Shield />, premium: false, 
+    desc: 'OWASP Top 10 Mitigation.', 
+    systemPrompt: "ROLE: Cybersecurity Analyst (OWASP Expert). TASK: Deep scan for SQL Injection, XSS, CSRF, IDOR, and Hardcoded Secrets. ACTION: Refactor code to use Parameterized Queries, Input Sanitization, and Environment Variables. Explain the attack vector you are mitigating. STRICT: Assume all user input is malicious." 
+  },
+  { 
+    id: 'perf', name: 'Optimizer', icon: <Zap />, premium: false, 
+    desc: 'Big O & Memory reduction.', 
+    systemPrompt: "ROLE: High-Performance Computing Engineer. TASK: Optimize for Time and Space Complexity. ACTION: Identify O(n^2) loops, unnecessary re-renders (React), or heavy database queries. Refactor using caching strategies (Memoization, Redis pattern), efficient algorithms, and vectorization where possible." 
+  },
+  { 
+    id: 'explain', name: 'Code Explainer', icon: <FileCode />, premium: false, 
+    desc: 'Pedagogical breakdown.', 
+    systemPrompt: "ROLE: Senior Developer Mentor. TASK: Explain the code to a Junior Developer. ACTION: Break down complex logic into plain English. Explain *why* a specific pattern was used (e.g., Singleton, Factory). Use analogies. Do not simplify to the point of inaccuracy." 
+  },
+  { 
+    id: 'pair', name: 'Pair Programmer', icon: <User />, premium: false, 
+    desc: 'Real-time co-pilot.', 
+    systemPrompt: "ROLE: Collaborative Senior Colleague. TASK: Suggest completions, improvements, or alternative approaches. TONE: Helpful, encouraging, but strict on best practices. If the user is stuck, ask guiding questions before providing the solution." 
+  },
+  // APEX MODULES
+  { 
+    id: 'legacy', name: 'Legacy Resurrection', icon: <History />, premium: true, 
+    desc: 'Modernize ancient stacks.', 
+    systemPrompt: "ROLE: Legacy Systems Architect. TASK: Modernize outdated code (COBOL, VB6, jQuery, PHP 5) to modern stacks (React, Node.js, Go, Rust). STRATEGY: Use the 'Strangler Fig' pattern logic. Preserve exact business logic while upgrading syntax, security, and performance. Add typing (TypeScript) where applicable." 
+  },
+  { 
+    id: 'cicd', name: 'CI/CD Integrator', icon: <Cpu />, premium: true, 
+    desc: 'Pipeline automation.', 
+    systemPrompt: "ROLE: DevOps Engineer. TASK: Generate production-ready pipeline configs (GitHub Actions, GitLab CI, Jenkins, Docker). INCLUDE: Multi-stage builds, Automated Testing, Linting, SAST/DAST Security Scanning, and Deployment to Cloud (AWS/GCP/Azure). Ensure immutable infrastructure principles." 
+  },
+  { 
+    id: 'custom', name: 'Custom Commander', icon: <Terminal />, premium: true, 
+    desc: 'Execute arbitrary prompts.', 
+    systemPrompt: "ROLE: Adaptive Polymath AI. TASK: Execute user instructions precisely. CAPABILITIES: Can generate unit tests (Jest/Vitest), write documentation, convert languages, or design system architecture. Follow the user's specific prompt constraints rigoriously." 
+  },
+  { 
+    id: 'sim', name: 'Adv. Simulation', icon: <Play />, premium: true, 
+    desc: 'Dry-run execution.', 
+    systemPrompt: "ROLE: Runtime Environment Simulator. TASK: Mentally execute the code state-by-state. OUTPUT: Trace the values of variables at each step. Predict final output or runtime errors. USE CASE: Finding logical bugs that static analysis misses (e.g., infinite loops, off-by-one errors)." 
+  },
+  { 
+    id: 'docs', name: 'Dynamic Docs', icon: <FileText />, premium: true, 
+    desc: 'Auto-Swagger/JSDoc.', 
+    systemPrompt: "ROLE: Technical Writer & API Designer. TASK: Generate industry-standard documentation. FORMAT: JSDoc for functions, OpenAPI/Swagger for REST APIs, or Markdown for READMEs. INCLUDE: Usage examples, edge cases, error codes, and complexity analysis." 
+  },
+  { 
+    id: 'exp', name: 'UI Generator', icon: <Sparkles />, premium: true, 
+    desc: 'React/Tailwind Designer.', 
+    systemPrompt: "ROLE: UI/UX Frontend Lead. TASK: Generate a COMPLETE, SINGLE-FILE React component using Tailwind CSS and Lucide-React icons. STYLE: Modern, Glassmorphism, or Neobrutalism. REQUIREMENT: The code MUST be copy-paste runnable. Do not use external CSS files. Use `export default function App()`. Make it visually stunning and responsive." 
+  },
+];
+
+const AI_MODELS = [
+  { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (Beta)', desc: 'Next-Gen Speed' },
+  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', desc: 'Deep Reasoning' },
+  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', desc: 'High Efficiency' },
+];
+
+// --- EXTENDED TRANSLATIONS ---
 const LANGUAGES: Record<string, any> = {
   en: { 
     label: 'English', flag: '🇺🇸', 
     ui: { 
-      dashboard: 'Dashboard', chat: 'Free Chat', portal: 'Portal', history: 'History', upgrade: 'Upgrade Apex', login: 'Login', 
-      analyze: 'Initiate Fix', input: 'Source Code', output: 'Output', processing: 'Processing...', settings: 'Settings', copy: 'Copy All', 
-      model: 'AI Model', newChat: 'New Session', viewUI: 'View UI', hideUI: 'Hide UI', copyCode: 'Copy Code', copied: 'Copied',
-      modules: 'Modules', system: 'System', tools: 'AI Tools', welcome: 'Welcome', guest: 'Guest Mode',
-      authRequired: 'Auth Required', unlock: 'Unlock', enterKey: 'Enter License Key', orUpload: 'OR UPLOAD KEY', authenticate: 'AUTHENTICATE',
-      purchase: 'Purchase', devOverride: 'Developer Override', access: 'ACCESS', customKey: 'Custom API Key',
-      chatPlaceholder: 'Type a message...', chatStart: 'Start chatting with CodeFixerX!', edit: 'Edit',
-      privacy: 'Privacy Policy', terms: 'Terms of Service', about: 'About Us', infra: 'Infrastructure', guide: 'User Manual',
-      roleUser: 'User', roleAI: 'CodeFixerX', buyKey: 'BUY KEY NOW', dontHaveKey: "DON'T HAVE A KEY?",
-      originTitle: 'Origin of Aleocrophic', specialThanks: 'Special Thanks', coreInfra: 'Core Infrastructure',
-      toggleHistory: 'Toggle History', sourceInput: 'SOURCE INPUT'
+      dashboard: 'Dashboard', chat: 'Apex Chat', portalLabel: 'Nexus Portal', history: 'Archives', upgrade: 'Upgrade Apex', login: 'Identify', 
+      analyze: 'Execute Protocol', input: 'Source Input', output: 'System Output', processing: 'Neural Processing...', settings: 'Config', copy: 'Copy Buffer', 
+      model: 'Neural Engine', newChat: 'Reset Cycle', viewUI: 'Visualize UI', hideUI: 'Code View', copyCode: 'Copy Code', copied: 'Copied',
+      modules: 'Core Modules', system: 'System', tools: 'Utilities', welcome: 'Welcome', guest: 'Guest Entity',
+      authRequired: 'Identity Verification Required', unlock: 'Unlock', enterKey: 'Input License Key', orUpload: 'OR UPLOAD KEYFILE', authenticate: 'AUTHENTICATE',
+      purchase: 'Acquire License', devOverride: 'Root Override', access: 'GRANT ACCESS', customKey: 'Gemini API Key',
+      chatPlaceholder: 'Input query to neural network...', chatStart: 'Link established with CodeFixerX Core.', edit: 'Refactor',
+      privacy: 'Data Protocol', terms: 'Terms of Engagement', about: 'Manifesto', infra: 'Infrastructure', guide: 'Field Manual',
+      roleUser: 'Operator', roleAI: 'CodeFixerX', buyKey: 'ACQUIRE ACCESS', dontHaveKey: "NO LICENSE FOUND?",
+      originTitle: 'The Aleocrophic Directive', specialThanks: 'Core Contributors', coreInfra: 'System Architecture',
+      portal: {
+        aboutText: "CodeFixerX is not merely a tool; it is an architectural intervention. In an era defined by entropy—where JavaScript frameworks multiply faster than they can be mastered—Aleocrophic Systems establishes order. Founded by Rayhan Dzaky Al Mubarok under the NyxShade Interactive conglomerate, we provide the 'Apex' standard: a development assistant that enforces security, scalability, and rigorous type safety by default.",
+        missionText: "We reject 'spaghetti code'. Our mission is to democratize Senior Engineering capabilities. Whether you are refactoring a monolithic legacy codebase or bootstrapping a startup, CodeFixerX acts as your Principal Engineer, conducting real-time audits on logic, security, and performance complexity.",
+        privacyText: "1. **Ephemeral Processing**: CodeFixerX operates on a stateless protocol. Your code snippets are transmitted to Google Gemini APIs strictly for inference and are not retained for model training by Aleocrophic Systems.\n2. **Local Storage**: API Keys and user preferences are stored locally in your browser's `localStorage`. We do not store your secrets on our servers.\n3. **Identity**: Authentication via Google Firebase is used solely for session management and usage quotas.",
+        termsText: "1. **License Usage**: The Apex license is non-transferable. Sharing keys will result in an immediate blacklist.\n2. **Liability**: While CodeFixerX strives for 100% accuracy, code generation involves probabilistic models. The Operator is responsible for the final validation of code before deployment to production environments.\n3. **Ethical Use**: Generation of malware, ransomware, or polymorphic attack scripts is strictly prohibited and triggers automated reporting.",
+        guideLite: "Lite Clearance allows access to the 'Omni Debugger' and 'Security Auditor'. Ideal for quick fixes and students learning the basics of secure coding.",
+        guideApex: "Apex Clearance unlocks the full suite: 'Legacy Resurrection' for enterprise migrations, 'CI/CD Integrator' for DevOps, and the 'UI Generator' for rapid prototyping. Includes unlimited tokens and priority processing.",
+        infraFrontend: "React 18, Vite, TailwindCSS, Framer Motion. Hosted on Edge Networks.",
+        infraBackend: "Google Firebase (Auth, Firestore), Cloud Functions. Serverless Architecture.",
+        infraAI: "Google Gemini 1.5 Pro & Flash. Multimodal capabilities with 1M+ token context window."
+      }
     } 
   },
   id: { 
     label: 'Indonesia', flag: '🇮🇩', 
     ui: { 
-      dashboard: 'Dasbor', chat: 'Obrolan Bebas', portal: 'Portal', history: 'Riwayat', upgrade: 'Buka Apex', login: 'Masuk', 
-      analyze: 'Mulai Analisa', input: 'Kode Sumber', output: 'Hasil', processing: 'Memproses...', settings: 'Pengaturan', copy: 'Salin Semua', 
-      model: 'Model AI', newChat: 'Sesi Baru', viewUI: 'Lihat UI', hideUI: 'Tutup UI', copyCode: 'Salin Kode', copied: 'Disalin',
-      modules: 'Modul', system: 'Sistem', tools: 'Alat AI', welcome: 'Selamat Datang', guest: 'Mode Tamu',
-      authRequired: 'Butuh Login', unlock: 'Buka', enterKey: 'Masukkan Kunci Lisensi', orUpload: 'ATAU UPLOAD KUNCI', authenticate: 'AUTENTIKASI',
-      purchase: 'Beli', devOverride: 'Akses Pengembang', access: 'AKSES', customKey: 'API Key Kustom',
-      chatPlaceholder: 'Ketik pesan...', chatStart: 'Mulai mengobrol dengan CodeFixerX!', edit: 'Ubah',
-      privacy: 'Kebijakan Privasi', terms: 'Syarat Layanan', about: 'Tentang Kami', infra: 'Infrastruktur', guide: 'Panduan Pengguna',
-      roleUser: 'Pengguna', roleAI: 'CodeFixerX', buyKey: 'BELI KUNCI SEKARANG', dontHaveKey: "BELUM PUNYA KUNCI?",
-      originTitle: 'Asal Usul Aleocrophic', specialThanks: 'Terima Kasih Khusus', coreInfra: 'Infrastruktur Inti',
-      toggleHistory: 'Buka Riwayat', sourceInput: 'SUMBER KODE'
+      dashboard: 'Dasbor', chat: 'Obrolan Apex', portalLabel: 'Portal Nexus', history: 'Arsip', upgrade: 'Akses Apex', login: 'Identifikasi', 
+      analyze: 'Eksekusi Protokol', input: 'Kode Sumber', output: 'Output Sistem', processing: 'Memproses...', settings: 'Konfigurasi', copy: 'Salin Semua', 
+      model: 'Mesin Neural', newChat: 'Sesi Baru', viewUI: 'Visualisasi UI', hideUI: 'Tutup Visual', copyCode: 'Salin Kode', copied: 'Tersalin',
+      modules: 'Modul Inti', system: 'Sistem', tools: 'Utilitas', welcome: 'Selamat Datang', guest: 'Mode Tamu',
+      authRequired: 'Verifikasi Identitas', unlock: 'Buka Akses', enterKey: 'Masukkan Kunci Lisensi', orUpload: 'UNGGAH FILE KUNCI', authenticate: 'AUTENTIKASI',
+      purchase: 'Beli Akses', devOverride: 'Akses Root', access: 'AKSES', customKey: 'API Key Gemini',
+      chatPlaceholder: 'Ketik perintah ke jaringan neural...', chatStart: 'Koneksi stabil dengan CodeFixerX Core.', edit: 'Ubah',
+      privacy: 'Protokol Data', terms: 'Ketentuan Layanan', about: 'Manifesto', infra: 'Infrastruktur', guide: 'Manual Operator',
+      roleUser: 'Operator', roleAI: 'CodeFixerX', buyKey: 'BELI AKSES SEKARANG', dontHaveKey: "TIDAK PUNYA KUNCI?",
+      originTitle: 'Direktif Aleocrophic', specialThanks: 'Kontributor Inti', coreInfra: 'Arsitektur Sistem',
+      portal: {
+        aboutText: "CodeFixerX bukan sekadar alat; ini adalah intervensi arsitektural. Di era entropi digital—di mana kerangka kerja JavaScript berkembang lebih cepat daripada yang bisa dikuasai—Aleocrophic Systems menciptakan keteraturan. Didirikan oleh Rayhan Dzaky Al Mubarok di bawah konglomerat NyxShade Interactive, kami menyediakan standar 'Apex': asisten pengembangan yang menegakkan keamanan, skalabilitas, dan keamanan tipe secara default.",
+        missionText: "Kami menolak 'kode spaghetti'. Misi kami adalah mendemokratisasi kemampuan Senior Engineer. Baik Anda melakukan refactoring basis kode warisan monolitik atau memulai startup, CodeFixerX bertindak sebagai Principal Engineer Anda, melakukan audit waktu nyata pada logika, keamanan, dan kompleksitas kinerja.",
+        privacyText: "1. **Pemrosesan Ephemeral**: CodeFixerX beroperasi pada protokol tanpa status (stateless). Kode Anda dikirim ke API Google Gemini hanya untuk inferensi dan tidak disimpan untuk pelatihan model.\n2. **Penyimpanan Lokal**: Kunci API dan preferensi disimpan secara lokal di browser Anda. Kami tidak menyimpan rahasia Anda di server kami.\n3. **Identitas**: Autentikasi via Google Firebase digunakan hanya untuk manajemen sesi.",
+        termsText: "1. **Penggunaan Lisensi**: Lisensi Apex tidak dapat dipindahtangankan. Membagikan kunci akan mengakibatkan pemblokiran permanen.\n2. **Tanggung Jawab**: Operator bertanggung jawab penuh atas validasi akhir kode sebelum penerapan ke lingkungan produksi.\n3. **Penggunaan Etis**: Pembuatan malware, ransomware, atau skrip serangan dilarang keras.",
+        guideLite: "Akses Lite memberikan akses ke 'Omni Debugger' dan 'Security Auditor'. Ideal untuk perbaikan cepat.",
+        guideApex: "Akses Apex membuka suite lengkap: 'Legacy Resurrection' untuk migrasi perusahaan, 'CI/CD Integrator' untuk DevOps, dan 'UI Generator'.",
+        infraFrontend: "React 18, Vite, TailwindCSS. Hosting pada Jaringan Edge.",
+        infraBackend: "Google Firebase (Auth, Firestore). Arsitektur Serverless.",
+        infraAI: "Google Gemini 1.5 Pro & Flash. Kemampuan Multimodal 1 Juta Token."
+      }
     } 
-  },
-  jp: { 
-    label: '日本語', flag: '🇯🇵', 
-    ui: { 
-      dashboard: 'ダッシュボード', chat: '自由チャット', portal: 'ポータル', history: '履歴', upgrade: 'Apexへ', login: 'ログイン', 
-      analyze: '分析開始', input: 'ソース', output: '出力', processing: '処理中...', settings: '設定', copy: 'コピー', 
-      model: 'AIモデル', newChat: '新規セッション', viewUI: 'UI表示', hideUI: 'UI非表示', copyCode: 'コードコピー', copied: 'コピー完了',
-      modules: 'モジュール', system: 'システム', tools: 'AIツール', welcome: 'ようこそ', guest: 'ゲスト',
-      authRequired: '認証が必要', unlock: '解除', enterKey: 'ライセンスキーを入力', orUpload: 'またはキーをアップロード', authenticate: '認証する',
-      purchase: '購入', devOverride: '開発者オーバーライド', access: 'アクセス', customKey: 'カスタムAPIキー',
-      chatPlaceholder: 'メッセージを入力...', chatStart: 'CodeFixerXとチャットを開始！', edit: '編集',
-      privacy: 'プライバシーポリシー', terms: '利用規約', about: '私たちについて', infra: 'インフラストラクチャ', guide: 'ユーザーマニュアル',
-      roleUser: 'ユーザー', roleAI: 'CodeFixerX', buyKey: '今すぐキーを購入', dontHaveKey: "キーをお持ちでないですか？",
-      originTitle: 'Aleocrophicの起源', specialThanks: '特別感謝', coreInfra: 'コアインフラストラクチャ',
-      toggleHistory: '履歴の切り替え', sourceInput: 'ソース入力'
-    } 
-  },
-  ar: { 
-    label: 'العربية', flag: '🇸🇦', 
-    ui: { 
-      dashboard: 'لوحة القيادة', chat: 'دردشة حرة', portal: 'بوابة', history: 'سجل', upgrade: 'ترقية أبيكس', login: 'دخول', 
-      analyze: 'بدء', input: 'شفرة', output: 'مخرجات', processing: 'معالجة...', settings: 'إعدادات', copy: 'نسخ', 
-      model: 'نموذج AI', newChat: 'جلسة جديدة', viewUI: 'عرض UI', hideUI: 'إخفاء UI', copyCode: 'نسخ الرمز', copied: 'تم النسخ',
-      modules: 'وحدات', system: 'نظام', tools: 'أدوات الذكاء الاصطناعي', welcome: 'أهلا بك', guest: 'زائر',
-      authRequired: 'مطلوب المصادقة', unlock: 'فتح', enterKey: 'أدخل مفتاح الترخيص', orUpload: 'أو تحميل المفتاح', authenticate: 'توثيق',
-      purchase: 'شراء', devOverride: 'تجاوز المطور', access: 'وصول', customKey: 'مفتاح API مخصص',
-      chatPlaceholder: 'أكتب رسالة...', chatStart: 'ابدأ الدردشة مع CodeFixerX!', edit: 'تعديل',
-      privacy: 'سياسة الخصوصية', terms: 'شروط الخدمة', about: 'معلومات عنا', infra: 'بنية تحتية', guide: 'دليل المستخدم',
-      roleUser: 'مستخدم', roleAI: 'CodeFixerX', buyKey: 'شراء المفتاح الآن', dontHaveKey: "ليس لديك مفتاح؟",
-      originTitle: 'أصل Aleocrophic', specialThanks: 'شكر خاص', coreInfra: 'البنية التحتية الأساسية',
-      toggleHistory: 'تبديل السجل', sourceInput: 'مدخلات المصدر'
-    } 
-  },
-  ru: { 
-    label: 'Русский', flag: '🇷🇺', 
-    ui: { 
-      dashboard: 'Панель', chat: 'Чат', portal: 'Портал', history: 'История', upgrade: 'Обновить', login: 'Вход', 
-      analyze: 'Анализ', input: 'Код', output: 'Вывод', processing: 'Обработка...', settings: 'Настройки', copy: 'Копировать', 
-      model: 'AI Модель', newChat: 'Новая сессия', viewUI: 'Показать UI', hideUI: 'Скрыть UI', copyCode: 'Копировать код', copied: 'Скопировано',
-      modules: 'Модули', system: 'Система', tools: 'AI Инструменты', welcome: 'Добро пожаловать', guest: 'Гость',
-      authRequired: 'Требуется вход', unlock: 'Открыть', enterKey: 'Введите ключ', orUpload: 'ИЛИ ЗАГРУЗИТЬ', authenticate: 'АУТЕНТИФИКАЦИЯ',
-      purchase: 'Купить', devOverride: 'Режим разработчика', access: 'ДОСТУП', customKey: 'Свой API ключ',
-      chatPlaceholder: 'Введите сообщение...', chatStart: 'Начать чат с CodeFixerX!', edit: 'Изменить',
-      privacy: 'Конфиденциальность', terms: 'Условия', about: 'О нас', infra: 'Инфраструктура', guide: 'Руководство',
-      roleUser: 'Пользователь', roleAI: 'CodeFixerX', buyKey: 'КУПИТЬ КЛЮЧ', dontHaveKey: "НЕТ КЛЮЧА?",
-      originTitle: 'Происхождение Aleocrophic', specialThanks: 'Особая благодарность', coreInfra: 'Базовая инфраструктура',
-      toggleHistory: 'История', sourceInput: 'ИСХОДНЫЙ КОД'
-    } 
-  },
-  de: { 
-    label: 'Deutsch', flag: '🇩🇪', 
-    ui: { 
-      dashboard: 'Dashboard', chat: 'Freier Chat', portal: 'Portal', history: 'Verlauf', upgrade: 'Upgrade', login: 'Anmelden', 
-      analyze: 'Starten', input: 'Quellcode', output: 'Ausgabe', processing: 'Verarbeitung...', settings: 'Einstellungen', copy: 'Kopieren', 
-      model: 'KI-Modell', newChat: 'Neue Sitzung', viewUI: 'UI Anzeigen', hideUI: 'UI Ausblenden', copyCode: 'Code Kopieren', copied: 'Kopiert',
-      modules: 'Module', system: 'System', tools: 'KI-Tools', welcome: 'Willkommen', guest: 'Gast',
-      authRequired: 'Anmeldung erforderlich', unlock: 'Entsperren', enterKey: 'Lizenzschlüssel eingeben', orUpload: 'ODER SCHLÜSSEL HOCHLADEN', authenticate: 'AUTHENTIFIZIEREN',
-      purchase: 'Kaufen', devOverride: 'Entwicklerzugriff', access: 'ZUGRIFF', customKey: 'Benutzerdefinierter API-Schlüssel',
-      chatPlaceholder: 'Nachricht eingeben...', chatStart: 'Chat mit CodeFixerX starten!', edit: 'Bearbeiten',
-      privacy: 'Datenschutz', terms: 'Nutzungsbedingungen', about: 'Über uns', infra: 'Infrastruktur', guide: 'Benutzerhandbuch',
-      roleUser: 'Benutzer', roleAI: 'CodeFixerX', buyKey: 'SCHLÜSSEL KAUFEN', dontHaveKey: "KEINEN SCHLÜSSEL?",
-      originTitle: 'Ursprung von Aleocrophic', specialThanks: 'Besonderer Dank', coreInfra: 'Kerninfrastruktur',
-      toggleHistory: 'Verlauf umschalten', sourceInput: 'QUELLCODE'
-    } 
-  },
-  es: { 
-    label: 'Español', flag: '🇪🇸', 
-    ui: { 
-      dashboard: 'Tablero', chat: 'Chat Libre', portal: 'Portal', history: 'Historial', upgrade: 'Mejorar', login: 'Acceso', 
-      analyze: 'Analizar', input: 'Código', output: 'Salida', processing: 'Procesando...', settings: 'Ajustes', copy: 'Copiar', 
-      model: 'Modelo IA', newChat: 'Nueva Sesión', viewUI: 'Ver UI', hideUI: 'Ocultar UI', copyCode: 'Copiar Código', copied: 'Copiado',
-      modules: 'Módulos', system: 'Sistema', tools: 'Herramientas IA', welcome: 'Bienvenido', guest: 'Invitado',
-      authRequired: 'Autenticación requerida', unlock: 'Desbloquear', enterKey: 'Introducir clave', orUpload: 'O SUBIR CLAVE', authenticate: 'AUTENTICAR',
-      purchase: 'Comprar', devOverride: 'Acceso Desarrollador', access: 'ACCESO', customKey: 'Clave API Personal',
-      chatPlaceholder: 'Escribe un mensaje...', chatStart: '¡Empieza a chatear con CodeFixerX!', edit: 'Editar',
-      privacy: 'Privacidad', terms: 'Términos', about: 'Sobre nosotros', infra: 'Infraestructura', guide: 'Manual de usuario',
-      roleUser: 'Usuario', roleAI: 'CodeFixerX', buyKey: 'COMPRAR CLAVE', dontHaveKey: "¿NO TIENES CLAVE?",
-      originTitle: 'Origen de Aleocrophic', specialThanks: 'Agradecimientos', coreInfra: 'Infraestructura Principal',
-      toggleHistory: 'Historial', sourceInput: 'CÓDIGO FUENTE'
-    } 
-  },
+  }
 };
-const MODULES = [
-  // --- LITE & APEX (Indices 0-5) ---
-  { 
-    id: 'debug', 
-    name: 'Omni Debugger', 
-    icon: <Code />, 
-    premium: false, 
-    desc: 'Fix syntax/logic errors.',
-    systemPrompt: "You are the Omni Code Debugger. Analyze the provided code for syntax errors, logical flaws, memory leaks, and runtime issues. Return the fixed code with comments explaining the corrections. Focus on correctness and stability."
-  },
-  { 
-    id: 'dep', 
-    name: 'Dependency Scanner', 
-    icon: <Search />, 
-    premium: false, 
-    desc: 'Analyze libs & vulnerabilities.',
-    systemPrompt: "You are the Dependency Scanner. Analyze the imports and dependencies in the code. Identify deprecated packages, security risks, or heavy libraries that could be optimized. Suggest lighter or more secure alternatives."
-  },
-  { 
-    id: 'sec', 
-    name: 'Security Auditor', 
-    icon: <Shield />, 
-    premium: false, 
-    desc: 'Fix SQLi, XSS, RCE.',
-    systemPrompt: "You are the Cybersecurity Auditor. Conduct a deep security scan on the code. Look for SQL Injection, XSS, CSRF, RCE, weak cryptography, and hardcoded secrets. Provide a secure refactored version and explain the vulnerabilities found."
-  },
-  { 
-    id: 'perf', 
-    name: 'Optimizer', 
-    icon: <Zap />, 
-    premium: false, 
-    desc: 'Boost speed & scalability.',
-    systemPrompt: "You are the Performance Optimizer. Refactor the code to improve execution speed, reduce memory usage, and enhance scalability. Look for O(n^2) loops, redundant computations, and unoptimized queries. Provide the optimized code."
-  },
-  { 
-    id: 'explain', 
-    name: 'Code Explainer', 
-    icon: <FileCode />, 
-    premium: false, 
-    desc: 'Deep explanations.',
-    systemPrompt: "You are the Interactive Code Explainer. Break down the provided code into simple, digestible parts. Explain the logic flow, variable purposes, and algorithmic approach. Use analogies where appropriate. Do not just rewrite the code, explain *why* it works."
-  },
-  { 
-    id: 'pair', 
-    name: 'Pair Programmer', 
-    icon: <User />, 
-    premium: false, 
-    desc: 'Real-time collab.',
-    systemPrompt: "You are an AI Pair Programmer. Act as a senior developer colleague. Suggest completions, refactorings, or alternative approaches to the user's current code snippet. Maintain a collaborative and helpful tone."
-  },
-  // --- APEX EXCLUSIVE (Indices 6-11) ---
-  { 
-    id: 'legacy', 
-    name: 'Legacy Resurrection', 
-    icon: <History />, 
-    premium: true, 
-    desc: 'Modernize old stacks.',
-    systemPrompt: "You are the Legacy Code Resurrection Engine. Your task is to modernize outdated code (e.g., COBOL, old PHP, jQuery, VB6) into modern standards (e.g., React, Go, Rust, Python 3.10+). Preserve business logic but upgrade the syntax, libraries, and security practices."
-  },
-  { 
-    id: 'cicd', 
-    name: 'CI/CD Integrator', 
-    icon: <Cpu />, 
-    premium: true, 
-    desc: 'Pipeline automation.',
-    systemPrompt: "You are the CI/CD Integrator. Generate robust pipeline configurations (GitHub Actions YAML, GitLab CI, Jenkinsfile, Dockerfile) for the provided code. Ensure automated testing, linting, security scanning, and deployment steps are included."
-  },
-  { 
-    id: 'custom', 
-    name: 'Custom Commander', 
-    icon: <Terminal />, 
-    premium: true, 
-    desc: 'Execute commands.',
-    systemPrompt: "You are the Custom Command Executor. Follow the specific instructions provided by the user regarding the code. You are versatile and adaptable. If the user asks for a specific refactor pattern (e.g., SOLID, DRY, KISS), apply it rigorously."
-  },
-  { 
-    id: 'sim', 
-    name: 'Adv. Simulation', 
-    icon: <Play />, 
-    premium: true, 
-    desc: 'Sandbox run.',
-    systemPrompt: "You are the Advanced Simulation Environment. Simulate the execution of the provided code. Predict the output for various edge cases. If it's UI code, describe the visual result. If it's logic, trace the variable states. Find logic bugs that static analysis might miss."
-  },
-  { 
-    id: 'docs', 
-    name: 'Dynamic Docs', 
-    icon: <FileText />, 
-    premium: true, 
-    desc: 'Auto documentation.',
-    systemPrompt: "You are the Dynamic Documentation Generator. Create comprehensive documentation for the code, including JSDoc/Docstrings, API endpoint definitions (Swagger/OpenAPI), and usage examples. Make it professional and ready for a README.md."
-  },
-  { 
-    id: 'exp', 
-    name: 'Experimental UI', 
-    icon: <Sparkles />, 
-    premium: true, 
-    desc: 'UI Auto-Design.',
-    systemPrompt: "You are the Experimental UI Generator. Your goal is to create stunning, modern, and responsive web interfaces. Use React, Tailwind CSS, and Lucide React icons. IMPORTANT: Provide the FULL code in a single file. Ensure it is visually impressive (Glassmorphism, Neobrutalism, or Minimalist)."
-  },
-];
-const AI_MODELS = [
-  { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash (Latest)', desc: 'Fastest & Most Capable' },
-  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', desc: 'Complex Reasoning' },
-  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', desc: 'High Speed' },
-  { id: 'gemini-1.0-pro', name: 'Gemini 1.0 Pro', desc: 'Legacy Stable' },
-];
-const APEX_MANIFESTO = "You are CodeFixerX Apex Edition. Infinite Context. Deep Scan Active.";
-const LITE_MANIFESTO = "You are CodeFixerX Lite. Efficient Debugging.";
-// --- 3. UTILITY COMPONENTS ---
-const highlightSyntax = (code: string) => {
+
+// --- 3. COMPONENT HELPERS ---
+
+const highlightSyntax = (code) => {
   if (!code) return '';
-  let html = code.replace(/&/g, "&amp;").replace(/</g, "<").replace(/>/g, ">");
+  let html = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // Strings
   html = html.replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="text-emerald-400">$1</span>');
+  // Comments
   html = html.replace(/(\/\/.*$)/gm, '<span class="text-slate-500 italic">$1</span>');
-  const keywords = "\\b(const|let|var|function|return|if|else|for|while|class|import|from|export|default|async|await|try|catch|switch|case|new|this|typeof|interface|type|extends|implements|public|private|protected|static|readonly|constructor)\\b";
+  // Keywords
+  const keywords = "\\b(const|let|var|function|return|if|else|for|while|class|import|from|export|default|async|await|try|catch|switch|case|new|this|typeof|interface|type|extends|implements|public|private|protected|static|readonly|constructor|void|any|string|number|boolean)\\b";
   html = html.replace(new RegExp(keywords, 'g'), '<span class="text-pink-400 font-semibold">$1</span>');
+  // Function Calls
   html = html.replace(/(\w+)(?=\()/g, '<span class="text-cyan-400">$1</span>');
+  // Numbers
   html = html.replace(/\b(\d+)\b/g, '<span class="text-orange-400">$1</span>');
   return html;
 };
-// Updated Markdown Renderer
-const MarkdownRenderer = ({ content, copyLabel, copiedLabel }: { content: string, copyLabel: string, copiedLabel: string }) => {
-  if (!content) return null;
-  const parts = content.split(/(```[\s\S]*?```)/g);
+
+const WebPreview = ({ code, isFullScreen, onClose, onExpand, onShrink }) => {
+  const iframeRef = useRef(null);
+  
+  useEffect(() => {
+    if (iframeRef.current && code) {
+      const doc = iframeRef.current.contentWindow?.document;
+      if(doc) {
+          doc.open();
+          // Clean imports for browser execution
+          const cleanCode = code
+            .replace(/^import\s+.*?;/gm, '')
+            .replace(/export\s+default\s+function\s+(\w+)/, 'function $1') // Remove export default
+            .replace(/export\s+default\s+(\w+);/, '') // Remove bottom export
+            .replace(/import\s+{.*?}\s+from\s+['"].*?['"];/gm, '');
+
+          doc.write(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <script src="https://cdn.tailwindcss.com"></script>
+                <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+                <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+                <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+                <script src="https://unpkg.com/lucide@latest"></script>
+                <script src="https://unpkg.com/lucide-react@latest"></script>
+                <style>
+                  body { background-color: #0f172a; color: #e2e8f0; font-family: sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; }
+                  #root { width: 100%; height: 100%; overflow: auto; }
+                  ::-webkit-scrollbar { width: 8px; }
+                  ::-webkit-scrollbar-track { background: #0f172a; }
+                  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+                </style>
+            </head>
+            <body>
+                <div id="root"></div>
+                <script type="text/babel">
+                    const { useState, useEffect, useRef, useMemo, useCallback } = React;
+                    const { createRoot } = ReactDOM;
+                    
+                    // Mock Lucide Icons if needed or use the global object
+                    const Icons = window.lucide ? window.lucide.icons : {};
+                    
+                    try {
+                        ${cleanCode}
+                        
+                        const root = createRoot(document.getElementById('root'));
+                        // Attempt to find the component named 'App'
+                        if (typeof App !== 'undefined') {
+                            root.render(<App />);
+                        } else {
+                            document.getElementById('root').innerHTML = '<div style="padding:20px;color:red">Error: Component must be named "App"</div>';
+                        }
+                    } catch (err) {
+                        document.getElementById('root').innerHTML = '<div style="padding:20px;color:red"><pre>' + err.message + '</pre></div>';
+                    }
+                </script>
+            </body>
+            </html>
+          `);
+          doc.close();
+      }
+    }
+  }, [code]);
+
+  const containerClass = isFullScreen 
+    ? "fixed inset-0 z-[60] bg-slate-950 flex flex-col animate-fadeIn" 
+    : "w-full h-96 mt-4 border border-slate-700 rounded-xl overflow-hidden flex flex-col bg-slate-900 shadow-2xl";
+
   return (
-    <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-      {parts.map((part, idx) => {
-        if (part.startsWith('```')) {
-          const lines = part.split('\n');
-          const lang = lines[0].replace('```', '').trim() || 'text';
-          const codeBody = lines.slice(1, -1).join('\n');
-          return <CodeBlock key={idx} lang={lang} code={codeBody} copyLabel={copyLabel} copiedLabel={copiedLabel} />;
-        } else {
-          let html = part
-            .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-cyan-400 mt-6 mb-2 flex items-center gap-2"><span class="w-1 h-4 bg-cyan-500 rounded-full"></span>$1</h3>')
-            .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-amber-400 mt-8 mb-4 border-b border-slate-800 pb-2">$1</h2>')
-            .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-white mt-8 mb-4 border-b-2 border-slate-700 pb-2">$1</h1>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em class="text-slate-400 italic">$1</em>')
-            .replace(/`(.*?)`/g, '<code class="bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300 font-mono text-xs border border-slate-700">$1</code>')
-            .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc text-slate-400 mb-1 pl-1">$1</li>')
-            .replace(/\n/g, '<br />');
-          return <div key={idx} dangerouslySetInnerHTML={{ __html: html }} />;
-        }
-      })}
+    <div className={containerClass}>
+      <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex justify-between items-center shrink-0">
+        <span className="text-xs font-bold text-cyan-400 flex items-center gap-2"><Globe size={12}/> LIVE RENDER</span>
+        <div className="flex gap-2">
+          {!isFullScreen 
+            ? <button onClick={onExpand} title="Maximize"><Maximize2 size={16} className="text-slate-500 hover:text-cyan-400"/></button> 
+            : <button onClick={onShrink} title="Minimize"><Minimize2 size={16} className="text-slate-500 hover:text-cyan-400"/></button>}
+          {isFullScreen && <button onClick={onClose}><X size={16} className="text-red-500 hover:text-red-400"/></button>}
+        </div>
+      </div>
+      <iframe ref={iframeRef} className="flex-1 w-full bg-slate-950" title="Preview" frameBorder="0" />
     </div>
   );
 };
-const CodeBlock = ({ lang, code, copyLabel, copiedLabel }: { lang: string, code: string, copyLabel: string, copiedLabel: string }) => {
+
+const CodeBlock = ({ lang, code, t }) => {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
-    const textarea = document.createElement('textarea');
-    textarea.value = code;
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      document.execCommand('copy');
+    navigator.clipboard.writeText(code).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) { console.error("Copy failed", err); }
-    document.body.removeChild(textarea);
+    });
   };
+
   return (
     <div className="rounded-lg overflow-hidden border border-slate-700 bg-slate-950 my-4 shadow-lg group relative">
       <div className="flex justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 items-center">
         <span className="text-xs font-mono text-cyan-400 uppercase flex items-center gap-2"><Terminal size={12}/> {lang}</span>
         <button onClick={handleCopy} className={`text-xs flex items-center gap-1 transition-all ${copied ? 'text-emerald-400' : 'text-slate-500 hover:text-white'}`}>
-          {copied ? <CheckCircle size={12}/> : <Clipboard size={12}/>} {copied ? copiedLabel : copyLabel}
+          {copied ? <CheckCircle size={12}/> : <Clipboard size={12}/>} {copied ? (t?.copied || 'Copied') : (t?.copyCode || 'Copy Code')}
         </button>
       </div>
       <div className="relative">
@@ -318,46 +287,85 @@ const CodeBlock = ({ lang, code, copyLabel, copiedLabel }: { lang: string, code:
       </div>
     </div>
   );
-}
-// --- 5. MAIN APP ---
+};
+
+const MarkdownRenderer = ({ content, t }) => {
+  if (!content) return null;
+  // Split by code blocks
+  const parts = content.split(/(```[\s\S]*?```)/g);
+  
+  return (
+    <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
+      {parts.map((part, idx) => {
+        if (part.startsWith('```')) {
+          const lines = part.split('\n');
+          const lang = lines[0].replace('```', '').trim() || 'text';
+          const codeBody = lines.slice(1, -1).join('\n');
+          return <CodeBlock key={idx} lang={lang} code={codeBody} t={t} />;
+        } else {
+          // Safe HTML rendering for markdown-like syntax
+          let html = part
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-cyan-400 mt-6 mb-2 flex items-center gap-2"><span class="w-1 h-4 bg-cyan-500 rounded-full"></span>$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-amber-400 mt-8 mb-4 border-b border-slate-800 pb-2">$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-white mt-8 mb-4 border-b-2 border-slate-700 pb-2">$1</h1>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em class="text-slate-400 italic">$1</em>')
+            .replace(/`(.*?)`/g, '<code class="bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300 font-mono text-xs border border-slate-700">$1</code>')
+            .replace(/^- (.*$)/gim, '<div class="flex gap-2 ml-2 mb-1"><span class="text-slate-500">•</span><span>$1</span></div>')
+            .replace(/\n/g, '<br />');
+            
+          return <div key={idx} dangerouslySetInnerHTML={{ __html: html }} />;
+        }
+      })}
+    </div>
+  );
+};
+
+// --- 4. MAIN APPLICATION ---
+
 export default function App() { 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState(null);
   const [view, setView] = useState('language');
   const [langCode, setLangCode] = useState('en');
   const [isPremium, setIsPremium] = useState(false);
   const [currentModule, setCurrentModule] = useState(MODULES[0]);
   const [aiModel, setAiModel] = useState(AI_MODELS[0].id);
+  
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isDevMode, setIsDevMode] = useState(false);
   const [devPin, setDevPin] = useState('');
+
   const [inputCode, setInputCode] = useState('');
   const [outputResult, setOutputResult] = useState('');
   const [isInputMinimized, setIsInputMinimized] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState([]);
+  
+  // PREVIEW STATE (FIXED)
+  const [previewCode, setPreviewCode] = useState(null);
+  const [showCompactPreview, setShowCompactPreview] = useState(false);
+  const [showFullPreview, setShowFullPreview] = useState(false);
+
   // CHAT STATE
-  const [chatMessages, setChatMessages] = useState<{role: 'user'|'ai', text: string}[]>([]);
+  const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [chatHistoryOpen, setChatHistoryOpen] = useState(false);
-  const [previewCode, setPreviewCode] = useState<string | null>(null);
-  const [showCompactPreview, setShowCompactPreview] = useState(false);
-  const [showFullPreview, setShowFullPreview] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false); // ✅ DEFAULT HIDE SIDEBAR
+
+  const [sidebarOpen, setSidebarOpen] = useState(true); 
   const [premiumKey, setPremiumKey] = useState('');
   const [customApiKey, setCustomApiKey] = useState('');
-  const [notif, setNotif] = useState<{msg: string, type: string} | null>(null);
+  const [loginApiKey, setLoginApiKey] = useState(''); 
+  const [notif, setNotif] = useState(null);
   const [portalTab, setPortalTab] = useState('about'); 
-  const [generatedApiKey, setGeneratedApiKey] = useState("GUEST");
-  const t = LANGUAGES[langCode] || LANGUAGES['en'];
-  const notify = (msg: string, type = 'info') => { setNotif({msg, type}); setTimeout(() => setNotif(null), 3000); };
-  // Language Helper
+
+  // --- HELPERS ---
   const getLangObj = () => LANGUAGES[langCode] || LANGUAGES['en'];
-  const tText = (key: string) => {
-     const lang = getLangObj();
-     return lang.ui[key] || key;
-  };
-  // Effects
+  const tText = (key) => { const lang = getLangObj(); return lang.ui[key] || key; };
+  const notify = (msg, type = 'info') => { setNotif({msg, type}); setTimeout(() => setNotif(null), 3000); };
+
+  // --- INITIALIZATION EFFECTS ---
   useEffect(() => {
     const savedLang = localStorage.getItem('cfx_lang');
     const savedKey = localStorage.getItem('cfx_api_key');
@@ -365,109 +373,88 @@ export default function App() {
     if (savedLang && LANGUAGES[savedLang]) setLangCode(savedLang);
     if (savedKey) setCustomApiKey(savedKey);
     if (savedModel) setAiModel(savedModel);
-    // ✅ Sidebar tetap collapsed by default, tidak auto-open
-    const handleResize = () => { /* Kosong */ };
-    window.addEventListener('resize', handleResize);
+    
+    const handleResize = () => { if (window.innerWidth < 768) setSidebarOpen(false); else setSidebarOpen(true); };
+    handleResize(); window.addEventListener('resize', handleResize);
+
     const unsub = onAuthStateChanged(auth, async (u) => { 
       setUser(u); 
       if(u) { 
         setIsDevMode(false);
-        setGeneratedApiKey(`CFX-${u.uid.substring(0,6).toUpperCase()}`);
         setView('dashboard');
         try {
           const docRef = doc(db, 'users', u.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const data = docSnap.data();
-            if (data.language && LANGUAGES[data.language]) setLangCode(data.language);
             if (data.isPremium) setIsPremium(true);
             if (data.aiModel) setAiModel(data.aiModel);
           }
         } catch (e) {}
       } else {
-        if (!isDevMode) { setIsPremium(false); setGeneratedApiKey("GUEST"); if(view === 'dashboard') setView('language'); }
+        if (!isDevMode) { setIsPremium(false); if(view === 'dashboard') setView('language'); }
       }
       setIsAuthChecking(false);
     });
     return () => { unsub(); window.removeEventListener('resize', handleResize); };
   }, []);
-  // HISTORY SYNC
+
+  // HISTORY LISTENER
   useEffect(() => {
     if (!user) { setHistory([]); return; }
     let q = query(collection(db, 'history'), where('userId', '==', user.uid));
     const unsub = onSnapshot(q, (snap) => {
       const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      fetched.sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      fetched.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       setHistory(fetched);
     });
     return () => unsub();
-  }, [user, view]); 
-  // HANDLERS
+  }, [user]); 
+
+  // --- HANDLERS ---
+
   const handleLogin = async () => {
     try { 
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider); 
-      notify("Identity Verified! 🌸", "success"); 
-    } catch (e: any) { 
-      console.error("Popup Auth Error:", e);
-      if (e.code === 'auth/unauthorized-domain' || e.code === 'auth/popup-blocked') {
-         notify(`Domain Blocked. Fallback to Anonymous.`, "warning");
-         try { await signInAnonymously(auth); notify("Logged in Anonymously.", "success"); } 
-         catch (anonErr) { notify("Critical Auth Failure.", "error"); }
-      } else { notify("Login Failed: " + e.message, "error"); }
+      notify("Identity Verified", "success"); 
+    } catch (e) { 
+       notify("Login Failed: " + e.message, "error"); 
     }
   };
-  const changeAiModel = async (modelId: string) => {
-    setAiModel(modelId); localStorage.setItem('cfx_ai_model', modelId);
-    if(user) { try { await setDoc(doc(db, 'users', user.uid), { aiModel: modelId }, { merge: true }); } catch(e) {} }
-    notify(`Neural Engine Switched: ${AI_MODELS.find(m => m.id === modelId)?.name}`, 'success');
-  }
-  // DEFINED: New Session Handler
-  const handleNewSession = () => {
-    if (view === 'chat') {
-      setChatMessages([]);
-      notify(tText('newChat'), "success");
-    } else {
-      setInputCode('');
-      setOutputResult('');
-      setIsInputMinimized(false);
-      notify(tText('newChat'), "success");
-    }
+
+  const handleGuestAccess = () => {
+      if (loginApiKey.trim()) {
+          setCustomApiKey(loginApiKey.trim());
+          localStorage.setItem('cfx_api_key', loginApiKey.trim());
+          notify("API Key Stored", "success");
+      }
+      setView('dashboard');
   };
-  const handleUnlock = async () => {
-    const cleanKey = premiumKey.trim();
-    if (cleanKey === "CFX-APX-2025R242") { 
-      setIsPremium(true); notify("APEX UNLOCKED", "success"); setView('dashboard');
-      if(user) await setDoc(doc(db, 'users', user.uid), { isPremium: true }, { merge: true });
-    } else notify("Invalid Key", "error");
-  };
-  const handleDevUnlock = () => {
-    if (devPin === "200924-RDZ-DVLP") { setIsDevMode(true); setGeneratedApiKey("RDZ-DEV-ROOT"); notify("⚠️ DEVELOPER MODE ACTIVE", "success"); setView('dashboard'); setDevPin(''); } 
-    else { notify("ACCESS DENIED 💀", "error"); }
-  };
-  const handleKeyFileUpload = (e: any) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => { if (e.target?.result) { setPremiumKey(e.target.result.toString().trim()); notify("Key Loaded!", "success"); } };
-    reader.readAsText(file);
-  };
-  const handleCopyOutput = () => {
-    const textarea = document.createElement('textarea');
-    textarea.value = outputResult;
-    textarea.style.position = 'fixed'; textarea.style.left = '-9999px';
-    document.body.appendChild(textarea); textarea.select();
-    try { document.execCommand('copy'); notify(tText('copy') + " Success!", "success"); } catch (e) { notify("Copy failed", "error"); }
-    document.body.removeChild(textarea);
-  };
+
   const handleAnalyze = async () => {
-    if (!inputCode.trim()) return notify("Input Empty 😅", "warning");
-    if (currentModule.premium && !isPremium) return notify("Locked! 🔒 Upgrade to Apex.", "error");
-    setLoading(true); setOutputResult(''); setIsInputMinimized(false);
     const apiKeyToUse = customApiKey || defaultApiKey; 
-    const baseManifesto = isPremium ? APEX_MANIFESTO : LITE_MANIFESTO;
+    if (!apiKeyToUse) {
+        notify("API Key Missing. Set in Settings.", "error");
+        setView('settings');
+        return;
+    }
+    if (!inputCode.trim()) return notify("Input Required", "warning");
+    if (currentModule.premium && !isPremium) return notify("Access Denied. Upgrade to Apex.", "error");
+
+    setLoading(true); setOutputResult(''); setPreviewCode(null); setShowCompactPreview(false); setIsInputMinimized(false);
+
     const lang = getLangObj();
-    const systemInstruction = `${baseManifesto} LANGUAGE: Reply strictly in ${lang.label} (${lang.flag}). MODULE: ${currentModule.name}. ${currentModule.systemPrompt}. USER TONE: Stylish, Expressive, minimal 3 emojis. OUTPUT: Markdown with explicit code blocks. NO PREVIEW/IFRAME CODE.`;
+    // Constructing a robust prompt
+    const systemInstruction = `
+      YOU ARE CODEFIXERX. ${isPremium ? 'APEX EDITION' : 'LITE EDITION'}.
+      LANGUAGE: Reply strictly in ${lang.label}. 
+      MODULE: ${currentModule.name}.
+      PROMPT: ${currentModule.systemPrompt}
+      OUTPUT FORMAT: Markdown.
+      IMPORTANT: If generating React UI code, wrap it in \`\`\`jsx and ensure it is a single file export named 'App'.
+    `;
+
     try {
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKeyToUse}`, {
         method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -475,396 +462,388 @@ export default function App() {
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error.";
-      setOutputResult(text); setIsInputMinimized(true);
+      
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Processing Error.";
+      setOutputResult(text);
+      setIsInputMinimized(true);
+
+      // Auto-detect code for preview
+      const codeMatch = text.match(/```(jsx|tsx|html|javascript)\n([\s\S]*?)```/);
+      if (codeMatch && (codeMatch[1] === 'jsx' || codeMatch[1] === 'tsx' || text.includes('export default function App'))) {
+          setPreviewCode(codeMatch[2]);
+          setShowCompactPreview(true); // Auto show if valid UI code found
+      }
+
       if (user && !isDevMode) await addDoc(collection(db, 'history'), { 
-        userId: user.uid, 
-        codeSnippet: inputCode.substring(0,50), 
-        module: currentModule.name, 
-        response: text, 
-        type: 'code',
-        createdAt: serverTimestamp() 
+        userId: user.uid, codeSnippet: inputCode.substring(0,50), module: currentModule.name, response: text, type: 'code', createdAt: serverTimestamp() 
       });
-    } catch (e: any) { notify(`AI Error: ${e.message}`, "error"); } finally { setLoading(false); }
+
+    } catch (e) { notify(`Error: ${e.message}`, "error"); } finally { setLoading(false); }
   };
+
   const handleChatSend = async () => {
-    if(!chatInput.trim()) return;
-    const newMessage = { role: 'user' as const, text: chatInput };
-    setChatMessages([...chatMessages, newMessage]);
-    setChatInput('');
-    setChatLoading(true);
     const apiKeyToUse = customApiKey || defaultApiKey;
-    const lang = getLangObj();
+    if(!apiKeyToUse || !chatInput.trim()) return;
+
+    const newMessage = { role: 'user', text: chatInput };
+    setChatMessages(prev => [...prev, newMessage]);
+    setChatInput(''); setChatLoading(true);
+
     try {
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKeyToUse}`, {
         method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ contents: [{ parts: [{ text: chatInput }] }], systemInstruction: { parts: [{ text: `You are CodeFixerX. Reply in ${lang.label} (${lang.flag}). Be stylish, expressive, and helpful. Use emojis.` }] } })
+        body: JSON.stringify({ contents: [{ parts: [{ text: chatInput }] }], systemInstruction: { parts: [{ text: "You are CodeFixerX Apex Chat. Be concise, technical, and brilliant." }] } })
       });
       const data = await resp.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error.";
-      setChatMessages(prev => [...prev, { role: 'ai', text: text }]);
+      setChatMessages(prev => [...prev, { role: 'ai', text }]);
+      
       if (user && !isDevMode) await addDoc(collection(db, 'history'), { 
-        userId: user.uid, 
-        codeSnippet: chatInput.substring(0,50), 
-        module: 'Free Chat', 
-        response: text, 
-        type: 'chat',
-        createdAt: serverTimestamp() 
+        userId: user.uid, codeSnippet: chatInput.substring(0,50), module: 'Chat', response: text, type: 'chat', createdAt: serverTimestamp() 
       });
-    } catch(e) { notify("Chat Error", "error"); } finally { setChatLoading(false); }
-  };
-  const copyChat = (text: string) => {
-    navigator.clipboard.writeText(text);
-    notify(tText('copied'), "success");
-  }
-  const editChat = (text: string) => {
-    setChatInput(text);
-    notify(tText('edit'), "info");
-  }
-  // --- RENDER AUTH LOADING ---
-  if (isAuthChecking) return (<div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4"><div className="relative mb-8"><div className="absolute inset-0 bg-cyan-500/30 blur-xl rounded-full animate-pulse"></div><Cpu size={64} className="text-cyan-400 relative z-10 animate-bounce"/></div><h2 className="text-2xl font-bold text-white mb-2 tracking-wider">INITIALIZING NEURAL LINK</h2></div>);
-  // --- LOGIN VIEW ---
-  if (view === 'language') return (<div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519608487953-e999c86e7455?q=80')] bg-cover opacity-10 animate-pulse"></div><div className="z-10 max-w-5xl w-full bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl p-8 shadow-2xl text-center"><h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">CodeFixerX</h1><p className="text-slate-400 text-sm tracking-[0.3em] uppercase mb-12">Aleocrophic Systems</p><div className="grid grid-cols-2 md:grid-cols-4 gap-4">{Object.entries(LANGUAGES).map(([code, data]) => (<button key={code} onClick={() => { setLangCode(code); setView('login'); }} className="p-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500 rounded-2xl transition-all group flex flex-col items-center"><span className="text-4xl mb-3 block group-hover:scale-110 transition-transform">{data.flag}</span><span className="text-slate-300 font-bold group-hover:text-white">{data.label}</span></button>))}</div></div></div>);
-  if (view === 'login') return (<div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"><button onClick={() => setView('language')} className="absolute top-6 left-6 text-slate-400 hover:text-white flex gap-2 z-20"><ChevronRight className="rotate-180"/> Back</button><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-slate-700 max-w-sm w-full text-center shadow-2xl relative"><div className="w-20 h-20 bg-cyan-900/30 rounded-full flex items-center justify-center mx-auto mb-6"><Cpu size={40} className="text-cyan-400"/></div><h2 className="text-2xl font-bold text-white mb-2">{tText('login')}</h2><p className="text-slate-400 text-xs mb-8">Access Cloud History & Settings</p><button onClick={handleLogin} className="w-full py-3 bg-white text-slate-900 font-bold rounded-xl flex justify-center gap-2 hover:bg-slate-200 transition mb-3"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="G"/> Google Auth</button><button onClick={() => setView('dashboard')} className="w-full py-3 bg-slate-800 text-slate-400 hover:text-white text-sm font-bold rounded-xl transition">Guest Access</button></div></div>);
-  
-  // ✅ Handle Shift + Enter for new line in chat
-  const handleChatInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleChatSend();
-    }
+    } catch(e) { notify("Network Failure", "error"); } finally { setChatLoading(false); }
   };
 
-  // --- MAIN DASHBOARD ---
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans flex overflow-hidden selection:bg-cyan-500/30">
-      {notif && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-lg border animate-bounce ${notif.type==='success'?'bg-emerald-500/20 border-emerald-500 text-emerald-300':'bg-red-500/20 border-red-500 text-red-300'}`}>{notif.msg}</div>}
-      {/* SIDEBAR */}
-      <aside className={`
-          fixed inset-y-0 left-0 z-50 bg-slate-900/95 backdrop-blur border-r border-slate-800 flex flex-col transition-transform duration-300 
-          ${sidebarOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden'}
-        `}>
-         <div className="p-6 border-b border-slate-800 flex justify-between items-center min-w-[18rem]">
-            <div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-lg ${isPremium ? 'bg-amber-500' : 'bg-cyan-600'}`}>{isPremium ? <Sparkles className="text-white"/> : <Code className="text-white"/>}</div><div><h2 className="font-bold leading-none tracking-tight">CodeFixerX</h2><span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{isPremium ? 'Apex' : 'Lite'}</span></div></div>
-            <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white"><X/></button>
+  // --- RENDER ---
+  if (isAuthChecking) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Cpu className="animate-spin text-cyan-500 mr-3"/> <span className="text-slate-300 font-mono">INITIALIZING NEURAL LINK...</span></div>;
+
+  if (view === 'language') return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519608487953-e999c86e7455?q=80')] bg-cover opacity-10 animate-pulse"></div>
+      <div className="z-10 max-w-5xl w-full bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl p-12 shadow-2xl text-center">
+        <h1 className="text-6xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-4">CodeFixerX</h1>
+        <p className="text-slate-400 text-sm tracking-[0.3em] uppercase mb-12">Aleocrophic Systems v2.5</p>
+        <div className="grid grid-cols-2 gap-4 justify-center max-w-lg mx-auto">
+          {Object.entries(LANGUAGES).map(([code, data]) => (
+            <button key={code} onClick={() => { setLangCode(code); setView('login'); }} className="p-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500 rounded-2xl transition-all group flex flex-col items-center">
+              <span className="text-4xl mb-3 group-hover:scale-110 transition-transform">{data.flag}</span>
+              <span className="text-slate-300 font-bold group-hover:text-white">{data.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (view === 'login') return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative">
+       <button onClick={() => setView('language')} className="absolute top-6 left-6 text-slate-400 hover:text-white flex gap-2 z-20"><ChevronRight className="rotate-180"/> Back</button>
+       <div className="z-10 bg-slate-900 p-8 rounded-3xl border border-slate-700 max-w-sm w-full text-center shadow-2xl relative">
+         <div className="w-20 h-20 bg-cyan-900/30 rounded-full flex items-center justify-center mx-auto mb-6 border border-cyan-500/30"><Cpu size={40} className="text-cyan-400"/></div>
+         <h2 className="text-2xl font-bold text-white mb-2">{tText('login')}</h2>
+         <div className="mb-6 text-left">
+           <label className="text-[10px] text-slate-500 uppercase font-bold ml-1 mb-1 block">{tText('customKey')} (Optional)</label>
+           <div className="flex gap-2">
+             <input type="password" value={loginApiKey} onChange={(e) => setLoginApiKey(e.target.value)} className="flex-1 bg-slate-800 border border-slate-600 text-white text-xs p-2 rounded-lg outline-none focus:border-cyan-500" placeholder="sk-..."/>
+             <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="bg-slate-800 border border-slate-600 text-cyan-400 hover:text-white p-2 rounded-lg" title="Get Key"><ExternalLink size={14}/></a>
+           </div>
          </div>
-         <div className="px-4 pt-4 flex gap-2 border-b border-slate-800 pb-4 min-w-[18rem]"><button onClick={() => setView('dashboard')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${view==='dashboard'?'bg-slate-800 text-cyan-400':'text-slate-500 hover:text-slate-300'}`}>{tText('dashboard')}</button><button onClick={() => setView('settings')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${view==='settings'?'bg-slate-800 text-cyan-400':'text-slate-500 hover:text-slate-300'}`}><Settings size={12} className="inline mb-0.5"/> {tText('settings')}</button></div>
-         <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar min-w-[18rem]">
+         <button onClick={handleLogin} className="w-full py-3 bg-white text-slate-900 font-bold rounded-xl flex justify-center gap-2 hover:bg-slate-200 transition mb-3">Google Sign In</button>
+         <button onClick={handleGuestAccess} className="w-full py-3 bg-slate-800 text-slate-400 hover:text-white text-sm font-bold rounded-xl transition border border-slate-700">Guest Access</button>
+       </div>
+    </div>
+  );
+
+  // --- DASHBOARD LAYOUT ---
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans flex overflow-hidden">
+      {notif && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-lg border animate-bounce ${notif.type==='success'?'bg-emerald-900/80 border-emerald-500 text-emerald-300':'bg-red-900/80 border-red-500 text-red-300'}`}>{notif.msg}</div>}
+      
+      {/* FULL SCREEN PREVIEW OVERLAY */}
+      {showFullPreview && previewCode && (
+        <WebPreview 
+          code={previewCode} 
+          isFullScreen={true} 
+          onClose={() => setShowFullPreview(false)} 
+          onShrink={() => { setShowFullPreview(false); setShowCompactPreview(true); }} 
+        />
+      )}
+
+      {/* SIDEBAR */}
+      <aside className={`fixed inset-y-0 left-0 z-40 bg-slate-900/95 backdrop-blur border-r border-slate-800 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden'}`}>
+         <div className="p-6 border-b border-slate-800 flex justify-between items-center min-w-[18rem]">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-lg ${isPremium ? 'bg-amber-500' : 'bg-cyan-600'}`}>
+                {isPremium ? <Sparkles className="text-white"/> : <Code className="text-white"/>}
+              </div>
+              <div><h2 className="font-bold leading-none tracking-tight text-white">CodeFixerX</h2><span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{isPremium ? 'Apex Edition' : 'Lite Edition'}</span></div>
+            </div>
+            <button onClick={() => setSidebarOpen(false)} className="md:hidden text-slate-400"><X/></button>
+         </div>
+         
+         <div className="flex-1 overflow-y-auto p-4 space-y-1 min-w-[18rem]">
            <div className="text-[10px] font-bold text-slate-500 uppercase px-2 mb-2 mt-2">{tText('modules')}</div>
            {MODULES.map((m) => {
              const isLocked = m.premium && !isPremium;
-             return (<button key={m.id} onClick={() => { if(!isLocked){setCurrentModule(m); setView('dashboard'); setSidebarOpen(false);} else notify("Locked 🔒 Upgrade!", "error"); }} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition text-left ${currentModule.id===m.id && view==='dashboard' ? (isPremium?'bg-amber-500/20 text-amber-300 border border-amber-500/20':'bg-cyan-500/20 text-cyan-300 border border-cyan-500/20') : 'text-slate-400 hover:bg-slate-800'} ${isLocked ? 'opacity-50 cursor-not-allowed':''}`}><div className={`${isLocked ? 'text-slate-600' : (m.premium ? 'text-amber-400' : 'text-cyan-400')}`}>{m.icon}</div><span className="flex-1 truncate text-xs font-medium">{m.name}</span>{isLocked && <Lock size={12} className="text-slate-600"/>}</button>);
+             return (
+               <button key={m.id} onClick={() => { if(!isLocked){setCurrentModule(m); setView('dashboard'); setSidebarOpen(false);} else notify("Upgrade Required", "error"); }} 
+                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition text-left ${currentModule.id===m.id && view==='dashboard' ? (isPremium?'bg-amber-500/20 text-amber-300 border border-amber-500/30':'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30') : 'text-slate-400 hover:bg-slate-800'} ${isLocked ? 'opacity-50 cursor-not-allowed':''}`}>
+                 <div className={`${isLocked ? 'text-slate-600' : (m.premium ? 'text-amber-400' : 'text-cyan-400')}`}>{m.icon}</div>
+                 <span className="flex-1 truncate text-xs font-medium">{m.name}</span>
+                 {isLocked && <Lock size={12} className="text-slate-600"/>}
+               </button>
+             );
            })}
+           
            <div className="text-[10px] font-bold text-slate-500 uppercase px-2 mb-2 mt-6">{tText('tools')}</div>
-           <button onClick={() => {setView('chat'); setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='chat' ? (isPremium ? 'bg-purple-500/20 text-purple-300 border border-purple-500/20' : 'text-slate-400 hover:bg-slate-800') : 'text-slate-400 hover:bg-slate-800'}`}><MessageSquare size={16} className={isPremium?"text-purple-400":""}/> {tText('chat')} (Apex) {!isPremium && <Lock size={12}/>}</button>
-           <div className="text-[10px] font-bold text-slate-500 uppercase px-2 mb-2 mt-6">{tText('system')}</div>
-           <button onClick={() => {setView('portal'); setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-400 hover:bg-slate-800 transition ${view==='portal'?'bg-indigo-500/20 text-indigo-300':''}`}><BookOpen size={16}/> {tText('portal')}</button>
+           <button onClick={() => {setView('chat'); setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='chat' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/20' : 'text-slate-400 hover:bg-slate-800'}`}>
+             <MessageSquare size={16} className="text-purple-400"/> {tText('chat')} {isPremium ? <span className="text-[10px] bg-purple-900 px-1 rounded">PRO</span> : <Lock size={12}/>}
+           </button>
+           
+           <button onClick={() => {setView('portal'); setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='portal' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/20' : 'text-slate-400 hover:bg-slate-800'}`}>
+             <BookOpen size={16} className="text-indigo-400"/> {tText('portalLabel')}
+           </button>
+           
+           <button onClick={() => {setView('settings'); setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='settings' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>
+             <Settings size={16} className="text-slate-400"/> {tText('settings')}
+           </button>
          </div>
+
          <div className="p-4 border-t border-slate-800 bg-slate-900 min-w-[18rem]">
-            {!isPremium && <button onClick={() => (user || isDevMode) ? setView('premium') : setView('login')} className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs font-bold rounded-lg transition shadow-lg shadow-amber-500/20 mb-2 flex items-center justify-center gap-2"><Unlock size={12}/> {tText('upgrade')}</button>}
-            {user || isDevMode ? (<div className="flex items-center gap-3 px-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${isDevMode ? 'bg-red-900 border-red-500 text-red-200' : 'bg-cyan-900 border-cyan-700 text-cyan-200'}`}>{isDevMode ? 'DEV' : user.email[0].toUpperCase()}</div><div className="flex-1 overflow-hidden"><div className="text-xs font-bold truncate">{isDevMode ? 'Developer' : user.displayName}</div><div className="text-[10px] text-slate-500">{isDevMode ? 'System Root' : 'Online'}</div></div><button onClick={() => { if(isDevMode){setIsDevMode(false);setIsPremium(false);setGeneratedApiKey("GUEST");setView('language');} else signOut(auth); }}><LogOut size={16} className="text-slate-500 hover:text-red-400"/></button></div>) : (<button onClick={() => setView('login')} className="w-full flex justify-center gap-2 bg-slate-800 py-3 rounded-xl text-sm font-bold hover:bg-slate-700 border border-slate-700"><LogIn size={16}/> {tText('login')}</button>)}
+            {!isPremium && <button onClick={() => setView('premium')} className="w-full py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-amber-900/20 mb-3 flex items-center justify-center gap-2"><Unlock size={12}/> {tText('upgrade')}</button>}
+            {user ? (
+                <div className="flex items-center gap-3 px-2">
+                    <div className="w-8 h-8 rounded-full bg-cyan-900 border border-cyan-500 text-cyan-200 flex items-center justify-center font-bold text-xs">{user.email[0].toUpperCase()}</div>
+                    <div className="flex-1 overflow-hidden"><div className="text-xs font-bold truncate text-white">{user.displayName || 'User'}</div><div className="text-[10px] text-slate-500">Connected</div></div>
+                    <button onClick={() => signOut(auth)}><LogOut size={16} className="text-slate-500 hover:text-red-400"/></button>
+                </div>
+            ) : (
+                <button onClick={() => setView('login')} className="w-full flex justify-center gap-2 bg-slate-800 py-2 rounded-lg text-xs font-bold border border-slate-700 hover:text-white transition"><LogIn size={14}/> {tText('login')}</button>
+            )}
          </div>
       </aside>
-      {/* MAIN */}
-      <main className="flex-1 flex flex-col w-full relative bg-slate-950">
-         <header className="h-auto min-h-[64px] border-b border-slate-800 flex flex-col md:flex-row items-center justify-between px-6 py-2 bg-slate-950/90 backdrop-blur sticky top-0 z-40 shadow-md">
-            <div className="flex items-center gap-4 w-full md:w-auto mb-2 md:mb-0">
-               <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-slate-400 hover:text-white transition-colors mr-2"><Menu/></button>
-               <div className="flex items-center gap-2 text-slate-400 text-sm"><LayoutDashboard size={16}/> <ChevronRight size={14}/> <span className={isPremium ? "text-amber-400 font-bold" : "text-cyan-400 font-bold"}>{view === 'portal' ? tText('portal') : view === 'premium' ? tText('upgrade') : view === 'settings' ? tText('settings') : view === 'chat' ? tText('chat') : currentModule.name}</span></div>
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 flex flex-col w-full relative bg-slate-950 h-screen overflow-hidden">
+         <header className="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
+            <div className="flex items-center gap-4">
+               <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-slate-400 hover:text-white p-2 bg-slate-800 rounded-lg transition"><Menu size={18}/></button>
+               <div className="flex items-center gap-2 text-sm">
+                   <LayoutDashboard size={16} className="text-slate-500"/> 
+                   <ChevronRight size={14} className="text-slate-600"/> 
+                   <span className={isPremium ? "text-amber-400 font-bold" : "text-cyan-400 font-bold"}>
+                       {view === 'dashboard' ? currentModule.name : view.toUpperCase()}
+                   </span>
+               </div>
             </div>
-            <div className="flex flex-wrap justify-end gap-4 text-[10px] md:text-xs font-mono w-full md:w-auto">
-               <div className="flex items-center gap-2 text-slate-500"><span className={`w-2 h-2 rounded-full ${isPremium ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span> ACTIVE</div>
-               <div className="text-slate-500">VER: {isPremium ? <span className="text-amber-500">vX.APEX</span> : <span className="text-cyan-500">vX.LITE</span>}</div>
-               {view !== 'settings' && view !== 'premium' && <button onClick={handleNewSession} className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1 rounded text-cyan-400 transition cursor-pointer"><RefreshCw size={12}/> {tText('newChat')}</button>}
-               <div className="flex items-center gap-1 border border-slate-800 rounded px-2 py-0.5 bg-slate-900"><Key size={10} className={isDevMode ? "text-red-500" : "text-slate-500"}/><span className={isDevMode ? "text-red-400 font-bold" : "text-cyan-400"}>{generatedApiKey}</span></div>
+            <div className="flex items-center gap-3">
+                <div className={`px-2 py-1 rounded text-[10px] font-bold border ${isPremium ? 'bg-amber-500/10 border-amber-500/50 text-amber-400' : 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400'}`}>
+                    {isPremium ? 'APEX ACTIVE' : 'LITE ACTIVE'}
+                </div>
             </div>
          </header>
+
+         {/* DASHBOARD VIEW */}
          {view === 'dashboard' && (
-            <div className="flex-1 p-4 md:p-6 overflow-hidden flex flex-col lg:flex-row gap-6">
+            <div className="flex-1 p-4 overflow-hidden flex flex-col lg:flex-row gap-4">
                <div className="flex-1 flex flex-col gap-4 h-full overflow-hidden">
-                  {/* INPUT AREA (SMART MINIMIZE) */}
-                  <div 
-                     onClick={() => isInputMinimized && setIsInputMinimized(false)}
-                     className={`bg-slate-900 rounded-2xl border border-slate-800 flex flex-col shadow-xl overflow-hidden transition-all duration-500 ease-in-out ${isInputMinimized ? 'h-16 cursor-pointer hover:border-cyan-500 hover:bg-slate-800' : 'flex-1 min-h-[250px]'}`}
-                  >
+                  {/* CODE INPUT */}
+                  <div onClick={() => isInputMinimized && setIsInputMinimized(false)} className={`bg-slate-900 rounded-2xl border border-slate-800 flex flex-col shadow-xl transition-all duration-300 ${isInputMinimized ? 'h-14 cursor-pointer hover:border-cyan-500' : 'flex-1 min-h-[30%]'}`}>
                      <div className="px-4 py-2 bg-slate-800/50 border-b border-slate-800 flex justify-between items-center">
-                        <span className="text-xs font-bold text-slate-400 flex items-center gap-2"><FileCode size={14}/> {tText('input')} {isInputMinimized && <span className="text-cyan-500 text-[10px] animate-pulse">◀ Click to Expand</span>}</span>
-                        {!isInputMinimized && <button onClick={(e) => {e.stopPropagation(); setIsInputMinimized(true);}} className="text-xs text-slate-500 hover:text-white flex items-center gap-1"><Minimize2 size={14}/> Minimize</button>}
+                        <span className="text-xs font-bold text-slate-400 flex items-center gap-2"><FileCode size={14}/> {tText('input')}</span>
+                        {!isInputMinimized && <button onClick={(e) => {e.stopPropagation(); setIsInputMinimized(true);}} className="text-xs text-slate-500 hover:text-white"><Minimize2 size={14}/></button>}
                      </div>
-                     <textarea value={inputCode} onChange={(e) => setInputCode(e.target.value)} className={`flex-1 bg-slate-900 p-4 font-mono text-sm text-slate-300 resize-none focus:outline-none custom-scrollbar ${isInputMinimized ? 'hidden' : 'block'}`} placeholder={`// Paste code here...`} spellCheck="false"/>
+                     <textarea value={inputCode} onChange={(e) => setInputCode(e.target.value)} className={`flex-1 bg-slate-950 p-4 font-mono text-sm text-slate-300 resize-none focus:outline-none ${isInputMinimized ? 'hidden' : 'block'}`} placeholder="// Paste source code here..." spellCheck="false"/>
                   </div>
+
                   {!isInputMinimized && (
-                    <button onClick={handleAnalyze} disabled={loading} className={`py-4 rounded-xl font-bold text-lg shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-3 ${loading ? 'bg-slate-800 text-slate-500' : isPremium ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white' : 'bg-gradient-to-r from-cyan-600 to-blue-700 text-white'}`}>
-                       {loading ? tText('processing') : <><Zap className={loading?"":"animate-pulse"}/> {tText('analyze')}</>}
+                    <button onClick={handleAnalyze} disabled={loading} className={`py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 ${loading ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : isPremium ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white' : 'bg-cyan-600 hover:bg-cyan-500 text-white'}`}>
+                       {loading ? <span className="animate-pulse">{tText('processing')}</span> : <><Zap size={18}/> {tText('analyze')}</>}
                     </button>
                   )}
+
+                  {/* OUTPUT AREA */}
                   {(outputResult || loading) && (
-                    <div className="flex-1 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col shadow-xl overflow-hidden min-h-[400px] relative animate-fadeIn">
-                       {loading && <div className="absolute inset-0 z-10 bg-slate-950/80 flex flex-col items-center justify-center"><div className="w-1/2 h-1 bg-slate-800 rounded-full overflow-hidden mb-4"><div className="h-full bg-cyan-500 animate-progress"></div></div><div className="text-cyan-400 text-xs font-mono animate-pulse">{tText('processing')}</div></div>}
+                    <div className="flex-1 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col shadow-xl overflow-hidden relative min-h-[40%]">
+                       {loading && <div className="absolute inset-0 z-10 bg-slate-950/80 flex flex-col items-center justify-center"><div className="w-48 h-1 bg-slate-800 rounded-full overflow-hidden mb-4"><div className="h-full bg-cyan-500 w-full animate-[ping_1s_ease-in-out_infinite]"></div></div></div>}
                        <div className="px-4 py-2 bg-slate-800/50 border-b border-slate-800 flex justify-between items-center shrink-0">
                           <span className="text-xs font-bold text-slate-400 flex items-center gap-2"><Terminal size={14}/> {tText('output')}</span>
                           <div className="flex gap-2">
-                            <button onClick={handleCopyOutput} className="text-xs flex items-center gap-1 text-slate-400 hover:text-white"><CheckCircle size={12}/> {tText('copy')}</button>
+                             {previewCode && <button onClick={() => setShowCompactPreview(!showCompactPreview)} className={`text-xs px-2 py-1 rounded border transition ${showCompactPreview ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300' : 'border-slate-700 text-slate-400'}`}>{showCompactPreview ? 'Hide UI' : 'Show UI'}</button>}
+                             <button onClick={() => {navigator.clipboard.writeText(outputResult); notify("Copied output!");}} className="text-xs text-slate-400 hover:text-white"><Clipboard size={14}/></button>
                           </div>
                        </div>
-                       <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-950">
-                          <MarkdownRenderer content={outputResult} copyLabel={tText('copyCode')} copiedLabel={tText('copied')} />
+                       <div className="flex-1 overflow-y-auto p-6 bg-slate-950 custom-scrollbar">
+                          <MarkdownRenderer content={outputResult} t={getLangObj().ui} />
+                          {showCompactPreview && previewCode && (
+                             <WebPreview 
+                               code={previewCode} 
+                               isFullScreen={false} 
+                               onExpand={() => setShowFullPreview(true)} 
+                               onClose={() => setShowCompactPreview(false)} 
+                             />
+                          )}
                        </div>
                     </div>
                   )}
                </div>
-               <div className="w-full lg:w-64 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col overflow-hidden shrink-0 h-48 lg:h-full shadow-lg">
-                  <div className="p-4 border-b border-slate-800 flex items-center justify-between"><span className="text-xs font-bold text-slate-400 flex items-center gap-2"><History size={14}/> {tText('history')}</span></div>
-                  <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-                    {!user && !isDevMode ? <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs p-4 text-center"><Lock size={20} className="mb-2"/><p>Guest Mode.</p></div> : history.filter(h => h.type !== 'chat').length === 0 ? <div className="text-center text-slate-600 text-xs mt-4">No logs.</div> : 
-                      history.filter(h => h.type !== 'chat').map(h => (
-                        <div key={h.id} onClick={() => {setInputCode(h.codeSnippet); setOutputResult(h.response); setIsInputMinimized(true);}} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group">
-                          <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-cyan-500 uppercase truncate">{h.module}</span></div>
-                          <div className="text-xs text-slate-400 truncate font-mono">{h.codeSnippet}</div>
-                        </div>
-                      ))
-                    }
-                  </div>
-               </div>
             </div>
          )}
-         {/* CHAT VIEW */}
-         {view === 'chat' && (
-           isPremium ? (
-             <div className="flex-1 p-4 md:p-6 overflow-hidden flex flex-col lg:flex-row gap-6">
-               <div className="flex-1 flex flex-col h-full bg-slate-900 rounded-2xl border border-slate-800 relative overflow-hidden shadow-xl">
-                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-4">
-                   {chatMessages.length === 0 && <div className="h-full flex flex-col items-center justify-center text-slate-600"><MessageSquare size={48} className="mb-4 opacity-20"/><p>{tText('chatStart')}</p></div>}
-                   {chatMessages.map((msg, idx) => (
-                     <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
-                       <div className={`max-w-[85%] p-4 rounded-2xl relative ${msg.role === 'user' ? 'bg-cyan-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'}`}>
-                         <MarkdownRenderer content={msg.text} copyLabel={tText('copy')} copiedLabel={tText('copied')} />
-                         <div className={`absolute -bottom-6 ${msg.role === 'user' ? 'right-0' : 'left-0'} opacity-0 group-hover:opacity-100 transition flex gap-2`}>
-                           <button onClick={() => copyChat(msg.text)} className="p-1 bg-slate-800 rounded border border-slate-700 text-slate-400 hover:text-white" title={tText('copy')}><Clipboard size={12}/></button>
-                           {msg.role === 'user' && <button onClick={() => editChat(msg.text)} className="p-1 bg-slate-800 rounded border border-slate-700 text-slate-400 hover:text-white" title={tText('edit')}><Edit2 size={12}/></button>}
-                         </div>
-                       </div>
-                     </div>
-                   ))}
-                   {chatLoading && <div className="flex justify-start"><div className="bg-slate-800 p-4 rounded-2xl rounded-bl-none border border-slate-700"><div className="flex gap-1"><div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"></div><div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce delay-75"></div><div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce delay-150"></div></div></div></div>}
-                 </div>
-                 <div className="p-4 bg-slate-900 border-t border-slate-800 flex gap-2">
-                   <textarea 
-                     value={chatInput} 
-                     onChange={(e)=>setChatInput(e.target.value)} 
-                     onKeyDown={handleChatInputKeyDown}
-                     placeholder={tText('chatPlaceholder')} 
-                     className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 p-3 rounded-xl focus:border-cyan-500 outline-none resize-none min-h-[40px] max-h-32"
-                     rows={1}
-                   />
-                   <button onClick={handleChatSend} className="bg-cyan-600 hover:bg-cyan-500 text-white p-3 rounded-xl self-end"><Send size={20}/></button>
-                 </div>
-               </div>
-               {/* CHAT HISTORY SIDEBAR */}
-               {chatHistoryOpen && (
-                <div className="w-full lg:w-64 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col overflow-hidden shrink-0 h-48 lg:h-full shadow-lg absolute lg:relative right-0 z-20">
-                    <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-400 flex items-center gap-2"><History size={14}/> {tText('history')} (Chat)</span>
-                        <button onClick={() => setChatHistoryOpen(false)} className="lg:hidden text-slate-400"><X size={14}/></button>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-                      {!user && !isDevMode ? <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs p-4 text-center"><Lock size={20} className="mb-2"/><p>Guest Mode.</p></div> : history.filter(h => h.type === 'chat').length === 0 ? <div className="text-center text-slate-600 text-xs mt-4">No chats.</div> : 
-                        history.filter(h => h.type === 'chat').map(h => (
-                          <div key={h.id} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group">
-                            <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-purple-400 uppercase truncate">CHAT</span><span className="text-[10px] text-slate-600">{h.createdAt ? new Date(h.createdAt.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Now'}</span></div>
-                            <div className="text-xs text-slate-400 truncate font-mono">{h.codeSnippet}</div>
-                          </div>
-                        ))
-                      }
-                    </div>
-                </div>
-               )}
-               <button onClick={() => setChatHistoryOpen(!chatHistoryOpen)} className="absolute right-6 top-24 lg:hidden z-30 bg-slate-800 p-2 rounded-full border border-slate-700 text-slate-400 shadow-lg"><PanelRight size={20}/></button>
-             </div>
-           ) : (
-             <div className="flex-1 flex items-center justify-center bg-slate-950 p-6"><div className="max-w-md w-full bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-slate-700 text-center shadow-2xl"><Lock size={40} className="text-slate-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">Premium Feature</h2><p className="text-slate-400 text-sm mb-6">Free Chat is available for Apex users only.</p><button onClick={() => (user||isDevMode) ? setView('premium') : setView('login')} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">UNLOCK APEX</button></div></div>
-           )
-         )}
-         {/* SETTINGS & PORTAL & PREMIUM views remain same... */}
-         {view === 'settings' && (
-           <div className="flex-1 overflow-y-auto p-6 md:p-12">
-             <div className="max-w-2xl mx-auto">
-               <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2"><Settings/> {tText('settings')}</h2>
-               <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6">
-                 <h3 className="text-white font-bold mb-4 flex items-center gap-2"><Brain size={18} className="text-purple-400"/> {tText('model')}</h3>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{AI_MODELS.map((model)=>(<button key={model.id} onClick={()=>changeAiModel(model.id)} className={`p-4 rounded-xl border text-left transition-all ${aiModel===model.id?'bg-purple-500/20 border-purple-500':'bg-slate-950 border-slate-700 hover:border-slate-500'}`}><div className={`font-bold text-sm mb-1 ${aiModel===model.id?'text-purple-300':'text-slate-300'}`}>{model.name}</div><div className="text-xs text-slate-500">{model.desc}</div></button>))}</div>
-               </div>
-               {/* ... Language & API Key sections ... */}
-               <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6"><h3 className="text-white font-bold mb-4 flex items-center gap-2"><Globe size={18} className="text-cyan-400"/> Language</h3><div className="flex flex-wrap gap-3">{Object.entries(LANGUAGES).map(([code, data])=>(<button key={code} onClick={()=>{setLangCode(code);localStorage.setItem('cfx_lang',code);}} className={`px-4 py-2 rounded-xl border text-sm flex items-center gap-2 ${langCode===code?'bg-cyan-500/20 border-cyan-500 text-cyan-300':'bg-slate-950 border-slate-700 text-slate-400 hover:border-slate-500'}`}><span>{data.flag}</span> {data.label}</button>))}</div></div>
-               <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6"><h3 className="text-white font-bold mb-4 flex items-center gap-2"><Key size={18} className="text-amber-400"/> {tText('customKey')}</h3><p className="text-xs text-slate-400 mb-4">BYOK (Bring Your Own Key). Stored locally.</p><div className="flex gap-2"><input type="password" value={customApiKey} onChange={(e)=>setCustomApiKey(e.target.value)} placeholder="AIzaSy..." className="flex-1 bg-slate-950 border border-slate-700 text-white p-3 rounded-xl text-sm font-mono focus:border-cyan-500 outline-none"/><button onClick={()=>{localStorage.setItem('cfx_api_key', customApiKey); notify("Key Saved!", "success");}} className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 rounded-xl font-bold text-sm">SAVE</button></div></div>
-               <div className="mt-12 border-t border-slate-800 pt-6"><h4 className="text-xs text-slate-600 font-mono mb-2 uppercase tracking-widest flex items-center gap-2"><Bug size={12}/> {tText('devOverride')}</h4><div className="flex gap-2 max-w-xs"><input type="password" value={devPin} onChange={(e)=>setDevPin(e.target.value)} placeholder="Enter PIN..." className="flex-1 bg-slate-950 border border-slate-800 text-slate-300 p-2 rounded-xl text-xs focus:border-red-500 outline-none transition-colors"/><button onClick={handleDevUnlock} className="bg-slate-800 hover:bg-red-900 hover:text-red-200 text-slate-400 px-4 rounded-xl text-xs font-bold transition-colors">{tText('access')}</button></div></div>
-             </div>
-           </div>
-         )}
+         
+         {/* PORTAL VIEW */}
          {view === 'portal' && (
-            <div className="flex-1 overflow-y-auto p-6 md:p-12 pb-20 custom-scrollbar bg-slate-950">
-               <div className="max-w-4xl mx-auto animate-fadeIn">
-                  <div className="flex gap-4 border-b border-slate-800 mb-8 pb-1 sticky top-0 bg-slate-950/95 z-20 pt-4">
-                     {[{id:'guide',label:'Guide'},{id:'infra',label:'Infra'},{id:'about',label:'About Us'},{id:'legal',label:'Legal Docs'}].map(t => (
-                       <button key={t.id} onClick={() => setPortalTab(t.id)} className={`px-4 py-2 text-sm font-bold transition ${portalTab===t.id ? 'text-cyan-400 border-b-2 border-cyan-500' : 'text-slate-500 hover:text-white'}`}>{t.label}</button>
-                     ))}
-                  </div>
-                  {portalTab === 'about' && (
-                     <div className="space-y-6">
-                        <section>
-                          <h2 className="text-3xl font-bold text-white mb-4">{tText('originTitle')}</h2>
-                          <p className="text-slate-400 leading-relaxed mb-4">CodeFixerX was born from a simple necessity: the modern development landscape is chaotic. With hundreds of languages, frameworks, and updates releasing weekly, developers are drowning in complexity. Aleocrophic Systems, founded by <strong>Rayhan Dzaky Al Mubarok</strong> under the <strong>NyxShade Interactive</strong> banner, aims to be the lighthouse in this storm. We bridge the gap between "it works on my machine" and "production-ready enterprise code" using state-of-the-art AI.</p>
-                          <p className="text-slate-400 leading-relaxed">Our mission is not to replace the developer, but to empower them. To give every coder, regardless of experience level, an "Apex" level assistant that understands security, scalability, and clean architecture.</p>
-                        </section>
-                        <section className="bg-slate-900 p-8 rounded-3xl border border-slate-800 mt-8">
-                           <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><Heart className="text-red-500" size={20}/> {tText('specialThanks')}</h3>
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-4">
-                                <div className="w-12 h-12 bg-cyan-900 rounded-full flex items-center justify-center font-bold text-cyan-400">RD</div>
-                                <div>
-                                  <div className="text-white font-bold">Rayhan Dzaky Al Mubarok</div>
-                                  <div className="text-xs text-slate-500">Founder & Lead Architect</div>
+             <div className="flex-1 overflow-y-auto p-8 bg-slate-950">
+                 <div className="max-w-4xl mx-auto">
+                    <div className="flex border-b border-slate-800 mb-8 gap-6">
+                        {['about', 'infra', 'legal'].map(tab => (
+                            <button key={tab} onClick={() => setPortalTab(tab)} className={`pb-2 text-sm font-bold uppercase tracking-wider transition ${portalTab === tab ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-slate-500 hover:text-slate-300'}`}>{tab}</button>
+                        ))}
+                    </div>
+                    
+                    {portalTab === 'about' && (
+                        <div className="space-y-8 animate-fadeIn">
+                            <section>
+                                <h1 className="text-4xl font-bold text-white mb-4">{tText('originTitle')}</h1>
+                                <p className="text-slate-400 leading-relaxed text-lg">{getLangObj().ui.portal.aboutText}</p>
+                            </section>
+                            <section className="grid md:grid-cols-2 gap-6">
+                                <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                                    <Heart className="text-pink-500 mb-4" size={32}/>
+                                    <h3 className="text-xl font-bold text-white mb-2">Mission</h3>
+                                    <p className="text-slate-400 text-sm">{getLangObj().ui.portal.missionText}</p>
                                 </div>
-                              </div>
-                              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-pink-900 border border-pink-500">
-                                  <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj8rY5XbTjGXe6z_pUj7VqN2M0L8O6K9P1Q2S3T4U5V6W7X8Y9Z0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2/s1600/download%20(5).jpeg" alt="TH" className="w-full h-full object-cover" onError={(e) => {e.currentTarget.onerror = null; e.currentTarget.src="https://via.placeholder.com/150/pink/white?text=TH"}} />
+                                <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                                    <Shield className="text-emerald-500 mb-4" size={32}/>
+                                    <h3 className="text-xl font-bold text-white mb-2">Security First</h3>
+                                    <p className="text-slate-400 text-sm">We don't just patch bugs; we architect defenses. Every line of code generated assumes a hostile environment.</p>
                                 </div>
-                                <div>
-                                  <div className="text-white font-bold">Takanashi Hoshino</div>
-                                  <div className="text-xs text-slate-500">Spiritual Support (Blue Archive)</div>
-                                </div>
-                              </div>
-                              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-4">
-                                <div className="w-12 h-12 bg-amber-900 rounded-full flex items-center justify-center font-bold text-amber-400">AL</div>
-                                <div>
-                                  <div className="text-white font-bold">Aleocrophic Brand</div>
-                                  <div className="text-xs text-slate-500">Identity & Design System</div>
-                                </div>
-                              </div>
-                           </div>
-                        </section>
+                            </section>
+                        </div>
+                    )}
+
+                    {portalTab === 'infra' && (
+                        <div className="grid gap-6 md:grid-cols-3 animate-fadeIn">
+                            <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800">
+                                <Globe className="text-cyan-500 mb-4" size={32}/>
+                                <h3 className="font-bold text-white mb-2">Frontend</h3>
+                                <p className="text-slate-400 text-sm">{getLangObj().ui.portal.infraFrontend}</p>
+                            </div>
+                            <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800">
+                                <Database className="text-amber-500 mb-4" size={32}/>
+                                <h3 className="font-bold text-white mb-2">Backend</h3>
+                                <p className="text-slate-400 text-sm">{getLangObj().ui.portal.infraBackend}</p>
+                            </div>
+                            <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800">
+                                <Cpu className="text-purple-500 mb-4" size={32}/>
+                                <h3 className="font-bold text-white mb-2">Artificial Intelligence</h3>
+                                <p className="text-slate-400 text-sm">{getLangObj().ui.portal.infraAI}</p>
+                            </div>
+                        </div>
+                    )}
+                    
+                     {portalTab === 'legal' && (
+                        <div className="space-y-8 animate-fadeIn">
+                            <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                                <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Shield size={18}/> Privacy Protocol</h3>
+                                <div className="text-slate-400 text-sm whitespace-pre-wrap leading-relaxed">{getLangObj().ui.portal.privacyText}</div>
+                            </div>
+                             <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                                <h3 className="font-bold text-white mb-4 flex items-center gap-2"><FileText size={18}/> Terms of Service</h3>
+                                <div className="text-slate-400 text-sm whitespace-pre-wrap leading-relaxed">{getLangObj().ui.portal.termsText}</div>
+                            </div>
+                        </div>
+                    )}
+                 </div>
+             </div>
+         )}
+
+         {/* CHAT VIEW (APEX) */}
+         {view === 'chat' && (
+             isPremium ? (
+                 <div className="flex-1 flex flex-col h-full bg-slate-950">
+                     <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                         {chatMessages.length === 0 && <div className="h-full flex flex-col items-center justify-center text-slate-700 opacity-50"><MessageSquare size={64} className="mb-4"/><p>Encrypted Channel Established.</p></div>}
+                         {chatMessages.map((m, i) => (
+                             <div key={i} className={`flex ${m.role==='user'?'justify-end':'justify-start'}`}>
+                                 <div className={`max-w-[80%] p-4 rounded-2xl ${m.role==='user'?'bg-cyan-700 text-white rounded-br-none':'bg-slate-800 border border-slate-700 text-slate-300 rounded-bl-none'}`}>
+                                     <MarkdownRenderer content={m.text} t={getLangObj().ui}/>
+                                 </div>
+                             </div>
+                         ))}
+                         {chatLoading && <div className="flex justify-start"><div className="bg-slate-800 p-3 rounded-2xl border border-slate-700"><div className="flex gap-1"><div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"></div><div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce delay-75"></div></div></div></div>}
                      </div>
-                  )}
-                  {portalTab === 'guide' && (
-                    <div className="space-y-8">
-                      <h2 className="text-2xl font-bold text-white mb-6">📘 {tText('guide')}</h2>
-                      <section className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                        <h3 className="text-cyan-400 font-bold text-lg mb-4">Getting Started</h3>
-                        <p className="text-slate-400 mb-4">Welcome to CodeFixerX — your AI-powered coding companion. Whether you're debugging, refactoring, or prototyping, CodeFixerX adapts to your workflow with intelligent, context-aware suggestions.</p>
-                        <h4 className="text-white font-semibold mt-6 mb-2">For Lite Users</h4>
-                        <ul className="text-slate-400 list-disc pl-5 space-y-1 mb-4">
-                          <li><strong>Omni Debugger</strong> – Fix syntax, logic errors, and memory leaks instantly.</li>
-                          <li><strong>Dependency Scanner</strong> – Identify outdated or insecure libraries.</li>
-                          <li><strong>Security Auditor</strong> – Patch vulnerabilities like SQLi, XSS, and RCE.</li>
-                          <li><strong>Optimizer</strong> – Boost performance with refactored, lean code.</li>
-                          <li><strong>Code Explainer</strong> – Understand unfamiliar codebases clearly.</li>
-                          <li><strong>Pair Programmer</strong> – Collaborate with a smart AI coding partner.</li>
-                        </ul>
-                        <h4 className="text-amber-400 font-semibold mt-6 mb-2">Apex-Exclusive Features</h4>
-                        <ul className="text-slate-400 list-disc pl-5 space-y-1">
-                          <li><strong>Legacy Resurrection</strong> – Modernize ancient codebases safely.</li>
-                          <li><strong>CI/CD Integrator</strong> – Auto-generate secure, tested pipelines.</li>
-                          <li><strong>Custom Commander</strong> – Execute precise refactoring commands.</li>
-                          <li><strong>Advanced Simulation</strong> – Predict runtime behavior in a sandbox.</li>
-                          <li><strong>Dynamic Docs</strong> – Auto-generate API docs and READMEs.</li>
-                          <li><strong>Experimental UI</strong> – Generate stunning React + Tailwind UIs with one click.</li>
-                        </ul>
-                      </section>
-                      <section className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                        <h3 className="text-emerald-400 font-bold text-lg mb-4">Best Practices</h3>
-                        <ul className="text-slate-400 list-disc pl-5 space-y-1">
-                          <li>Always review AI-generated code before merging to production.</li>
-                          <li>Use Apex features for enterprise-level automation and design.</li>
-                          <li>Combine modules — e.g., run Security Auditor after Optimizer.</li>
-                          <li>Store your own API key in Settings for faster, private inference.</li>
-                        </ul>
-                      </section>
-                    </div>
-                  )}
-                  {portalTab === 'infra' && (
-                    <section className="space-y-8">
-                      <h2 className="text-2xl font-bold text-white mb-6"><Server size={24}/> {tText('coreInfra')}</h2>
-                      <p className="text-slate-400 leading-relaxed">
-                        CodeFixerX is engineered for speed, privacy, and developer joy. Every layer—from the UI to AI inference—is optimized for real-world use.
-                      </p>
-                      <div className="grid gap-6 md:grid-cols-3">
-                        <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800">
-                          <Globe className="text-cyan-500 mb-4"/>
-                          <h3 className="text-white font-bold mb-2">Frontend</h3>
-                          <p className="text-slate-400 text-sm">React 18 + TypeScript + Tailwind CSS</p>
-                          <p className="text-slate-500 text-xs mt-2">Fully responsive, keyboard-navigable, and PWA-ready.</p>
-                        </div>
-                        <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800">
-                          <Database className="text-amber-500 mb-4"/>
-                          <h3 className="text-white font-bold mb-2">Backend</h3>
-                          <p className="text-slate-400 text-sm">Firebase Auth + Firestore</p>
-                          <p className="text-slate-500 text-xs mt-2">Secure, serverless, and syncs across devices.</p>
-                        </div>
-                        <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800">
-                          <Cpu className="text-emerald-500 mb-4"/>
-                          <h3 className="text-white font-bold mb-2">AI Engine</h3>
-                          <p className="text-slate-400 text-sm">Google Gemini Pro & Flash</p>
-                          <p className="text-slate-500 text-xs mt-2">State-of-the-art reasoning with code-aware context windows.</p>
-                        </div>
-                      </div>
-                      <section className="mt-8 bg-slate-900 p-6 rounded-xl border border-slate-800">
-                        <h3 className="text-purple-400 font-bold mb-3">Security & Privacy</h3>
-                        <p className="text-slate-400 text-sm">
-                          Your code never touches our servers permanently. Inputs are sent directly to Google’s AI API (or your custom key) and stored only in your personal Firestore history — which you can delete anytime. We do not train on your data.
-                        </p>
-                      </section>
-                    </section>
-                  )}
-                  {portalTab === 'legal' && (
-                    <div className="space-y-8">
-                      <section>
-                        <h2 className="text-2xl font-bold text-white mb-4"><Shield size={24} className="text-emerald-500 inline mr-2"/> {tText('privacy')}</h2>
-                        <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 space-y-4 text-sm text-slate-400">
-                          <p><strong>1. Data Collection:</strong> Aleocrophic Systems only collects minimal data required for authentication (via Google Firebase) and prompt processing. We do not store your source code permanently on our servers beyond the history log visible to you.</p>
-                          <p><strong>2. AI Processing:</strong> Your code snippets are sent ephemerally to Google Gemini APIs for processing. This data is not used to train public models in this instance, adhering to standard enterprise data hygiene.</p>
-                          <p><strong>3. User Rights:</strong> You retain full ownership of any code you submit and any code generated by the AI. You may delete your history at any time via the database.</p>
-                          <p><strong>4. Local Storage:</strong> Your language preference, API key (if provided), and model selection are stored in browser localStorage solely for UX convenience and are never transmitted to our servers.</p>
-                        </div>
-                      </section>
-                      <section>
-                        <h2 className="text-2xl font-bold text-white mb-4"><FileText size={24} className="text-amber-500 inline mr-2"/> {tText('terms')}</h2>
-                        <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 space-y-4 text-sm text-slate-400">
-                          <p><strong>1. Acceptance:</strong> By using CodeFixerX (Lite or Apex), you agree to these terms. This tool is provided "as is" without warranties of any kind.</p>
-                          <p><strong>2. Prohibited Use:</strong> You strictly agree NOT to use this AI to generate malware, ransomware, exploits, phishing tools, or any code intended to harm systems or violate laws. Violation results in immediate account termination and potential reporting to authorities.</p>
-                          <p><strong>3. Liability:</strong> Aleocrophic Systems is not liable for any production outages, data loss, or security breaches caused by code generated by this tool. The developer is solely responsible for final review, testing, and deployment.</p>
-                          <p><strong>4. License Key:</strong> Apex access keys are non-transferable, non-refundable, and tied to a single user session. Sharing or reselling keys voids all access.</p>
-                          <p><strong>5. Updates:</strong> We reserve the right to update, deprecate, or enhance modules without notice. Core functionality will remain free for Lite users indefinitely.</p>
-                        </div>
-                      </section>
-                    </div>
-                  )}
-               </div>
-            </div>
+                     <div className="p-4 bg-slate-900 border-t border-slate-800 flex gap-2">
+                         <input type="text" value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleChatSend()} className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-cyan-500 outline-none" placeholder={tText('chatPlaceholder')}/>
+                         <button onClick={handleChatSend} className="bg-cyan-600 hover:bg-cyan-500 text-white p-3 rounded-xl"><Send size={20}/></button>
+                     </div>
+                 </div>
+             ) : (
+                 <div className="flex-1 flex items-center justify-center">
+                     <div className="text-center max-w-md p-8 bg-slate-900 rounded-3xl border border-slate-800">
+                         <Lock size={48} className="mx-auto text-slate-600 mb-4"/>
+                         <h2 className="text-2xl font-bold text-white mb-2">Apex Feature</h2>
+                         <p className="text-slate-400 mb-6">Chat Mode requires Apex clearance.</p>
+                         <button onClick={()=>setView('premium')} className="w-full py-3 bg-amber-600 text-white font-bold rounded-xl">UPGRADE</button>
+                     </div>
+                 </div>
+             )
          )}
+
+         {/* SETTINGS VIEW */}
+         {view === 'settings' && (
+             <div className="flex-1 overflow-y-auto p-8 bg-slate-950">
+                 <div className="max-w-2xl mx-auto space-y-6">
+                     <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2"><Settings/> Configuration</h2>
+                     
+                     {/* MODEL SELECT */}
+                     <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                         <h3 className="font-bold text-white mb-4 flex items-center gap-2"><BrainIcon className="text-purple-400"/> Neural Model</h3>
+                         <div className="grid gap-3">
+                             {AI_MODELS.map(m => (
+                                 <button key={m.id} onClick={() => {setAiModel(m.id); localStorage.setItem('cfx_ai_model', m.id);}} className={`text-left p-4 rounded-xl border transition ${aiModel === m.id ? 'bg-purple-500/20 border-purple-500 text-purple-300' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+                                     <div className="font-bold">{m.name}</div>
+                                     <div className="text-xs opacity-70">{m.desc}</div>
+                                 </button>
+                             ))}
+                         </div>
+                     </div>
+
+                     {/* API KEY */}
+                     <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                         <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Key className="text-amber-400"/> API Credentials</h3>
+                         <p className="text-xs text-slate-500 mb-3">Your Gemini API key is stored locally on your device.</p>
+                         <div className="flex gap-2">
+                             <input type="password" value={customApiKey} onChange={e=>setCustomApiKey(e.target.value)} className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-white" placeholder="AIzaSy..."/>
+                             <button onClick={() => {localStorage.setItem('cfx_api_key', customApiKey); notify("Key Saved", "success");}} className="bg-cyan-600 text-white px-4 rounded-xl font-bold">Save</button>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         )}
+
+         {/* PREMIUM VIEW */}
          {view === 'premium' && (
-           <div className="flex-1 flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/20 to-slate-950"></div><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-amber-500/30 max-w-md w-full text-center shadow-2xl"><Unlock size={40} className="text-amber-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">{tText('unlock')} Apex Edition</h2><p className="text-slate-400 text-sm mb-6">{tText('enterKey')}</p><input type="text" value={premiumKey} onChange={(e)=>setPremiumKey(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-center text-white p-3 rounded-xl mb-4 font-mono focus:border-amber-500 outline-none" placeholder="XXXX-XXXX-XXXX"/><div className="flex items-center gap-2 mb-4"><div className="h-px bg-slate-800 flex-1"></div><span className="text-xs text-slate-500">{tText('orUpload')}</span><div className="h-px bg-slate-800 flex-1"></div></div><label className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl cursor-pointer transition mb-4 border border-dashed border-slate-600"><Upload size={14}/> Upload key.txt<input type="file" accept=".txt" className="hidden" onChange={handleKeyFileUpload}/></label><button onClick={() => {const cleanKey = premiumKey.trim().toUpperCase(); if(cleanKey==="CFX-APX-2025R242"){setIsPremium(true);notify("UNLOCKED!","success");setView('dashboard');}else notify("Invalid","error");}} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">{tText('authenticate')}</button>
-          <div className="flex items-center gap-3 mt-4">
-              <div className="h-px bg-slate-800 flex-1"></div>
-              <span className="text-xs text-slate-500">{tText('dontHaveKey')}</span>
-              <div className="h-px bg-slate-800 flex-1"></div>
-          </div>
-          <a 
-            href="https://lynk.id/zetago-aurum/yjzz3v78oq13"
-            target="_blank"
-            rel="noreferrer"
-            className="w-full py-3 mt-3 bg-slate-800 hover:bg-slate-700 border border-amber-500/50 text-amber-400 font-bold rounded-xl flex items-center justify-center gap-2 transition group"
-          >
-            <ShoppingCart size={16} className="group-hover:scale-110 transition-transform"/> {tText('buyKey')}
-          </a>
-           </div></div>
+             <div className="flex-1 flex items-center justify-center p-4 relative overflow-hidden">
+                 <div className="absolute inset-0 bg-amber-900/10 pointer-events-none"></div>
+                 <div className="z-10 bg-slate-900 p-10 rounded-3xl border border-amber-500/30 max-w-lg w-full text-center shadow-2xl">
+                     <Sparkles size={48} className="mx-auto text-amber-500 mb-6 animate-pulse"/>
+                     <h2 className="text-3xl font-bold text-white mb-2">Apex Access</h2>
+                     <p className="text-slate-400 mb-8">Unlock CI/CD pipelines, Legacy Modernization, and Unlimited Tokens.</p>
+                     
+                     <div className="mb-6">
+                         <input type="text" value={premiumKey} onChange={e=>setPremiumKey(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-center text-white p-4 rounded-xl font-mono text-lg tracking-widest focus:border-amber-500 outline-none" placeholder="XXXX-XXXX-APEX"/>
+                     </div>
+                     
+                     <button onClick={() => {
+                         if(premiumKey.trim() === 'CFX-APX-2025R242'){ setIsPremium(true); notify("ACCESS GRANTED", "success"); setView('dashboard'); }
+                         else { notify("Invalid License Key", "error"); }
+                     }} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-black font-bold rounded-xl mb-4 hover:scale-105 transition-transform">
+                         ACTIVATE LICENSE
+                     </button>
+                     
+                     <div className="flex items-center justify-center gap-4 text-xs text-slate-500">
+                        <a href="#" className="hover:text-amber-400 border-b border-dashed border-slate-600">Enterprise Contact</a>
+                        <span>•</span>
+                        <a href="https://lynk.id/zetago-aurum/yjzz3v78oq13" target="_blank" rel="noreferrer" className="hover:text-amber-400 border-b border-dashed border-slate-600">Purchase Key</a>
+                     </div>
+                 </div>
+             </div>
          )}
+
       </main>
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: #020617; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-        .animate-progress { animation: progress 2s ease-in-out infinite; } @keyframes progress { 0% { width: 0%; } 50% { width: 70%; } 100% { width: 100%; } }
-        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
     </div>
   );
 }
+
+// --- ICONS HELPER FOR SETTINGS ---
+function BrainIcon({className}) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.97-3.284"/><path d="M17.97 14.716A4 4 0 0 1 18 18"/></svg>; }
