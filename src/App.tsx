@@ -26,13 +26,16 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// --- GLOBAL API KEY PLACEHOLDER ---
+const apiKey = "AIzaSyAk94JpjT7qpIduHTIjX70LY6iRF7u9-t0"; // Default System Key Injected! 💉
+
 // --- 2. DATA & TRANSLATIONS ---
 
 const LANGUAGES: Record<string, any> = {
   en: { label: 'English', flag: '🇺🇸', ui: { dashboard: 'Dashboard', portal: 'Portal', history: 'History', upgrade: 'Upgrade Apex', login: 'Login', analyze: 'Initiate Fix', input: 'Source Code', output: 'Output', processing: 'Processing...', settings: 'Settings', copy: 'Copy All', model: 'AI Model' } },
   id: { label: 'Indonesia', flag: '🇮🇩', ui: { dashboard: 'Dasbor', portal: 'Portal', history: 'Riwayat', upgrade: 'Buka Apex', login: 'Masuk', analyze: 'Mulai Analisa', input: 'Kode Sumber', output: 'Hasil', processing: 'Memproses...', settings: 'Pengaturan', copy: 'Salin Semua', model: 'Model AI' } },
   jp: { label: '日本語', flag: '🇯🇵', ui: { dashboard: 'ダッシュボード', portal: 'ポータル', history: '履歴', upgrade: 'Apexへ', login: 'ログイン', analyze: '分析開始', input: 'ソース', output: '出力', processing: '処理中...', settings: '設定', copy: 'コピー', model: 'AIモデル' } },
-  ar: { label: 'العربية', flag: '🇸🇦', ui: { dashboard: 'لوحة القيادة', portal: 'بوابة', history: 'سجل', upgrade: 'ترقية أبيكس', login: 'دخول', analyze: 'بدء', input: 'شفرة', output: 'مخرجات', processing: 'معالجة...', settings: 'إعدادات', copy: 'نسخ', model: 'نموذج AI' } },
+  ar: { label: 'العربية', flag: '🇸🇦', ui: { dashboard: 'لوحة القيادة', portal: 'بوابة', history: 'سجل', upgrade: 'ترقية أبيكس', login: 'دخول', analyze: 'بدء', input: 'شفرة', output: 'المخرجات', processing: 'معالجة...', settings: 'إعدادات', copy: 'نسخ', model: 'نموذج AI' } },
   ru: { label: 'Русский', flag: '🇷🇺', ui: { dashboard: 'Панель', portal: 'Портал', history: 'История', upgrade: 'Обновить', login: 'Вход', analyze: 'Анализ', input: 'Код', output: 'Вывод', processing: 'Обработка...', settings: 'Настройки', copy: 'Копировать', model: 'AI Модель' } },
   de: { label: 'Deutsch', flag: '🇩🇪', ui: { dashboard: 'Dashboard', portal: 'Portal', history: 'Verlauf', upgrade: 'Upgrade', login: 'Anmelden', analyze: 'Starten', input: 'Quellcode', output: 'Ausgabe', processing: 'Verarbeitung...', settings: 'Einstellungen', copy: 'Kopieren', model: 'KI-Modell' } },
   es: { label: 'Español', flag: '🇪🇸', ui: { dashboard: 'Tablero', portal: 'Portal', history: 'Historial', upgrade: 'Mejorar', login: 'Acceso', analyze: 'Analizar', input: 'Código', output: 'Salida', processing: 'Procesando...', settings: 'Ajustes', copy: 'Copiar', model: 'Modelo IA' } },
@@ -66,6 +69,7 @@ const LITE_MANIFESTO = "You are CodeFixerX Lite. Efficient Debugging.";
 
 // --- 3. UTILITY COMPONENTS ---
 
+// Simple Regex-based Syntax Highlighter
 const highlightSyntax = (code: string) => {
   if (!code) return '';
   let html = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -397,7 +401,7 @@ export default function App() {
     setPreviewCode(null);
     setShowCompactPreview(false);
 
-    const apiKeyToUse = customApiKey || ""; 
+    const apiKeyToUse = customApiKey || apiKey; 
     
     const baseManifesto = isPremium ? APEX_MANIFESTO : LITE_MANIFESTO;
     const lang = LANGUAGES[langCode];
@@ -411,6 +415,10 @@ export default function App() {
     `;
 
     try {
+      if (!apiKeyToUse) {
+         throw new Error("No API Key available. Please set a Custom Key in Settings.");
+      }
+
       // DYNAMIC MODEL URL
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKeyToUse}`, {
         method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -791,24 +799,9 @@ export default function App() {
          )}
          
          {view === 'premium' && (
-           <div className="flex-1 flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/20 to-slate-950"></div><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-amber-500/30 max-w-md w-full text-center shadow-2xl"><Unlock size={40} className="text-amber-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">Unlock Apex</h2><p className="text-slate-400 text-sm mb-6">Enter license key (CFX-APX...)</p>
-           
-           {/* MANUAL INPUT */}
-           <input type="text" value={premiumKey} onChange={(e)=>setPremiumKey(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-center text-white p-3 rounded-xl mb-4 font-mono focus:border-amber-500 outline-none" placeholder="XXXX-XXXX-XXXX"/>
-           
-           {/* FILE UPLOAD OPTION */}
-           <div className="flex items-center gap-2 mb-4">
-              <div className="h-px bg-slate-800 flex-1"></div>
-              <span className="text-xs text-slate-500">OR UPLOAD KEY</span>
-              <div className="h-px bg-slate-800 flex-1"></div>
-           </div>
-           <label className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl cursor-pointer transition mb-4 border border-dashed border-slate-600">
-              <Upload size={14}/> Upload key.txt
-              <input type="file" accept=".txt" className="hidden" onChange={handleKeyFileUpload}/>
-           </label>
-
-           <button onClick={handleUnlock} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">AUTHENTICATE</button>
-           <div className="mt-4 text-xs text-slate-500">Purchase: <a href="https://lynk.id/zetago-aurum/yjzz3v78oq13" target="_blank" className="text-amber-500 hover:underline">lynk.id/zetago-aurum</a></div></div></div>
+           <div className="flex-1 flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/20 to-slate-950"></div><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-amber-500/30 max-w-md w-full text-center shadow-2xl"><Unlock size={40} className="text-amber-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">Unlock Apex</h2><p className="text-slate-400 text-sm mb-6">Enter license key (CFX-APX...)</p><input type="text" value={premiumKey} onChange={(e)=>setPremiumKey(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-center text-white p-3 rounded-xl mb-4 font-mono focus:border-amber-500 outline-none" placeholder="XXXX-XXXX-XXXX"/>
+           <div className="flex items-center gap-2 mb-4"><div className="h-px bg-slate-800 flex-1"></div><span className="text-xs text-slate-500">OR UPLOAD KEY</span><div className="h-px bg-slate-800 flex-1"></div></div><label className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl cursor-pointer transition mb-4 border border-dashed border-slate-600"><Upload size={14}/> Upload key.txt<input type="file" accept=".txt" className="hidden" onChange={handleKeyFileUpload}/></label>
+           <button onClick={() => {if(premiumKey==="CFX-APX-2025R242"){setIsPremium(true);notify("UNLOCKED!","success");setView('dashboard');}else notify("Invalid","error");}} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">AUTHENTICATE</button><div className="mt-4 text-xs text-slate-500">Purchase: <a href="https://lynk.id/zetago-aurum/yjzz3v78oq13" target="_blank" className="text-amber-500 hover:underline">lynk.id/zetago-aurum</a></div></div></div>
          )}
       </main>
 
