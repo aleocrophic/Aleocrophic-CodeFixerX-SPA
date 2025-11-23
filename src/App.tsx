@@ -8,7 +8,7 @@ import {
   FileCode, Play, CheckCircle, Search, 
   Menu, X, ChevronRight, Command, LogIn, Info, 
   Server, Globe, Copyright, FileText, Eye, Maximize2, Minimize2, 
-  Settings, Box, Activity, Languages, BookOpen, Key, Database, Layers, Clipboard, AlertTriangle, Heart, Briefcase, Laptop, Bug, Upload
+  Settings, Box, Activity, Languages, BookOpen, Key, Database, Layers, Clipboard, AlertTriangle, Heart, Briefcase, Laptop, Bug, Upload, Brain
 } from 'lucide-react';
 
 // --- 1. FIREBASE CONFIGURATION ---
@@ -28,14 +28,14 @@ const db = getFirestore(app);
 
 // --- 2. DATA & TRANSLATIONS ---
 
-const LANGUAGES = {
-  en: { label: 'English', flag: '🇺🇸', ui: { dashboard: 'Dashboard', portal: 'Portal', history: 'History', upgrade: 'Upgrade Apex', login: 'Login', analyze: 'Initiate Fix', input: 'Source Code', output: 'Output', processing: 'Processing...', settings: 'Settings', copy: 'Copy All' } },
-  id: { label: 'Indonesia', flag: '🇮🇩', ui: { dashboard: 'Dasbor', portal: 'Portal', history: 'Riwayat', upgrade: 'Buka Apex', login: 'Masuk', analyze: 'Mulai Analisa', input: 'Kode Sumber', output: 'Hasil', processing: 'Memproses...', settings: 'Pengaturan', copy: 'Salin Semua' } },
-  jp: { label: '日本語', flag: '🇯🇵', ui: { dashboard: 'ダッシュボード', portal: 'ポータル', history: '履歴', upgrade: 'Apexへ', login: 'ログイン', analyze: '分析開始', input: 'ソース', output: '出力', processing: '処理中...', settings: '設定', copy: 'コピー' } },
-  ar: { label: 'العربية', flag: '🇸🇦', ui: { dashboard: 'لوحة القيادة', portal: 'بوابة', history: 'سجل', upgrade: 'ترقية أبيكس', login: 'دخول', analyze: 'بدء', input: 'شفرة', output: 'المخرجات', processing: 'معالجة...', settings: 'إعدادات', copy: 'نسخ' } },
-  ru: { label: 'Русский', flag: '🇷🇺', ui: { dashboard: 'Панель', portal: 'Портал', history: 'История', upgrade: 'Обновить', login: 'Вход', analyze: 'Анализ', input: 'Код', output: 'Вывод', processing: 'Обработка...', settings: 'Настройки', copy: 'Копировать' } },
-  de: { label: 'Deutsch', flag: '🇩🇪', ui: { dashboard: 'Dashboard', portal: 'Portal', history: 'Verlauf', upgrade: 'Upgrade', login: 'Anmelden', analyze: 'Starten', input: 'Quellcode', output: 'Ausgabe', processing: 'Verarbeitung...', settings: 'Einstellungen', copy: 'Kopieren' } },
-  es: { label: 'Español', flag: '🇪🇸', ui: { dashboard: 'Tablero', portal: 'Portal', history: 'Historial', upgrade: 'Mejorar', login: 'Acceso', analyze: 'Analizar', input: 'Código', output: 'Salida', processing: 'Procesando...', settings: 'Ajustes', copy: 'Copiar' } },
+const LANGUAGES: Record<string, any> = {
+  en: { label: 'English', flag: '🇺🇸', ui: { dashboard: 'Dashboard', portal: 'Portal', history: 'History', upgrade: 'Upgrade Apex', login: 'Login', analyze: 'Initiate Fix', input: 'Source Code', output: 'Output', processing: 'Processing...', settings: 'Settings', copy: 'Copy All', model: 'AI Model' } },
+  id: { label: 'Indonesia', flag: '🇮🇩', ui: { dashboard: 'Dasbor', portal: 'Portal', history: 'Riwayat', upgrade: 'Buka Apex', login: 'Masuk', analyze: 'Mulai Analisa', input: 'Kode Sumber', output: 'Hasil', processing: 'Memproses...', settings: 'Pengaturan', copy: 'Salin Semua', model: 'Model AI' } },
+  jp: { label: '日本語', flag: '🇯🇵', ui: { dashboard: 'ダッシュボード', portal: 'ポータル', history: '履歴', upgrade: 'Apexへ', login: 'ログイン', analyze: '分析開始', input: 'ソース', output: '出力', processing: '処理中...', settings: '設定', copy: 'コピー', model: 'AIモデル' } },
+  ar: { label: 'العربية', flag: '🇸🇦', ui: { dashboard: 'لوحة القيادة', portal: 'بوابة', history: 'سجل', upgrade: 'ترقية أبيكس', login: 'دخول', analyze: 'بدء', input: 'شفرة', output: 'مخرجات', processing: 'معالجة...', settings: 'إعدادات', copy: 'نسخ', model: 'نموذج AI' } },
+  ru: { label: 'Русский', flag: '🇷🇺', ui: { dashboard: 'Панель', portal: 'Портал', history: 'История', upgrade: 'Обновить', login: 'Вход', analyze: 'Анализ', input: 'Код', output: 'Вывод', processing: 'Обработка...', settings: 'Настройки', copy: 'Копировать', model: 'AI Модель' } },
+  de: { label: 'Deutsch', flag: '🇩🇪', ui: { dashboard: 'Dashboard', portal: 'Portal', history: 'Verlauf', upgrade: 'Upgrade', login: 'Anmelden', analyze: 'Starten', input: 'Quellcode', output: 'Ausgabe', processing: 'Verarbeitung...', settings: 'Einstellungen', copy: 'Kopieren', model: 'KI-Modell' } },
+  es: { label: 'Español', flag: '🇪🇸', ui: { dashboard: 'Tablero', portal: 'Portal', history: 'Historial', upgrade: 'Mejorar', login: 'Acceso', analyze: 'Analizar', input: 'Código', output: 'Salida', processing: 'Procesando...', settings: 'Ajustes', copy: 'Copiar', model: 'Modelo IA' } },
 };
 
 const MODULES = [
@@ -52,6 +52,13 @@ const MODULES = [
   { id: 'sim', name: 'Adv. Simulation', icon: <Play />, premium: true, desc: 'Sandbox run.' },
   { id: 'docs', name: 'Dynamic Docs', icon: <FileText />, premium: true, desc: 'Auto documentation.' },
   { id: 'exp', name: 'Experimental UI', icon: <Sparkles />, premium: true, desc: 'UI Auto-Design.' },
+];
+
+const AI_MODELS = [
+  { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash (Latest)', desc: 'Fastest & Most Capable' },
+  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', desc: 'Complex Reasoning' },
+  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', desc: 'High Speed' },
+  { id: 'gemini-1.0-pro', name: 'Gemini 1.0 Pro', desc: 'Legacy Stable' },
 ];
 
 const APEX_MANIFESTO = "You are CodeFixerX Apex Edition. Infinite Context. Deep Scan Active.";
@@ -212,8 +219,9 @@ export default function App() {
   const [langCode, setLangCode] = useState('en');
   const [isPremium, setIsPremium] = useState(false);
   const [currentModule, setCurrentModule] = useState(MODULES[0]);
+  const [aiModel, setAiModel] = useState(AI_MODELS[0].id); // NEW STATE FOR AI MODEL
   
-  // Auth Loading State (CRITICAL FIX FOR REFRESH ISSUE)
+  // Auth Loading State
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Dev Mode State
@@ -244,8 +252,10 @@ export default function App() {
   useEffect(() => {
     const savedLang = localStorage.getItem('cfx_lang');
     const savedKey = localStorage.getItem('cfx_api_key');
+    const savedModel = localStorage.getItem('cfx_ai_model'); // Load Model
     if (savedLang && LANGUAGES[savedLang]) setLangCode(savedLang);
     if (savedKey) setCustomApiKey(savedKey);
+    if (savedModel) setAiModel(savedModel);
     
     const handleResize = () => {
       if (window.innerWidth < 768) setSidebarOpen(false);
@@ -270,18 +280,16 @@ export default function App() {
             const data = docSnap.data();
             if (data.language && LANGUAGES[data.language]) setLangCode(data.language);
             if (data.isPremium) setIsPremium(true);
+            if (data.aiModel) setAiModel(data.aiModel); // Load model from cloud
           }
         } catch (e) {}
       } else {
         if (!isDevMode) {
           setIsPremium(false);
           setGeneratedApiKey("GUEST");
-          // If auth failed/logout and NOT in dev mode, we can stay on language/login or reset.
-          // But to be safe, if we were expecting auth and failed, we let user decide in login view.
           if (view === 'dashboard') setView('language'); 
         }
       }
-      // Initialization Done
       setIsAuthChecking(false);
     });
     return () => {
@@ -320,6 +328,15 @@ export default function App() {
       }
     }
   };
+
+  const changeAiModel = async (modelId: string) => {
+    setAiModel(modelId);
+    localStorage.setItem('cfx_ai_model', modelId);
+    if(user) {
+        try { await setDoc(doc(db, 'users', user.uid), { aiModel: modelId }, { merge: true }); } catch(e) {}
+    }
+    notify(`Neural Engine Switched: ${AI_MODELS.find(m => m.id === modelId)?.name}`, 'success');
+  }
 
   const handleDevUnlock = () => {
     if (devPin === "200924-RDZ-DVLP") {
@@ -381,6 +398,7 @@ export default function App() {
     setShowCompactPreview(false);
 
     const apiKeyToUse = customApiKey || ""; 
+    
     const baseManifesto = isPremium ? APEX_MANIFESTO : LITE_MANIFESTO;
     const lang = LANGUAGES[langCode];
     
@@ -393,7 +411,8 @@ export default function App() {
     `;
 
     try {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKeyToUse}`, {
+      // DYNAMIC MODEL URL
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKeyToUse}`, {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ contents: [{ parts: [{ text: inputCode }] }], systemInstruction: { parts: [{ text: systemInstruction }] } })
       });
@@ -403,7 +422,7 @@ export default function App() {
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error.";
       
       setOutputResult(text);
-      setIsInputMinimized(true); // Animation Trigger
+      setIsInputMinimized(true);
 
       const codeMatch = text.match(/```(html|react|jsx|javascript)([\s\S]*?)```/);
       if (codeMatch && codeMatch[2] && (text.includes('html') || text.includes('React'))) {
@@ -434,9 +453,9 @@ export default function App() {
   if (view === 'language') return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519608487953-e999c86e7455?q=80')] bg-cover opacity-10 animate-pulse"></div>
-      <div className="z-10 max-w-5xl w-full bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-10 shadow-2xl text-center">
-        <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent mb-4">Aleocrophic</h1>
-        <p className="text-slate-400 text-sm tracking-[0.3em] uppercase mb-12">CodeFixerX: Ultimate Architecture</p>
+      <div className="z-10 max-w-5xl w-full bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl p-8 shadow-2xl text-center">
+        <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">CodeFixerX</h1>
+        <p className="text-slate-400 text-sm tracking-[0.3em] uppercase mb-12">Aleocrophic Systems</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.entries(LANGUAGES).map(([code, data]) => (
             <button key={code} onClick={() => { setLangCode(code); setView('login'); }} className="p-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500 rounded-2xl transition-all group flex flex-col items-center">
@@ -594,6 +613,19 @@ export default function App() {
            <div className="flex-1 overflow-y-auto p-6 md:p-12">
              <div className="max-w-2xl mx-auto">
                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2"><Settings/> {t('settings')}</h2>
+               
+               <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6">
+                 <h3 className="text-white font-bold mb-4 flex items-center gap-2"><Brain size={18} className="text-purple-400"/> {t('model')}</h3>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                   {AI_MODELS.map((model) => (
+                     <button key={model.id} onClick={() => changeAiModel(model.id)} className={`p-4 rounded-xl border text-left transition-all ${aiModel === model.id ? 'bg-purple-500/20 border-purple-500' : 'bg-slate-950 border-slate-700 hover:border-slate-500'}`}>
+                       <div className={`font-bold text-sm mb-1 ${aiModel === model.id ? 'text-purple-300' : 'text-slate-300'}`}>{model.name}</div>
+                       <div className="text-xs text-slate-500">{model.desc}</div>
+                     </button>
+                   ))}
+                 </div>
+               </div>
+
                <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6">
                  <h3 className="text-white font-bold mb-4 flex items-center gap-2"><Globe size={18} className="text-cyan-400"/> Language</h3>
                  <div className="flex flex-wrap gap-3">
@@ -653,7 +685,7 @@ export default function App() {
                               </div>
                               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-pink-900 border border-pink-500">
-                                  <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj8rY5XbTjGXe6z_pUj7VqN2M0L8O6K9P1Q2S3T4U5V6W7X8Y9Z0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2/s1600/download%20(5).jpeg" alt="Takanashi Hoshino" className="w-full h-full object-cover" onError={(e) => {e.target.onerror = null; e.target.src="https://via.placeholder.com/150/pink/white?text=TH"}} />
+                                  <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj8rY5XbTjGXe6z_pUj7VqN2M0L8O6K9P1Q2S3T4U5V6W7X8Y9Z0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2/s1600/download%20(5).jpeg" alt="Takanashi Hoshino" className="w-full h-full object-cover" onError={(e) => {e.currentTarget.onerror = null; e.currentTarget.src="https://via.placeholder.com/150/pink/white?text=TH"}} />
                                 </div>
                                 <div>
                                   <div className="text-white font-bold">Takanashi Hoshino</div>
