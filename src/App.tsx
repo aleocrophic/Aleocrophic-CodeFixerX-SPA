@@ -28,9 +28,10 @@ const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 // --- GLOBAL API KEY PLACEHOLDER ---
+// User must provide key via Settings or Login screen
 const defaultApiKey = ""; 
 
-// --- 2. DATA & TRANSLATIONS (FULL REPAIRED 7 LANGUAGES) ---
+// --- 2. DATA & TRANSLATIONS (FULL COMPLETE 7 LANGUAGES) ---
 
 const LANGUAGES: Record<string, any> = {
   en: { 
@@ -43,12 +44,11 @@ const LANGUAGES: Record<string, any> = {
       authRequired: 'Auth Required', unlock: 'Unlock', enterKey: 'Enter License Key', orUpload: 'OR UPLOAD KEY', authenticate: 'AUTHENTICATE',
       purchase: 'Purchase', devOverride: 'Developer Override', access: 'ACCESS', customKey: 'Gemini API Key',
       chatPlaceholder: 'Type a message...', chatStart: 'Start chatting with CodeFixerX!', edit: 'Edit',
-      privacy: 'Privacy Policy', terms: 'Terms of Service', about: 'About Us', infra: 'Infrastructure', guide: 'User Guide',
+      privacy: 'Privacy Policy', terms: 'Terms of Service', about: 'About Us', infra: 'Infrastructure', guide: 'User Manual',
       roleUser: 'User', roleAI: 'CodeFixerX', buyKey: 'BUY KEY NOW', dontHaveKey: "DON'T HAVE A KEY?",
       originTitle: 'Origin of Aleocrophic', specialThanks: 'Special Thanks', coreInfra: 'Core Infrastructure',
       toggleHistory: 'Toggle History', sourceInput: 'SOURCE INPUT', getKey: 'Get API Key', saveEnter: 'Save & Enter',
       apiKeyDesc: 'Required. Your personal Gemini API Key. Stored locally.',
-      // Portal Content Object
       portalContent: {
         aboutText: "CodeFixerX was born from a simple necessity: the modern development landscape is chaotic. With hundreds of languages, frameworks, and updates releasing weekly, developers are drowning in complexity. Aleocrophic Systems, founded by Rayhan Dzaky Al Mubarok under the NyxShade Interactive banner, aims to be the lighthouse in this storm. We bridge the gap between 'it works on my machine' and 'production-ready enterprise code' using state-of-the-art AI.",
         missionText: "Our mission is not to replace the developer, but to empower them. To give every coder, regardless of experience level, an 'Apex' level assistant that understands security, scalability, and clean architecture.",
@@ -233,105 +233,19 @@ const LANGUAGES: Record<string, any> = {
 };
 
 const MODULES = [
-  // --- LITE & APEX (Indices 0-5) ---
-  { 
-    id: 'debug', 
-    name: 'Omni Debugger', 
-    icon: <Code />, 
-    premium: false, 
-    desc: 'Fix syntax/logic errors.',
-    systemPrompt: "You are the Omni Code Debugger. Analyze the provided code for syntax errors, logical flaws, memory leaks, and runtime issues. Return the fixed code with comments explaining the corrections. Focus on correctness and stability."
-  },
-  { 
-    id: 'dep', 
-    name: 'Dependency Scanner', 
-    icon: <Search />, 
-    premium: false, 
-    desc: 'Analyze libs & vulnerabilities.',
-    systemPrompt: "You are the Dependency Scanner. Analyze the imports and dependencies in the code. Identify deprecated packages, security risks, or heavy libraries that could be optimized. Suggest lighter or more secure alternatives."
-  },
-  { 
-    id: 'sec', 
-    name: 'Security Auditor', 
-    icon: <Shield />, 
-    premium: false, 
-    desc: 'Fix SQLi, XSS, RCE.',
-    systemPrompt: "You are the Cybersecurity Auditor. Conduct a deep security scan on the code. Look for SQL Injection, XSS, CSRF, RCE, weak cryptography, and hardcoded secrets. Provide a secure refactored version and explain the vulnerabilities found."
-  },
-  { 
-    id: 'perf', 
-    name: 'Optimizer', 
-    icon: <Zap />, 
-    premium: false, 
-    desc: 'Boost speed & scalability.',
-    systemPrompt: "You are the Performance Optimizer. Refactor the code to improve execution speed, reduce memory usage, and enhance scalability. Look for O(n^2) loops, redundant computations, and unoptimized queries. Provide the optimized code."
-  },
-  { 
-    id: 'explain', 
-    name: 'Code Explainer', 
-    icon: <FileCode />, 
-    premium: false, 
-    desc: 'Deep explanations.',
-    systemPrompt: "You are the Interactive Code Explainer. Break down the provided code into simple, digestible parts. Explain the logic flow, variable purposes, and algorithmic approach. Use analogies where appropriate. Do not just rewrite the code, explain *why* it works."
-  },
-  { 
-    id: 'pair', 
-    name: 'Pair Programmer', 
-    icon: <User />, 
-    premium: false, 
-    desc: 'Real-time collab.',
-    systemPrompt: "You are an AI Pair Programmer. Act as a senior developer colleague. Suggest completions, refactorings, or alternative approaches to the user's current code snippet. Maintain a collaborative and helpful tone."
-  },
-  
-  // --- APEX EXCLUSIVE (Indices 6-11) ---
-  { 
-    id: 'legacy', 
-    name: 'Legacy Resurrection', 
-    icon: <History />, 
-    premium: true, 
-    desc: 'Modernize old stacks.',
-    systemPrompt: "You are the Legacy Code Resurrection Engine. Your task is to modernize outdated code (e.g., COBOL, old PHP, jQuery, VB6) into modern standards (e.g., React, Go, Rust, Python 3.10+). Preserve business logic but upgrade the syntax, libraries, and security practices."
-  },
-  { 
-    id: 'cicd', 
-    name: 'CI/CD Integrator', 
-    icon: <Cpu />, 
-    premium: true, 
-    desc: 'Pipeline automation.',
-    systemPrompt: "You are the CI/CD Integrator. Generate robust pipeline configurations (GitHub Actions YAML, GitLab CI, Jenkinsfile, Dockerfile) for the provided code. Ensure automated testing, linting, security scanning, and deployment steps are included."
-  },
-  { 
-    id: 'custom', 
-    name: 'Custom Commander', 
-    icon: <Terminal />, 
-    premium: true, 
-    desc: 'Execute commands.',
-    systemPrompt: "You are the Custom Command Executor. Follow the specific instructions provided by the user regarding the code. You are versatile and adaptable. If the user asks for a specific refactor pattern (e.g., SOLID, DRY, KISS), apply it rigorously."
-  },
-  { 
-    id: 'sim', 
-    name: 'Adv. Simulation', 
-    icon: <Play />, 
-    premium: true, 
-    desc: 'Sandbox run.',
-    systemPrompt: "You are the Advanced Simulation Environment. Simulate the execution of the provided code. Predict the output for various edge cases. If it's UI code, describe the visual result. If it's logic, trace the variable states. Find logic bugs that static analysis might miss."
-  },
-  { 
-    id: 'docs', 
-    name: 'Dynamic Docs', 
-    icon: <FileText />, 
-    premium: true, 
-    desc: 'Auto documentation.',
-    systemPrompt: "You are the Dynamic Documentation Generator. Create comprehensive documentation for the code, including JSDoc/Docstrings, API endpoint definitions (Swagger/OpenAPI), and usage examples. Make it professional and ready for a README.md."
-  },
-  { 
-    id: 'exp', 
-    name: 'Experimental UI', 
-    icon: <Sparkles />, 
-    premium: true, 
-    desc: 'UI Auto-Design.',
-    systemPrompt: "You are the Experimental UI Generator. Generate stunning, modern, and responsive web interfaces using React, Tailwind CSS, and Lucide React icons. IMPORTANT: Provide the FULL code in a single file. Ensure it is visually impressive (Glassmorphism, Neobrutalism, or Minimalist)."
-  },
+  { id: 'debug', name: 'Omni Debugger', icon: <Code />, premium: false, desc: 'Fix syntax/logic errors.', systemPrompt: "You are the Omni Code Debugger. Analyze the provided code for syntax errors, logical flaws, memory leaks, and runtime issues. Return the fixed code with comments explaining the corrections. Focus on correctness and stability." },
+  { id: 'dep', name: 'Dependency Scanner', icon: <Search />, premium: false, desc: 'Analyze libs & vulnerabilities.', systemPrompt: "You are the Dependency Scanner. Analyze the imports and dependencies in the code. Identify deprecated packages, security risks, or heavy libraries that could be optimized. Suggest lighter or more secure alternatives." },
+  { id: 'sec', name: 'Security Auditor', icon: <Shield />, premium: false, desc: 'Fix SQLi, XSS, RCE.', systemPrompt: "You are the Cybersecurity Auditor. Conduct a deep security scan on the code. Look for SQL Injection, XSS, CSRF, RCE, weak cryptography, and hardcoded secrets. Provide a secure refactored version and explain the vulnerabilities found." },
+  { id: 'perf', name: 'Optimizer', icon: <Zap />, premium: false, desc: 'Boost speed & scalability.', systemPrompt: "You are the Performance Optimizer. Refactor the code to improve execution speed, reduce memory usage, and enhance scalability. Look for O(n^2) loops, redundant computations, and unoptimized queries. Provide the optimized code." },
+  { id: 'explain', name: 'Code Explainer', icon: <FileCode />, premium: false, desc: 'Deep explanations.', systemPrompt: "You are the Interactive Code Explainer. Break down the provided code into simple, digestible parts. Explain the logic flow, variable purposes, and algorithmic approach. Use analogies where appropriate. Do not just rewrite the code, explain *why* it works." },
+  { id: 'pair', name: 'Pair Programmer', icon: <User />, premium: false, desc: 'Real-time collab.', systemPrompt: "You are an AI Pair Programmer. Act as a senior developer colleague. Suggest completions, refactorings, or alternative approaches to the user's current code snippet. Maintain a collaborative and helpful tone." },
+  // APEX
+  { id: 'legacy', name: 'Legacy Resurrection', icon: <History />, premium: true, desc: 'Modernize old stacks.', systemPrompt: "You are the Legacy Code Resurrection Engine. Your task is to modernize outdated code (e.g., COBOL, old PHP, jQuery, VB6) into modern standards (e.g., React, Go, Rust, Python 3.10+). Preserve business logic but upgrade the syntax, libraries, and security practices." },
+  { id: 'cicd', name: 'CI/CD Integrator', icon: <Cpu />, premium: true, desc: 'Pipeline automation.', systemPrompt: "You are the CI/CD Integrator. Generate robust pipeline configurations (GitHub Actions YAML, GitLab CI, Jenkinsfile, Dockerfile) for the provided code. Ensure automated testing, linting, security scanning, and deployment steps are included." },
+  { id: 'custom', name: 'Custom Commander', icon: <Terminal />, premium: true, desc: 'Execute commands.', systemPrompt: "You are the Custom Command Executor. Follow the specific instructions provided by the user regarding the code. You are versatile and adaptable. If the user asks for a specific refactor pattern (e.g., SOLID, DRY, KISS), apply it rigorously." },
+  { id: 'sim', name: 'Adv. Simulation', icon: <Play />, premium: true, desc: 'Sandbox run.', systemPrompt: "You are the Advanced Simulation Environment. Simulate the execution of the provided code. Predict the output for various edge cases. If it's UI code, describe the visual result. If it's logic, trace the variable states. Find logic bugs that static analysis might miss." },
+  { id: 'docs', name: 'Dynamic Docs', icon: <FileText />, premium: true, desc: 'Auto documentation.', systemPrompt: "You are the Dynamic Documentation Generator. Create comprehensive documentation for the code, including JSDoc/Docstrings, API endpoint definitions (Swagger/OpenAPI), and usage examples. Make it professional and ready for a README.md." },
+  { id: 'exp', name: 'Experimental UI', icon: <Sparkles />, premium: true, desc: 'UI Auto-Design.', systemPrompt: "You are the Experimental UI Generator. Generate stunning, modern, and responsive web interfaces using React, Tailwind CSS, and Lucide React icons. IMPORTANT: Provide the FULL code in a single file. Ensure it is visually impressive (Glassmorphism, Neobrutalism, or Minimalist)." },
 ];
 
 const AI_MODELS = [
@@ -541,13 +455,22 @@ export default function App() {
   }, []);
 
   // HISTORY SYNC
+  // UPDATED V17.0: REMOVED 'orderBy' from query to prevent index errors. Sorted manually.
   useEffect(() => {
     if (!user) { setHistory([]); return; }
-    let q = query(collection(db, 'history'), where('userId', '==', user.uid), orderBy('createdAt', 'desc')); 
+    let q = query(collection(db, 'history'), where('userId', '==', user.uid)); 
+    
     const unsub = onSnapshot(q, (snap) => {
       const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      fetched.sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      // Client-side Sorting (Newest First)
+      fetched.sort((a: any, b: any) => {
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
       setHistory(fetched);
+    }, (error) => {
+        console.error("Firestore History Error:", error); // Log error silently
     });
     return () => unsub();
   }, [user, view]); 
@@ -627,6 +550,7 @@ export default function App() {
   };
 
   const handleAnalyze = async () => {
+    // SECURITY: Require User API Key
     const apiKeyToUse = customApiKey || defaultApiKey; 
     if (!apiKeyToUse) {
         notify("⚠️ API Key Missing! Please set it in Settings or Login.", "error");
@@ -695,7 +619,7 @@ export default function App() {
         codeSnippet: chatInput.substring(0,50), 
         module: 'Free Chat', 
         response: text, 
-        type: 'chat',
+        type: 'chat', 
         createdAt: serverTimestamp() 
       });
 
@@ -773,7 +697,7 @@ export default function App() {
 
       {/* MAIN */}
       <main className="flex-1 flex flex-col w-full relative bg-slate-950">
-         <header className="h-auto min-h-[64px] border-b border-slate-800 flex flex-col md:flex-row items-center justify-between px-6 py-2 bg-slate-950/90 backdrop-blur sticky top-0 z-30">
+         <header className="h-auto min-h-[64px] border-b border-slate-800 flex flex-col md:flex-row items-center justify-between px-6 py-2 bg-slate-950/90 backdrop-blur sticky top-0 z-40 shadow-md">
             <div className="flex items-center gap-4 w-full md:w-auto mb-2 md:mb-0">
                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-slate-400 hover:text-white transition-colors mr-2 p-2 bg-slate-800/50 rounded-lg"><Menu/></button>
                <div className="flex items-center gap-2 text-slate-400 text-sm"><LayoutDashboard size={16}/> <ChevronRight size={14}/> <span className={isPremium ? "text-amber-400 font-bold" : "text-cyan-400 font-bold"}>{view === 'portal' ? tText('portalLabel') : view === 'premium' ? tText('upgrade') : view === 'settings' ? tText('settings') : view === 'chat' ? tText('chat') : currentModule.name}</span></div>
@@ -890,7 +814,7 @@ export default function App() {
            )
          )}
 
-         {/* SETTINGS & PORTAL & PREMIUM views remain same... */}
+         {/* SETTINGS VIEW */}
          {view === 'settings' && (
            <div className="flex-1 overflow-y-auto p-6 md:p-12">
              <div className="max-w-2xl mx-auto">
