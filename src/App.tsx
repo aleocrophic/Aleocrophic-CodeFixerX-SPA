@@ -8,7 +8,7 @@ import {
   FileCode, Play, CheckCircle, Search,  
   Menu, X, ChevronRight, Command, LogIn, Info,  
   Server, Globe, Copyright, FileText, Eye, Maximize2, Minimize2,  
-  Settings, Box, Activity, Languages, BookOpen, Key, Database, Layers, Clipboard, AlertTriangle, Heart, Briefcase, Laptop, Bug, Upload, Brain, MessageSquare, PlusCircle, RefreshCw, Send, ShoppingCart, Edit2, Trash2, PanelRight, ExternalLink, Github 
+  Settings, Box, Activity, Languages, BookOpen, Key, Database, Layers, Clipboard, AlertTriangle, Heart, Briefcase, Laptop, Bug, Upload, Brain, MessageSquare, PlusCircle, RefreshCw, Send, ShoppingCart, Edit2, Trash2, PanelRight, ExternalLink, Github, Wifi, WifiOff, Fingerprint 
 } from 'lucide-react'; 
  
 // --- 1. FIREBASE CONFIGURATION --- 
@@ -26,8 +26,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app); 
 const db = getFirestore(app); 
  
-// --- GLOBAL API KEY PLACEHOLDER --- 
-const defaultApiKey = "";  
+// --- 🚫 SECURITY UPDATE: NO DEFAULT API KEY --- 
+const defaultApiKey = ""; // REMOVED FOR SECURITY 
  
 // --- 2. DATA & TRANSLATIONS (FULL COMPLETE 7 LANGUAGES) --- 
  
@@ -46,7 +46,10 @@ const LANGUAGES = {
       roleUser: 'User', roleAI: 'CodeFixerX', buyKey: 'BUY KEY NOW', dontHaveKey: "DON'T HAVE A KEY?", 
       originTitle: 'Origin of Aleocrophic', specialThanks: 'Special Thanks', coreInfra: 'Core Infrastructure', 
       toggleHistory: 'Toggle History', sourceInput: 'SOURCE INPUT', getKey: 'Get API Key', saveEnter: 'Save & Enter', 
-      apiKeyDesc: 'Required. Your personal Gemini API Key. Stored locally.', 
+      apiKeyDesc: 'REQUIRED. Your personal Gemini API Key. Stored strictly locally on your device.', 
+      enterApiFirst: 'System Locked. API Key Required.', 
+      apiGateMsg: 'To prevent API abuse and flagging, a personal Gemini API Key is now mandatory to access the system.', 
+      validateKey: 'VALIDATE & ENTER', 
       portalContent: { 
         aboutText: "CodeFixerX was born from a simple necessity: the modern development landscape is chaotic. With hundreds of languages, frameworks, and updates releasing weekly, developers are drowning in complexity. Aleocrophic Systems, founded by Rayhan Dzaky Al Mubarok under the NyxShade Interactive banner, aims to be the lighthouse in this storm. We bridge the gap between 'it works on my machine' and 'production-ready enterprise code' using state-of-the-art AI.", 
         missionText: "Our mission is not to replace the developer, but to empower them. To give every coder, regardless of experience level, an 'Apex' level assistant that understands security, scalability, and clean architecture.", 
@@ -74,7 +77,10 @@ const LANGUAGES = {
       roleUser: 'Pengguna', roleAI: 'CodeFixerX', buyKey: 'BELI KUNCI SEKARANG', dontHaveKey: "BELUM PUNYA KUNCI?", 
       originTitle: 'Asal Usul Aleocrophic', specialThanks: 'Terima Kasih Khusus', coreInfra: 'Infrastruktur Inti', 
       toggleHistory: 'Buka Riwayat', sourceInput: 'SUMBER KODE', getKey: 'Dapatkan Key', saveEnter: 'Simpan & Masuk', 
-      apiKeyDesc: 'Wajib. API Key Gemini pribadi Anda. Disimpan secara lokal.', 
+      apiKeyDesc: 'WAJIB. API Key Gemini pribadi Anda. Disimpan secara lokal di perangkat ini.', 
+      enterApiFirst: 'Sistem Terkunci. Butuh API Key.', 
+      apiGateMsg: 'Untuk mencegah penyalahgunaan API dan flagging, Kunci API Gemini pribadi sekarang wajib untuk mengakses sistem.', 
+      validateKey: 'VALIDASI & MASUK', 
       portalContent: { 
         aboutText: "CodeFixerX lahir dari kebutuhan sederhana: lanskap pengembangan modern sangat kacau. Dengan ratusan bahasa dan kerangka kerja yang rilis setiap minggu, pengembang tenggelam dalam kompleksitas. Aleocrophic Systems, didirikan oleh Rayhan Dzaky Al Mubarok di bawah bendera NyxShade Interactive, bertujuan menjadi mercusuar dalam badai ini. Kami menjembatani kesenjangan antara 'kode coba-coba' dan 'kode standar perusahaan' menggunakan AI mutakhir.", 
         missionText: "Misi kami bukan untuk menggantikan pengembang, tetapi untuk memberdayakan mereka. Memberikan setiap pemrogram, tanpa memandang level pengalaman, asisten level 'Apex' yang memahami keamanan, skalabilitas, dan arsitektur bersih.", 
@@ -103,6 +109,9 @@ const LANGUAGES = {
       originTitle: 'Aleocrophicの起源', specialThanks: '特別感謝', coreInfra: 'コアインフラストラクチャ', 
       toggleHistory: '履歴の切り替え', sourceInput: 'ソース入力', getKey: 'キーを取得', saveEnter: '保存して入る', 
       apiKeyDesc: '必須。個人のGemini APIキー。ローカルに保存されます。', 
+      enterApiFirst: 'システムロック中。APIキーが必要です。', 
+      apiGateMsg: 'APIの悪用やフラグ付けを防ぐため、システムへのアクセスには個人のGemini APIキーが必須となりました。', 
+      validateKey: '検証して入る', 
       portalContent: { 
         aboutText: "CodeFixerXは、単純な必要性から生まれました。現代の開発環境は混沌としています。Aleocrophic Systemsは、NyxShade Interactiveの旗の下、Rayhan Dzaky Al Mubarokによって設立され、この嵐の中の灯台となることを目指しています。最先端のAIを使用して、「ローカルで動くコード」と「本番環境対応のエンタープライズコード」の間のギャップを埋めます。", 
         missionText: "私たちの使命は、開発者に取って代わることではなく、力を与えることです。経験レベルに関係なく、すべてのプログラマーにセキュリティ、スケーラビリティ、クリーンアーキテクチャを理解する「Apex」レベルのアシスタントを提供します。", 
@@ -131,6 +140,9 @@ const LANGUAGES = {
       originTitle: 'أصل Aleocrophic', specialThanks: 'شكر خاص', coreInfra: 'البنية التحتية الأساسية', 
       toggleHistory: 'تبديل السجل', sourceInput: 'مدخلات المصدر', getKey: 'احصل على المفتاح', saveEnter: 'حفظ والدخول', 
       apiKeyDesc: 'مطلوب. مفتاح Gemini API الخاص بك. مخزن محليا.', 
+      enterApiFirst: 'النظام مقفل. مطلوب مفتاح API.', 
+      apiGateMsg: 'لمنع إساءة استخدام واجهة برمجة التطبيقات والإبلاغ عنها، أصبح مفتاح Gemini API الشخصي إلزاميًا الآن للوصول إلى النظام.', 
+      validateKey: 'التحقق والدخول', 
       portalContent: { 
         aboutText: "ولدت CodeFixerX من ضرورة بسيطة: مشهد التطوير الحديث فوضوي. تهدف Aleocrophic Systems، التي أسسها ريحان زكي المبارك تحت راية NyxShade Interactive، إلى أن تكون المنارة في هذه العاصفة. نحن نسد الفجوة بين الكود التجريبي والكود الجاهز للإنتاج باستخدام الذكاء الاصطناعي المتطور.", 
         missionText: "مهمتنا ليست استبدال المطور، بل تمكينه. لمنح كل مبرمج، بغض النظر عن مستوى الخبرة، مساعدًا بمستوى 'Apex' يفهم الأمن وقابلية التوسع والهندسة النظيفة.", 
@@ -159,6 +171,9 @@ const LANGUAGES = {
       originTitle: 'Происхождение Aleocrophic', specialThanks: 'Особая благодарность', coreInfra: 'Базовая инфраструктура', 
       toggleHistory: 'История', sourceInput: 'ИСХОДНЫЙ КОД', getKey: 'Получить ключ', saveEnter: 'Сохранить и войти', 
       apiKeyDesc: 'Обязательно. Ваш личный ключ API Gemini. Хранится локально.', 
+      enterApiFirst: 'Система заблокирована. Требуется API-ключ.', 
+      apiGateMsg: 'Чтобы предотвратить злоупотребление API и блокировку, для доступа к системе теперь требуется личный ключ API Gemini.', 
+      validateKey: 'ПРОВЕРИТЬ И ВОЙТИ', 
       portalContent: { 
         aboutText: "CodeFixerX родился из простой необходимости: современный ландшафт разработки хаотичен. Aleocrophic Systems, основанная Райханом Дзаки Аль Мубароком под знаменем NyxShade Interactive, стремится стать маяком в этом шторме. Мы устраняем разрыв между 'работает на моей машине' и 'готовым к производству корпоративным кодом' с помощью передового ИИ.", 
         missionText: "Наша миссия — не заменить разработчика, а расширить его возможности. Предоставить каждому программисту, независимо от опыта, помощника уровня 'Apex', который понимает безопасность и масштабируемость.", 
@@ -187,6 +202,9 @@ const LANGUAGES = {
       originTitle: 'Ursprung von Aleocrophic', specialThanks: 'Besonderer Dank', coreInfra: 'Kerninfrastruktur', 
       toggleHistory: 'Verlauf umschalten', sourceInput: 'QUELLCODE', getKey: 'Schlüssel erhalten', saveEnter: 'Speichern & Eintreten', 
       apiKeyDesc: 'Erforderlich. Ihr persönlicher Gemini API-Schlüssel. Lokal gespeichert.', 
+      enterApiFirst: 'System gesperrt. API-Schlüssel erforderlich.', 
+      apiGateMsg: 'Um API-Missbrauch und Sperrungen zu verhindern, ist jetzt ein persönlicher Gemini API-Schlüssel erforderlich, um auf das System zuzugreifen.', 
+      validateKey: 'VALIDIEREN & EINTRETEN', 
       portalContent: { 
         aboutText: "CodeFixerX entstand aus einer einfachen Notwendigkeit: Die moderne Entwicklungslandschaft ist chaotisch. Aleocrophic Systems, gegründet von Rayhan Dzaky Al Mubarok unter dem Banner von NyxShade Interactive, will der Leuchtturm in diesem Sturm sein.", 
         missionText: "Unsere Mission ist es nicht, den Entwickler zu ersetzen, sondern ihn zu befähigen. Jedem Programmierer einen Assistenten auf 'Apex'-Niveau zu geben.", 
@@ -215,6 +233,9 @@ const LANGUAGES = {
       originTitle: 'Origen de Aleocrophic', specialThanks: 'Agradecimientos', coreInfra: 'Infraestructura Principal', 
       toggleHistory: 'Historial', sourceInput: 'CÓDIGO FUENTE', getKey: 'Obtener clave', saveEnter: 'Guardar y Entrar', 
       apiKeyDesc: 'Requerido. Tu clave API personal de Gemini. Almacenada localmente.', 
+      enterApiFirst: 'Sistema Bloqueado. Clave API Requerida.', 
+      apiGateMsg: 'Para evitar el abuso de la API y las banderas, ahora es obligatorio una clave de API personal de Gemini para acceder al sistema.', 
+      validateKey: 'VALIDAR Y ENTRAR', 
       portalContent: { 
         aboutText: "CodeFixerX nació de una necesidad simple: el panorama de desarrollo moderno es caótico. Aleocrophic Systems, fundada por Rayhan Dzaky Al Mubarok bajo la bandera de NyxShade Interactive, aspira a ser el faro en esta tormenta.", 
         missionText: "Nuestra misión no es reemplazar al desarrollador, sino empoderarlo. Darle a cada programador un asistente de nivel 'Apex'.", 
@@ -248,10 +269,9 @@ const MODULES = [
 ]; 
  
 const AI_MODELS = [ 
-  { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash (Latest)', desc: 'Fastest & Most Capable' }, 
-  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', desc: 'Complex Reasoning' }, 
-  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', desc: 'High Speed' }, 
-  { id: 'gemini-1.0-pro', name: 'Gemini 1.0 Pro', desc: 'Legacy Stable' }, 
+  { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash', desc: 'Latest' }, 
+  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', desc: 'Reasoning' }, 
+  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', desc: 'Speed' }, 
 ]; 
  
 const APEX_MANIFESTO = "You are CodeFixerX Apex Edition. Infinite Context. Deep Scan Active."; 
@@ -369,11 +389,12 @@ const CodeBlock = ({ lang, code, copyLabel, copiedLabel }) => {
 // --- 4. MAIN APP --- 
 export default function App() {  
   const [user, setUser] = useState(null); 
-  const [view, setView] = useState('language'); 
+  const [view, setView] = useState('apikey_gate'); // DEFAULT VIEW IS NOW SECURITY GATE 
   const [langCode, setLangCode] = useState('en'); 
   const [isPremium, setIsPremium] = useState(false); 
   const [currentModule, setCurrentModule] = useState(MODULES[0]); 
   const [aiModel, setAiModel] = useState(AI_MODELS[0].id); 
+  const [apiStatus, setApiStatus] = useState('idle'); // idle, loading, success, error 
    
   const [isAuthChecking, setIsAuthChecking] = useState(true); 
   const [isDevMode, setIsDevMode] = useState(false); 
@@ -395,10 +416,12 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);  
   const [premiumKey, setPremiumKey] = useState(''); 
   const [customApiKey, setCustomApiKey] = useState(''); 
+  const [gateApiKey, setGateApiKey] = useState(''); // New state for Gate input 
   const [loginApiKey, setLoginApiKey] = useState('');  
   const [notif, setNotif] = useState(null); 
   const [portalTab, setPortalTab] = useState('about');  
   const [generatedApiKey, setGeneratedApiKey] = useState("GUEST"); 
+  const [hoshinoImgError, setHoshinoImgError] = useState(false); 
  
   // SAFE TRANSLATION HELPERS 
   const getLangObj = () => LANGUAGES[langCode] || LANGUAGES['en']; 
@@ -421,12 +444,22 @@ export default function App() {
   // Effects 
   useEffect(() => { 
     const savedLang = localStorage.getItem('cfx_lang'); 
+    // SECURITY CHECK: API Key 
     const savedKey = localStorage.getItem('cfx_api_key'); 
     const savedModel = localStorage.getItem('cfx_ai_model'); 
     const savedPremium = localStorage.getItem('cfx_is_premium');  
  
     if (savedLang && LANGUAGES[savedLang]) setLangCode(savedLang); 
-    if (savedKey) setCustomApiKey(savedKey); 
+     
+    // LOGIC: If Key Exists, allow entry. If not, force Gate. 
+    if (savedKey && savedKey.trim().length > 10) { 
+        setCustomApiKey(savedKey); 
+        // Only set view to language if we haven't already determined user flow 
+        // This is handled by AuthStateChanged mostly 
+    } else { 
+        setView('apikey_gate'); 
+    } 
+ 
     if (savedModel) setAiModel(savedModel); 
     if (savedPremium === 'true') setIsPremium(true); // LOCAL STORAGE PERSISTENCE 
      
@@ -435,6 +468,14 @@ export default function App() {
  
     const unsub = onAuthStateChanged(auth, async (u) => {  
       setUser(u);  
+      // CHECK KEY AGAIN ON AUTH CHANGE 
+      const currentKey = localStorage.getItem('cfx_api_key'); 
+      if (!currentKey || currentKey.trim() === "") { 
+          setView('apikey_gate'); 
+          setIsAuthChecking(false); 
+          return; 
+      } 
+ 
       if(u) {  
         setIsDevMode(false); 
         setGeneratedApiKey(`CFX-${u.uid.substring(0,6).toUpperCase()}`); 
@@ -460,7 +501,8 @@ export default function App() {
                setIsPremium(false); 
             } 
             setGeneratedApiKey("GUEST");  
-            if(view === 'dashboard') setView('language');  
+            // If logged out but key exists, show language select or login 
+             if(view === 'dashboard') setView('language'); 
         } 
       } 
       setIsAuthChecking(false); 
@@ -490,6 +532,18 @@ export default function App() {
  
   // HANDLERS 
  
+  // NEW: Handle Gate API Key Submit 
+  const handleGateSubmit = () => { 
+      if (!gateApiKey.trim() || gateApiKey.length < 10) { 
+          notify("Invalid API Key Format", "error"); 
+          return; 
+      } 
+      localStorage.setItem('cfx_api_key', gateApiKey.trim()); 
+      setCustomApiKey(gateApiKey.trim()); 
+      notify("Security Check Passed! 🛡️", "success"); 
+      setView('language'); // Proceed to Language Selection 
+  }; 
+ 
   const handleLogin = async () => { 
     try {  
       const provider = new GoogleAuthProvider(); 
@@ -506,11 +560,6 @@ export default function App() {
   }; 
  
   const handleGuestAccess = () => { 
-      if (loginApiKey.trim()) { 
-          setCustomApiKey(loginApiKey.trim()); 
-          localStorage.setItem('cfx_api_key', loginApiKey.trim()); 
-          notify("API Key Saved!", "success"); 
-      } 
       setView('dashboard'); 
   } 
  
@@ -564,18 +613,18 @@ export default function App() {
   }; 
  
   const handleAnalyze = async () => { 
-    // SECURITY: Require User API Key 
-    const apiKeyToUse = customApiKey || defaultApiKey;  
+    // SECURITY: Require User API Key - NO DEFAULT FALLBACK 
+    const apiKeyToUse = customApiKey; 
     if (!apiKeyToUse) { 
-        notify("⚠️ API Key Missing! Please set it in Settings or Login.", "error"); 
-        setView('settings'); 
+        notify("CRITICAL: API Key Missing. Security Protocol Engaged.", "error"); 
+        setView('apikey_gate'); // KICK TO GATE 
         return; 
     } 
  
     if (!inputCode.trim()) return notify("Input Empty 😅", "warning"); 
     if (currentModule.premium && !isPremium) return notify("Locked! 🔒 Upgrade to Apex.", "error"); 
  
-    setLoading(true); setOutputResult(''); setIsInputMinimized(false); 
+    setLoading(true); setApiStatus('loading'); setOutputResult(''); setIsInputMinimized(false); 
  
     const baseManifesto = isPremium ? APEX_MANIFESTO : LITE_MANIFESTO; 
     const lang = getLangObj(); 
@@ -586,10 +635,16 @@ export default function App() {
         method: 'POST', headers: {'Content-Type': 'application/json'}, 
         body: JSON.stringify({ contents: [{ parts: [{ text: inputCode }] }], systemInstruction: { parts: [{ text: systemInstruction }] } }) 
       }); 
+       
+      if (resp.status === 403) { 
+          setApiStatus('error'); 
+          throw new Error("API KEY INVALID OR EXPIRED"); 
+      } 
+ 
       const data = await resp.json(); 
       if (data.error) throw new Error(data.error.message); 
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error."; 
-      setOutputResult(text); setIsInputMinimized(true); 
+      setOutputResult(text); setIsInputMinimized(true); setApiStatus('success'); 
  
       if (user && !isDevMode) await addDoc(collection(db, 'history'), {  
         userId: user.uid,  
@@ -600,14 +655,18 @@ export default function App() {
         createdAt: serverTimestamp()  
       }); 
  
-    } catch (e) { notify(`AI Error: ${e.message}`, "error"); } finally { setLoading(false); } 
+    } catch (e) {  
+        notify(`AI Error: ${e.message}`, "error");  
+        setApiStatus('error'); 
+        if (e.message.includes("API KEY")) setView('apikey_gate'); // Kick if invalid 
+    } finally { setLoading(false); } 
   }; 
  
   const handleChatSend = async () => { 
-    const apiKeyToUse = customApiKey || defaultApiKey; 
+    const apiKeyToUse = customApiKey; 
     if (!apiKeyToUse) { 
-        notify("⚠️ API Key Missing! Please set it in Settings.", "error"); 
-        setView('settings'); 
+        notify("CRITICAL: API Key Missing.", "error"); 
+        setView('apikey_gate'); 
         return; 
     } 
  
@@ -615,7 +674,7 @@ export default function App() {
     const newMessage = { role: 'user', text: chatInput }; 
     setChatMessages([...chatMessages, newMessage]); 
     setChatInput(''); 
-    setChatLoading(true); 
+    setChatLoading(true); setApiStatus('loading'); 
     
     // Reset height of textarea 
     if(chatInputRef.current) { 
@@ -629,9 +688,15 @@ export default function App() {
         method: 'POST', headers: {'Content-Type': 'application/json'}, 
         body: JSON.stringify({ contents: [{ parts: [{ text: chatInput }] }], systemInstruction: { parts: [{ text: `You are CodeFixerX. Reply in ${lang.label} (${lang.flag}). Be stylish, expressive, and helpful. Use emojis.` }] } }) 
       }); 
+       
+      if (resp.status === 403) { 
+          setApiStatus('error'); 
+          throw new Error("API KEY INVALID"); 
+      } 
+ 
       const data = await resp.json(); 
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error."; 
-      setChatMessages(prev => [...prev, { role: 'ai', text: text }]); 
+      setChatMessages(prev => [...prev, { role: 'ai', text: text }]); setApiStatus('success'); 
        
       if (user && !isDevMode) await addDoc(collection(db, 'history'), {  
         userId: user.uid,  
@@ -642,7 +707,11 @@ export default function App() {
         createdAt: serverTimestamp()  
       }); 
  
-    } catch(e) { notify("Chat Error", "error"); } finally { setChatLoading(false); } 
+    } catch(e) {  
+        notify("Chat Error: " + e.message, "error");  
+        setApiStatus('error'); 
+        if (e.message.includes("API KEY")) setView('apikey_gate'); // Kick if invalid 
+    } finally { setChatLoading(false); } 
   }; 
  
   const copyChat = (text) => { 
@@ -657,6 +726,7 @@ export default function App() {
     } 
     localStorage.setItem('cfx_api_key', customApiKey); 
     notify("Custom Key Saved & Ready!", "success"); 
+    setApiStatus('idle'); // Reset status 
   } 
  
   // FIX: Shift+Enter Handler 
@@ -670,15 +740,43 @@ export default function App() {
   // --- RENDER AUTH LOADING --- 
   if (isAuthChecking) return (<div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4"><div className="relative mb-8"><div className="absolute inset-0 bg-cyan-500/30 blur-xl rounded-full animate-pulse"></div><Cpu size={64} className="text-cyan-400 relative z-10 animate-bounce"/></div><h2 className="text-2xl font-bold text-white mb-2 tracking-wider">INITIALIZING NEURAL LINK</h2></div>); 
  
-  // --- LOGIN VIEW --- 
+  // --- API KEY GATE (NEW) --- 
+  if (view === 'apikey_gate') return ( 
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"> 
+       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80')] bg-cover opacity-10 blur-sm"></div> 
+       <div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-red-500/50 max-w-md w-full text-center shadow-2xl relative animate-fadeIn"> 
+         <div className="w-20 h-20 bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6 ring-2 ring-red-500/50 animate-pulse"><Shield size={40} className="text-red-500"/></div> 
+         <h2 className="text-2xl font-bold text-white mb-2 tracking-wider">SECURITY GATE</h2> 
+         <p className="text-slate-400 text-sm mb-6">{tText('apiGateMsg') || 'Mandatory API Key Required to prevent flagging.'}</p> 
+         <div className="mb-6 text-left relative"> 
+            <label className="text-[10px] text-slate-500 uppercase font-bold ml-1 mb-1 block flex items-center gap-1"><Key size={10}/> {tText('customKey')}</label> 
+            <div className="flex gap-2"> 
+                <input type="password" value={gateApiKey} onChange={(e) => setGateApiKey(e.target.value)} className="flex-1 bg-slate-950 border border-slate-700 text-white text-sm p-3 rounded-xl outline-none focus:border-red-500 transition-colors" placeholder="AIzaSy..."/> 
+            </div> 
+            <p className="text-[10px] text-slate-500 mt-2 flex items-center gap-1"><Lock size={10}/> Stored strictly locally on your device (localStorage).</p> 
+         </div> 
+         <button onClick={handleGateSubmit} className="w-full py-4 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold rounded-xl flex justify-center gap-2 transition shadow-lg shadow-red-900/50"> 
+            <Fingerprint size={20}/> {tText('validateKey') || 'VALIDATE & ENTER'} 
+         </button> 
+         <div className="mt-4 text-center"> 
+             <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-xs text-cyan-500 hover:text-cyan-400 font-bold flex items-center justify-center gap-1 hover:underline"><ExternalLink size={10}/> Get Free Gemini API Key</a> 
+         </div> 
+       </div> 
+    </div> 
+  ); 
+ 
+  // --- LANGUAGE SELECTION --- 
   if (view === 'language') return (<div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519608487953-e999c86e7455?q=80')] bg-cover opacity-10 animate-pulse"></div><div className="z-10 max-w-5xl w-full bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl p-8 shadow-2xl text-center"><h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">CodeFixerX</h1><p className="text-slate-400 text-sm tracking-[0.3em] uppercase mb-12">Aleocrophic Systems</p><div className="grid grid-cols-2 md:grid-cols-4 gap-4">{Object.entries(LANGUAGES).map(([code, data]) => (<button key={code} onClick={() => { setLangCode(code); setView('login'); }} className="p-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500 rounded-2xl transition-all group flex flex-col items-center"><span className="text-4xl mb-3 block group-hover:scale-110 transition-transform">{data.flag}</span><span className="text-slate-300 font-bold group-hover:text-white">{data.label}</span></button>))}</div></div></div>); 
+ 
+  // --- LOGIN VIEW --- 
   if (view === 'login') return ( 
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"> 
        <button onClick={() => setView('language')} className="absolute top-6 left-6 text-slate-400 hover:text-white flex gap-2 z-20"><ChevronRight className="rotate-180"/> Back</button> 
        <div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-slate-700 max-w-sm w-full text-center shadow-2xl relative"> 
          <div className="w-20 h-20 bg-cyan-900/30 rounded-full flex items-center justify-center mx-auto mb-6"><Cpu size={40} className="text-cyan-400"/></div> 
          <h2 className="text-2xl font-bold text-white mb-2">{tText('login')}</h2> 
-         <div className="mb-4 text-left"><label className="text-[10px] text-slate-500 uppercase font-bold ml-1 mb-1 block">{tText('customKey')}</label><div className="flex gap-2"><input type="password" value={loginApiKey} onChange={(e) => setLoginApiKey(e.target.value)} className="flex-1 bg-slate-800 border border-slate-600 text-white text-xs p-2 rounded-lg outline-none focus:border-cyan-500" placeholder="Paste Key Here..."/><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="bg-slate-800 border border-slate-600 text-cyan-400 hover:text-white p-2 rounded-lg" title={tText('getKey')}><ExternalLink size={14}/></a></div></div> 
+         {/* Removed Input Key here because Gatekeeper handles it */} 
+         <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-lg mb-4 text-xs text-emerald-300 flex items-center gap-2"><CheckCircle size={14}/> API Key Secured & Ready.</div> 
          <button onClick={handleLogin} className="w-full py-3 bg-white text-slate-900 font-bold rounded-xl flex justify-center gap-2 hover:bg-slate-200 transition mb-3"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="G"/> Google Auth</button> 
          <button onClick={handleGuestAccess} className="w-full py-3 bg-slate-800 text-slate-400 hover:text-white text-sm font-bold rounded-xl transition">{tText('saveEnter')}</button> 
        </div> 
@@ -689,6 +787,9 @@ export default function App() {
   return ( 
     <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-200 font-sans selection:bg-cyan-500/30"> 
       {notif && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-lg border animate-bounce ${notif.type==='success'?'bg-emerald-500/20 border-emerald-500 text-emerald-300':'bg-red-500/20 border-red-500 text-red-300'}`}>{notif.msg}</div>} 
+ 
+      {/* SIDEBAR OVERLAY FOR MOBILE */} 
+      {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm" onClick={()=>setSidebarOpen(false)}></div>} 
  
       {/* SIDEBAR */} 
       <aside className={` 
@@ -721,16 +822,21 @@ export default function App() {
       {/* MAIN CONTENT AREA */} 
       <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-950"> 
          
-         {/* STICKY NAVBAR - Inside the flex-col so it doesn't overlap sidebar */} 
+         {/* STICKY NAVBAR */} 
          <header className="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/90 backdrop-blur sticky top-0 z-30 shadow-md shrink-0"> 
             <div className="flex items-center gap-4"> 
                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden text-slate-400 hover:text-white transition-colors mr-2 p-2 bg-slate-800/50 rounded-lg"><Menu/></button> 
-               <div className="flex items-center gap-2 text-slate-400 text-sm"><LayoutDashboard size={16}/> <ChevronRight size={14}/> <span className={isPremium ? "text-amber-400 font-bold" : "text-cyan-400 font-bold"}>{view === 'portal' ? tText('portalLabel') : view === 'premium' ? tText('upgrade') : view === 'settings' ? tText('settings') : view === 'chat' ? tText('chat') : currentModule.name}</span></div> 
+               <div className="flex items-center gap-2 text-slate-400 text-sm overflow-hidden whitespace-nowrap"><LayoutDashboard size={16} className="shrink-0"/> <ChevronRight size={14} className="shrink-0"/> <span className={`truncate ${isPremium ? "text-amber-400 font-bold" : "text-cyan-400 font-bold"}`}>{view === 'portal' ? tText('portalLabel') : view === 'premium' ? tText('upgrade') : view === 'settings' ? tText('settings') : view === 'chat' ? tText('chat') : currentModule.name}</span></div> 
             </div> 
-            <div className="flex items-center gap-4 text-xs font-mono"> 
+            <div className="flex items-center gap-2 sm:gap-4 text-xs font-mono"> 
+               {/* STATUS INDICATOR (NEW) */} 
+               <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-slate-900 border border-slate-800"> 
+                  {apiStatus === 'loading' ? <RefreshCw size={12} className="animate-spin text-cyan-500"/> : apiStatus === 'error' ? <WifiOff size={12} className="text-red-500"/> : <Wifi size={12} className="text-emerald-500"/>} 
+                  <span className={`hidden sm:inline font-bold ${apiStatus==='error'?'text-red-400':apiStatus==='loading'?'text-cyan-400':'text-emerald-400'}`}>{apiStatus === 'loading' ? 'SYNC...' : apiStatus === 'error' ? 'OFFLINE' : 'ONLINE'}</span> 
+               </div> 
+ 
                <div className="hidden md:flex items-center gap-2 text-slate-500"><span className={`w-2 h-2 rounded-full ${isPremium ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span> ACTIVE</div> 
                {view !== 'settings' && view !== 'premium' && <button onClick={handleNewSession} className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1.5 rounded text-cyan-400 transition cursor-pointer"><RefreshCw size={12}/> <span className="hidden sm:inline">{tText('newChat')}</span></button>} 
-               {customApiKey && <div className="hidden sm:flex items-center gap-1 border border-slate-800 rounded px-2 py-0.5 bg-slate-900"><Key size={10} className="text-amber-500"/><span className="text-slate-400">CUSTOM KEY</span></div>} 
             </div> 
          </header> 
  
@@ -739,7 +845,7 @@ export default function App() {
             
             {/* VIEW: DASHBOARD */} 
             {view === 'dashboard' && ( 
-                <div className="p-4 md:p-6 flex flex-col lg:flex-row gap-6 min-h-full"> 
+                <div className="p-4 flex flex-col lg:flex-row gap-6 min-h-full"> 
                    <div className="flex-1 flex flex-col gap-4"> 
                       {/* INPUT AREA */} 
                       <div  
@@ -795,13 +901,13 @@ export default function App() {
             {/* VIEW: CHAT */} 
             {view === 'chat' && ( 
                isPremium ? ( 
-                 <div className="p-4 md:p-6 flex flex-col lg:flex-row gap-6 h-full"> 
+                 <div className="p-4 flex flex-col lg:flex-row gap-6 h-full"> 
                    <div className="flex-1 flex flex-col h-full bg-slate-900 rounded-2xl border border-slate-800 relative overflow-hidden shadow-xl"> 
-                     <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-4"> 
+                     <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar space-y-4"> 
                        {chatMessages.length === 0 && <div className="h-full flex flex-col items-center justify-center text-slate-600"><MessageSquare size={48} className="mb-4 opacity-20"/><p>{tText('chatStart')}</p></div>} 
                        {chatMessages.map((msg, idx) => ( 
                          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}> 
-                           <div className={`max-w-[85%] p-4 rounded-2xl relative ${msg.role === 'user' ? 'bg-cyan-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'}`}> 
+                           <div className={`max-w-[90%] md:max-w-[85%] p-4 rounded-2xl relative ${msg.role === 'user' ? 'bg-cyan-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'}`}> 
                              <MarkdownRenderer content={msg.text} copyLabel={tText('copy')} copiedLabel={tText('copied')} /> 
                              <div className={`absolute -bottom-6 ${msg.role === 'user' ? 'right-0' : 'left-0'} opacity-0 group-hover:opacity-100 transition flex gap-2`}> 
                                <button onClick={() => copyChat(msg.text)} className="p-1 bg-slate-800 rounded border border-slate-700 text-slate-400 hover:text-white" title={tText('copy')}><Clipboard size={12}/></button> 
@@ -819,12 +925,12 @@ export default function App() {
                             setChatInput(e.target.value); 
                             // AUTO EXPAND LOGIC 
                             e.target.style.height = 'auto'; 
-                            e.target.style.height = `${e.target.scrollHeight}px`; 
+                            e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`; // Max height limit 
                          }}  
                          onKeyDown={handleChatInputKeyDown}  
                          placeholder={tText('chatPlaceholder')}  
                          rows={1} 
-                         className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 p-3 rounded-xl focus:border-cyan-500 outline-none resize-none max-h-48 overflow-y-auto min-h-[50px] custom-scrollbar" 
+                         className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 p-3 rounded-xl focus:border-cyan-500 outline-none resize-none overflow-y-auto min-h-[50px] custom-scrollbar" 
                        /> 
                        <button onClick={handleChatSend} className="bg-cyan-600 hover:bg-cyan-500 text-white p-3 rounded-xl mb-0.5"><Send size={20}/></button> 
                      </div> 
@@ -832,29 +938,32 @@ export default function App() {
                     
                    {/* CHAT HISTORY SIDEBAR */} 
                    {chatHistoryOpen && ( 
-                    <div className="w-full lg:w-64 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col overflow-hidden shrink-0 h-48 lg:h-full shadow-lg absolute lg:relative right-0 z-20"> 
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between"> 
-                            <span className="text-xs font-bold text-slate-400 flex items-center gap-2"><History size={14}/> {tText('history')} (Chat)</span> 
-                            <button onClick={() => setChatHistoryOpen(false)} className="lg:hidden text-slate-400"><X size={14}/></button> 
-                        </div> 
-                        <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar"> 
-                          {!user && !isDevMode ? <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs p-4 text-center"><Lock size={20} className="mb-2"/><p>Guest Mode.</p></div> : history.filter(h => h.type === 'chat').length === 0 ? <div className="text-center text-slate-600 text-xs mt-4">No chats.</div> :  
-                            history.filter(h => h.type === 'chat').map(h => ( 
-                              <div key={h.id} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group" 
-                                   onClick={() => { 
-                                       setChatMessages([ 
-                                           { role: 'user', text: h.codeSnippet }, 
-                                           { role: 'ai', text: h.response } 
-                                       ]); 
-                                       notify("Chat Session Loaded", "success"); 
-                                       if(window.innerWidth < 768) setChatHistoryOpen(false); 
-                                   }}> 
-                                <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-purple-400 uppercase truncate">CHAT</span><span className="text-[10px] text-slate-600">{h.createdAt ? new Date(h.createdAt.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Now'}</span></div> 
-                                <div className="text-xs text-slate-400 truncate font-mono">{h.codeSnippet}</div> 
-                              </div> 
-                            )) 
-                          } 
-                        </div> 
+                    <div className="fixed inset-0 lg:static lg:inset-auto z-50 flex justify-end lg:block"> 
+                       <div className="absolute inset-0 bg-black/60 lg:hidden backdrop-blur-sm" onClick={() => setChatHistoryOpen(false)}></div> 
+                       <div className="w-72 lg:w-64 bg-slate-900 rounded-l-2xl lg:rounded-2xl border-l lg:border border-slate-800 flex flex-col overflow-hidden shrink-0 h-full shadow-2xl lg:shadow-lg relative z-10 animate-fadeInRight"> 
+                            <div className="p-4 border-b border-slate-800 flex items-center justify-between"> 
+                                <span className="text-xs font-bold text-slate-400 flex items-center gap-2"><History size={14}/> {tText('history')}</span> 
+                                <button onClick={() => setChatHistoryOpen(false)} className="lg:hidden text-slate-400"><X size={14}/></button> 
+                            </div> 
+                            <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar"> 
+                              {!user && !isDevMode ? <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs p-4 text-center"><Lock size={20} className="mb-2"/><p>Guest Mode.</p></div> : history.filter(h => h.type === 'chat').length === 0 ? <div className="text-center text-slate-600 text-xs mt-4">No chats.</div> :  
+                                history.filter(h => h.type === 'chat').map(h => ( 
+                                  <div key={h.id} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group" 
+                                      onClick={() => { 
+                                          setChatMessages([ 
+                                              { role: 'user', text: h.codeSnippet }, 
+                                              { role: 'ai', text: h.response } 
+                                          ]); 
+                                          notify("Chat Session Loaded", "success"); 
+                                          if(window.innerWidth < 768) setChatHistoryOpen(false); 
+                                      }}> 
+                                    <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-purple-400 uppercase truncate">CHAT</span><span className="text-[10px] text-slate-600">{h.createdAt ? new Date(h.createdAt.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Now'}</span></div> 
+                                    <div className="text-xs text-slate-400 truncate font-mono">{h.codeSnippet}</div> 
+                                  </div> 
+                                )) 
+                              } 
+                            </div> 
+                       </div> 
                     </div> 
                    )} 
                    <button onClick={() => setChatHistoryOpen(!chatHistoryOpen)} className="absolute right-6 top-6 lg:hidden z-30 bg-slate-800 p-2 rounded-full border border-slate-700 text-slate-400 shadow-lg"><PanelRight size={20}/></button> 
@@ -880,11 +989,11 @@ export default function App() {
  
             {/* VIEW: PORTAL (UPDATED & IMPLEMENTED) */} 
             {view === 'portal' && ( 
-                <div className="p-6 md:p-12 pb-20 max-w-5xl mx-auto animate-fadeIn"> 
+                <div className="p-4 md:p-12 pb-20 max-w-5xl mx-auto animate-fadeIn"> 
                     {/* Portal Navigation */} 
-                    <div className="flex gap-4 border-b border-slate-800 mb-8 pb-1 sticky top-0 bg-slate-950/95 z-20 pt-4"> 
+                    <div className="flex overflow-x-auto gap-4 border-b border-slate-800 mb-8 pb-1 sticky top-0 bg-slate-950/95 z-20 pt-4 scrollbar-hide"> 
                         {[{id:'about',label:'About Us'},{id:'legal',label:'Legal Docs'},{id:'guide',label:'Guide'},{id:'infra',label:'Infrastructure'}].map(t => ( 
-                          <button key={t.id} onClick={() => setPortalTab(t.id)} className={`px-4 py-2 text-sm font-bold transition ${portalTab===t.id ? 'text-cyan-400 border-b-2 border-cyan-500' : 'text-slate-500 hover:text-white'}`}>{t.label}</button> 
+                          <button key={t.id} onClick={() => setPortalTab(t.id)} className={`px-4 py-2 text-sm font-bold whitespace-nowrap transition ${portalTab===t.id ? 'text-cyan-400 border-b-2 border-cyan-500' : 'text-slate-500 hover:text-white'}`}>{t.label}</button> 
                         ))} 
                     </div> 
                     
@@ -924,10 +1033,18 @@ export default function App() {
                                     <div className="text-[10px] text-slate-500">Founder & Lead Architect</div> 
                                   </div> 
                                 </div> 
-                                {/* Waifu Card (Hoshino) */} 
+                                {/* Waifu Card (Hoshino) - FIXED FALLBACK */} 
                                 <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-4 hover:border-pink-500/30 transition"> 
                                   <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-pink-900 border border-pink-500 relative group"> 
-                                    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj8rY5XbTjGXe6z_pUj7VqN2M0L8O6K9P1Q2S3T4U5V6W7X8Y9Z0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2/s1600/download%20(5).jpeg" alt="TH" className="w-full h-full object-cover group-hover:scale-110 transition-transform" onError={(e) => {e.currentTarget.onerror = null; e.currentTarget.src="https://via.placeholder.com/150/pink/white?text=TH"}} /> 
+                                    {hoshinoImgError ? ( 
+                                        <div className="w-full h-full bg-pink-950 flex items-center justify-center text-pink-300 font-bold text-xs">TH</div> 
+                                    ) : ( 
+                                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj8rY5XbTjGXe6z_pUj7VqN2M0L8O6K9P1Q2S3T4U5V6W7X8Y9Z0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2/s1600/download%20(5).jpeg"  
+                                            alt="TH"  
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform"  
+                                            onError={() => setHoshinoImgError(true)} 
+                                        /> 
+                                    )} 
                                   </div> 
                                   <div> 
                                     <div className="text-white font-bold text-sm">Takanashi Hoshino</div> 
@@ -951,13 +1068,13 @@ export default function App() {
                       <div className="space-y-8 grid grid-cols-1 md:grid-cols-2 gap-6"> 
                          <section className="bg-slate-900 p-6 rounded-xl border border-slate-800 h-full"> 
                             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Shield size={20} className="text-emerald-500"/> {tText('privacy')}</h2> 
-                            <div className="text-sm text-slate-400 whitespace-pre-wrap leading-relaxed font-mono bg-slate-950 p-4 rounded-lg border border-slate-800 h-[calc(100%-3rem)] overflow-y-auto custom-scrollbar"> 
+                            <div className="text-sm text-slate-400 whitespace-pre-wrap leading-relaxed font-mono bg-slate-950 p-4 rounded-lg border border-slate-800 h-96 overflow-y-auto custom-scrollbar"> 
                                 {tData('privacyText')} 
                             </div> 
                          </section> 
                          <section className="bg-slate-900 p-6 rounded-xl border border-slate-800 h-full"> 
                             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><FileText size={20} className="text-amber-500"/> {tText('terms')}</h2> 
-                            <div className="text-sm text-slate-400 whitespace-pre-wrap leading-relaxed font-mono bg-slate-950 p-4 rounded-lg border border-slate-800 h-[calc(100%-3rem)] overflow-y-auto custom-scrollbar"> 
+                            <div className="text-sm text-slate-400 whitespace-pre-wrap leading-relaxed font-mono bg-slate-950 p-4 rounded-lg border border-slate-800 h-96 overflow-y-auto custom-scrollbar"> 
                                 {tData('termsText')} 
                             </div> 
                          </section> 
@@ -996,7 +1113,7 @@ export default function App() {
                     {portalTab === 'infra' && ( 
                        <section className="space-y-8"> 
                           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><Server size={24}/> {tText('coreInfra')}</h2> 
-                          <div className="grid gap-6 md:grid-cols-3"> 
+                          <div className="grid gap-6 grid-cols-1 md:grid-cols-3"> 
                              <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800 hover:scale-105 transition-transform duration-300"> 
                                 <Globe className="text-cyan-500 mb-4 h-10 w-10"/> 
                                 <h3 className="text-white font-bold mb-2 text-lg">Frontend</h3> 
@@ -1036,6 +1153,8 @@ export default function App() {
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: #020617; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; } 
         .animate-progress { animation: progress 2s ease-in-out infinite; } @keyframes progress { 0% { width: 0%; } 50% { width: 70%; } 100% { width: 100%; } } 
         .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } 
+        .animate-fadeInRight { animation: fadeInRight 0.3s ease-out forwards; } @keyframes fadeInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } } 
+        .scrollbar-hide::-webkit-scrollbar { display: none; } .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; } 
       `}</style> 
     </div> 
   ); 
