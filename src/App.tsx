@@ -269,9 +269,10 @@ const MODULES = [
 ]; 
  
 const AI_MODELS = [ 
-  { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash', desc: 'Latest' }, 
-  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', desc: 'Reasoning' }, 
-  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', desc: 'Speed' }, 
+  { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash (Exclusive)', desc: 'High Performance' }, 
+  // Note: Other models are temporarily disabled due to API environment restrictions 
+  // { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', desc: 'Reasoning' }, 
+  // { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', desc: 'Speed' }, 
 ]; 
  
 const APEX_MANIFESTO = "You are CodeFixerX Apex Edition. Infinite Context. Deep Scan Active."; 
@@ -303,7 +304,6 @@ const highlightSyntax = (code) => {
     .replace(/(\/\*[\s\S]*?\*\/)/g, match => addPlaceholder(match, 'comment')); // Multi line comments 
  
   // 3. Highlight Keywords (Now safe from strings/comments) 
-  // Removed aggressive number regex that matched Tailwind classes like '400' 
   const keywords = "\\b(const|let|var|function|return|if|else|for|while|class|import|from|export|default|async|await|try|catch|switch|case|new|this|typeof|interface|type|extends|implements|public|private|protected|static|readonly|constructor|def|print|class|self|init)\\b"; 
    
   safeCode = safeCode 
@@ -447,6 +447,7 @@ export default function App() {
     const savedLang = localStorage.getItem('cfx_lang'); 
     const savedKey = localStorage.getItem('cfx_api_key'); 
     const savedModel = localStorage.getItem('cfx_ai_model'); 
+    // FORCE READ LOCAL STORAGE ON MOUNT - Fix for Mobile Persistence 
     const savedPremium = localStorage.getItem('cfx_is_premium');  
  
     if (savedLang && LANGUAGES[savedLang]) setLangCode(savedLang); 
@@ -458,7 +459,12 @@ export default function App() {
     } 
  
     if (savedModel) setAiModel(savedModel); 
-    if (savedPremium === 'true') setIsPremium(true); 
+    
+    // CRITICAL PERSISTENCE FIX: Load Premium from LS immediately 
+    if (savedPremium === 'true') { 
+        setIsPremium(true); 
+        console.log("Premium restored from local storage"); 
+    } 
      
     // Default close history on mobile 
     const handleResize = () => { 
@@ -494,13 +500,14 @@ export default function App() {
             if (data.language && LANGUAGES[data.language]) setLangCode(data.language); 
             if (data.isPremium) { 
                 setIsPremium(true); 
-                localStorage.setItem('cfx_is_premium', 'true'); 
+                localStorage.setItem('cfx_is_premium', 'true'); // RE-SYNC Local 
             } 
             if (data.aiModel) setAiModel(data.aiModel); 
           } 
         } catch (e) {} 
       } else { 
         if (!isDevMode) {  
+            // PERSISTENCE GUARD: Only reset if LS is explicitly NOT true 
             if(localStorage.getItem('cfx_is_premium') !== 'true') { 
                setIsPremium(false); 
             } 
@@ -558,7 +565,16 @@ export default function App() {
     } 
   }; 
  
-  const handleGuestAccess = () => { 
+  // UPDATE: Force Anonymous Auth for Guest to ensure Firestore persistence works 
+  const handleGuestAccess = async () => { 
+      try { 
+          if (!auth.currentUser) { 
+              await signInAnonymously(auth); 
+              notify("Guest Session Initialized", "success"); 
+          } 
+      } catch (e) { 
+          console.error("Anon auth failed", e); 
+      } 
       setView('dashboard'); 
   } 
  
@@ -580,11 +596,25 @@ export default function App() {
     } 
   }; 
  
+  // UPDATE: Robust Premium Unlock with Dual Persistence 
   const handleUnlock = async () => { 
     const cleanKey = premiumKey.trim(); 
     if (cleanKey === "CFX-APX-2025R242") {  
-      setIsPremium(true); notify("APEX UNLOCKED", "success"); setView('dashboard'); 
-      if(user) await setDoc(doc(db, 'users', user.uid), { isPremium: true }, { merge: true }); 
+      // 1. Local Persistence (Instant) 
+      setIsPremium(true); 
+      localStorage.setItem('cfx_is_premium', 'true'); 
+      notify("APEX UNLOCKED", "success"); 
+      setView('dashboard'); 
+       
+      // 2. Cloud Persistence (Firestore) 
+      if(user) { 
+          try { 
+            await setDoc(doc(db, 'users', user.uid), { isPremium: true }, { merge: true }); 
+            notify("License Synced to Cloud ☁️", "success"); 
+          } catch(e) { 
+             console.error("Cloud sync failed", e); 
+          } 
+      } 
     } else notify("Invalid Key", "error"); 
   }; 
  
@@ -1134,7 +1164,7 @@ export default function App() {
  
             {/* VIEW: PREMIUM */} 
             {view === 'premium' && ( 
-               <div className="flex items-center justify-center min-h-full p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/20 to-slate-950"></div><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-amber-500/30 max-w-md w-full text-center shadow-2xl"><Unlock size={40} className="text-amber-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">{tText('unlock')} Apex Edition</h2><p className="text-slate-400 text-sm mb-6">{tText('enterKey')}</p><input type="text" value={premiumKey} onChange={(e)=>setPremiumKey(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-center text-white p-3 rounded-xl mb-4 font-mono focus:border-amber-500 outline-none" placeholder="XXXX-XXXX-XXXX"/><div className="flex items-center gap-2 mb-4"><div className="h-px bg-slate-800 flex-1"></div><span className="text-xs text-slate-500">{tText('orUpload')}</span><div className="h-px bg-slate-800 flex-1"></div></div><label className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl cursor-pointer transition mb-4 border border-dashed border-slate-600"><Upload size={14}/> Upload key.txt<input type="file" accept=".txt" className="hidden" onChange={handleKeyFileUpload}/></label><button onClick={() => {const cleanKey = premiumKey.trim().toUpperCase(); if(cleanKey==="CFX-APX-2025R242"){setIsPremium(true);notify("UNLOCKED!","success");setView('dashboard');}else notify("Invalid","error");}} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">{tText('authenticate')}</button> 
+               <div className="flex items-center justify-center min-h-full p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/20 to-slate-950"></div><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-amber-500/30 max-w-md w-full text-center shadow-2xl"><Unlock size={40} className="text-amber-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">{tText('unlock')} Apex Edition</h2><p className="text-slate-400 text-sm mb-6">{tText('enterKey')}</p><input type="text" value={premiumKey} onChange={(e)=>setPremiumKey(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-center text-white p-3 rounded-xl mb-4 font-mono focus:border-amber-500 outline-none" placeholder="XXXX-XXXX-XXXX"/><div className="flex items-center gap-2 mb-4"><div className="h-px bg-slate-800 flex-1"></div><span className="text-xs text-slate-500">{tText('orUpload')}</span><div className="h-px bg-slate-800 flex-1"></div></div><label className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl cursor-pointer transition mb-4 border border-dashed border-slate-600"><Upload size={14}/> Upload key.txt<input type="file" accept=".txt" className="hidden" onChange={handleKeyFileUpload}/></label><button onClick={handleUnlock} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">{tText('authenticate')}</button> 
               <div className="flex items-center gap-3 mt-4"> 
                   <div className="h-px bg-slate-800 flex-1"></div> 
                   <span className="text-xs text-slate-500">{tText('dontHaveKey')}</span> 
