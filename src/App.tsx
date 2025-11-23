@@ -304,8 +304,17 @@ export default function App() {
 
   useEffect(() => {
     if (!user) { setHistory([]); return; }
-    const q = query(collection(db, 'history'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
-    const unsub = onSnapshot(q, (snap) => setHistory(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+    
+    // UPDATED QUERY: Remove orderBy to avoid index error
+    // Just filter by userId, and we will sort in JS
+    const q = query(collection(db, 'history'), where('userId', '==', user.uid));
+    
+    const unsub = onSnapshot(q, (snap) => {
+      const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Sort client-side by createdAt (descending)
+      fetched.sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setHistory(fetched);
+    });
     return () => unsub();
   }, [user]);
 
@@ -669,7 +678,7 @@ export default function App() {
             <div className="flex-1 overflow-y-auto p-6 md:p-12 pb-20 custom-scrollbar bg-slate-950">
                <div className="max-w-4xl mx-auto animate-fadeIn">
                   <div className="flex gap-4 border-b border-slate-800 mb-8 pb-1 sticky top-0 bg-slate-950/95 z-20 pt-4">
-                     {[{id:'guide',label:'Guide'},{id:'infra',label:'Infrastructure'},{id:'about',label:'About Us'},{id:'legal',label:'Legal Docs'}].map(t => (
+                     {[{id:'guide',label:'Guide'},{id:'infra',label:'Infra'},{id:'about',label:'About Us'},{id:'legal',label:'Legal Docs'}].map(t => (
                        <button key={t.id} onClick={() => setPortalTab(t.id)} className={`px-4 py-2 text-sm font-bold transition ${portalTab===t.id ? 'text-cyan-400 border-b-2 border-cyan-500' : 'text-slate-500 hover:text-white'}`}>{t.label}</button>
                      ))}
                   </div>
@@ -799,9 +808,7 @@ export default function App() {
          )}
          
          {view === 'premium' && (
-           <div className="flex-1 flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/20 to-slate-950"></div><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-amber-500/30 max-w-md w-full text-center shadow-2xl"><Unlock size={40} className="text-amber-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">Unlock Apex</h2><p className="text-slate-400 text-sm mb-6">Enter license key (CFX-APX...)</p><input type="text" value={premiumKey} onChange={(e)=>setPremiumKey(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-center text-white p-3 rounded-xl mb-4 font-mono focus:border-amber-500 outline-none" placeholder="XXXX-XXXX-XXXX"/>
-           <div className="flex items-center gap-2 mb-4"><div className="h-px bg-slate-800 flex-1"></div><span className="text-xs text-slate-500">OR UPLOAD KEY</span><div className="h-px bg-slate-800 flex-1"></div></div><label className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl cursor-pointer transition mb-4 border border-dashed border-slate-600"><Upload size={14}/> Upload key.txt<input type="file" accept=".txt" className="hidden" onChange={handleKeyFileUpload}/></label>
-           <button onClick={() => {if(premiumKey==="CFX-APX-2025R242"){setIsPremium(true);notify("UNLOCKED!","success");setView('dashboard');}else notify("Invalid","error");}} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">AUTHENTICATE</button><div className="mt-4 text-xs text-slate-500">Purchase: <a href="https://lynk.id/zetago-aurum/yjzz3v78oq13" target="_blank" className="text-amber-500 hover:underline">lynk.id/zetago-aurum</a></div></div></div>
+           <div className="flex-1 flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/20 to-slate-950"></div><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-amber-500/30 max-w-md w-full text-center shadow-2xl"><Unlock size={40} className="text-amber-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">Unlock Apex</h2><p className="text-slate-400 text-sm mb-6">Enter license key (CFX-APX...)</p><input type="text" value={premiumKey} onChange={(e)=>setPremiumKey(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-center text-white p-3 rounded-xl mb-4 font-mono focus:border-amber-500 outline-none" placeholder="XXXX-XXXX-XXXX"/><button onClick={() => {if(premiumKey==="CFX-APX-2025R242"){setIsPremium(true);notify("UNLOCKED!","success");setView('dashboard');}else notify("Invalid","error");}} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">AUTHENTICATE</button></div></div>
          )}
       </main>
 
