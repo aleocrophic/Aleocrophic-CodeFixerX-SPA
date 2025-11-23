@@ -252,7 +252,7 @@ const LITE_MANIFESTO = "You are CodeFixerX Lite. Efficient Debugging.";
 // --- 3. UTILITY COMPONENTS ---
 const highlightSyntax = (code: string) => {
   if (!code) return '';
-  let html = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  let html = code.replace(/&/g, "&amp;").replace(/</g, "<").replace(/>/g, ">");
   html = html.replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="text-emerald-400">$1</span>');
   html = html.replace(/(\/\/.*$)/gm, '<span class="text-slate-500 italic">$1</span>');
   const keywords = "\\b(const|let|var|function|return|if|else|for|while|class|import|from|export|default|async|await|try|catch|switch|case|new|this|typeof|interface|type|extends|implements|public|private|protected|static|readonly|constructor)\\b";
@@ -343,7 +343,7 @@ export default function App() {
   const [previewCode, setPreviewCode] = useState<string | null>(null);
   const [showCompactPreview, setShowCompactPreview] = useState(false);
   const [showFullPreview, setShowFullPreview] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true); 
+  const [sidebarOpen, setSidebarOpen] = useState(false); // ✅ DEFAULT HIDE SIDEBAR
   const [premiumKey, setPremiumKey] = useState('');
   const [customApiKey, setCustomApiKey] = useState('');
   const [notif, setNotif] = useState<{msg: string, type: string} | null>(null);
@@ -365,8 +365,9 @@ export default function App() {
     if (savedLang && LANGUAGES[savedLang]) setLangCode(savedLang);
     if (savedKey) setCustomApiKey(savedKey);
     if (savedModel) setAiModel(savedModel);
-    const handleResize = () => { if (window.innerWidth < 768) setSidebarOpen(false); else setSidebarOpen(true); };
-    handleResize(); window.addEventListener('resize', handleResize);
+    // ✅ Sidebar tetap collapsed by default, tidak auto-open
+    const handleResize = () => { /* Kosong */ };
+    window.addEventListener('resize', handleResize);
     const unsub = onAuthStateChanged(auth, async (u) => { 
       setUser(u); 
       if(u) { 
@@ -526,7 +527,7 @@ export default function App() {
   if (view === 'language') return (<div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"><div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519608487953-e999c86e7455?q=80')] bg-cover opacity-10 animate-pulse"></div><div className="z-10 max-w-5xl w-full bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl p-8 shadow-2xl text-center"><h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">CodeFixerX</h1><p className="text-slate-400 text-sm tracking-[0.3em] uppercase mb-12">Aleocrophic Systems</p><div className="grid grid-cols-2 md:grid-cols-4 gap-4">{Object.entries(LANGUAGES).map(([code, data]) => (<button key={code} onClick={() => { setLangCode(code); setView('login'); }} className="p-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500 rounded-2xl transition-all group flex flex-col items-center"><span className="text-4xl mb-3 block group-hover:scale-110 transition-transform">{data.flag}</span><span className="text-slate-300 font-bold group-hover:text-white">{data.label}</span></button>))}</div></div></div>);
   if (view === 'login') return (<div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"><button onClick={() => setView('language')} className="absolute top-6 left-6 text-slate-400 hover:text-white flex gap-2 z-20"><ChevronRight className="rotate-180"/> Back</button><div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-slate-700 max-w-sm w-full text-center shadow-2xl relative"><div className="w-20 h-20 bg-cyan-900/30 rounded-full flex items-center justify-center mx-auto mb-6"><Cpu size={40} className="text-cyan-400"/></div><h2 className="text-2xl font-bold text-white mb-2">{tText('login')}</h2><p className="text-slate-400 text-xs mb-8">Access Cloud History & Settings</p><button onClick={handleLogin} className="w-full py-3 bg-white text-slate-900 font-bold rounded-xl flex justify-center gap-2 hover:bg-slate-200 transition mb-3"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="G"/> Google Auth</button><button onClick={() => setView('dashboard')} className="w-full py-3 bg-slate-800 text-slate-400 hover:text-white text-sm font-bold rounded-xl transition">Guest Access</button></div></div>);
   
-  // Chat input handler with Shift+Enter
+  // ✅ Handle Shift + Enter for new line in chat
   const handleChatInputKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
