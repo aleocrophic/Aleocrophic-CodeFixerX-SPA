@@ -41,7 +41,7 @@ const LANGUAGES = {
       modules: 'Modules', system: 'System', tools: 'AI Tools', welcome: 'Welcome', guest: 'Guest Mode', 
       authRequired: 'Auth Required', unlock: 'Unlock', enterKey: 'Enter License Key', orUpload: 'OR UPLOAD KEY', authenticate: 'AUTHENTICATE', 
       purchase: 'Purchase', devOverride: 'Developer Override', access: 'ACCESS', customKey: 'Gemini API Key', 
-      chatPlaceholder: 'Type a message... (Shift+Enter for new line)', chatStart: 'Start chatting with CodeFixerX!', edit: 'Edit', 
+      chatPlaceholder: 'Type a message...', chatStart: 'Start chatting with CodeFixerX!', edit: 'Edit', 
       privacy: 'Privacy Policy', terms: 'Terms of Service', about: 'About Us', infra: 'Infrastructure', guide: 'User Guide', 
       roleUser: 'User', roleAI: 'CodeFixerX', buyKey: 'BUY KEY NOW', dontHaveKey: "DON'T HAVE A KEY?", 
       originTitle: 'Origin of Aleocrophic', specialThanks: 'Special Thanks', coreInfra: 'Core Infrastructure', 
@@ -72,7 +72,7 @@ const LANGUAGES = {
       modules: 'Modul', system: 'Sistem', tools: 'Alat AI', welcome: 'Selamat Datang', guest: 'Mode Tamu', 
       authRequired: 'Butuh Login', unlock: 'Buka', enterKey: 'Masukkan Kunci Lisensi', orUpload: 'ATAU UPLOAD KUNCI', authenticate: 'AUTENTIKASI', 
       purchase: 'Beli', devOverride: 'Akses Pengembang', access: 'AKSES', customKey: 'API Key Gemini', 
-      chatPlaceholder: 'Ketik pesan... (Shift+Enter baris baru)', chatStart: 'Mulai mengobrol dengan CodeFixerX!', edit: 'Ubah', 
+      chatPlaceholder: 'Ketik pesan...', chatStart: 'Mulai mengobrol dengan CodeFixerX!', edit: 'Ubah', 
       privacy: 'Kebijakan Privasi', terms: 'Syarat Layanan', about: 'Tentang Kami', infra: 'Infrastruktur', guide: 'Panduan Pengguna', 
       roleUser: 'Pengguna', roleAI: 'CodeFixerX', buyKey: 'BELI KUNCI SEKARANG', dontHaveKey: "BELUM PUNYA KUNCI?", 
       originTitle: 'Asal Usul Aleocrophic', specialThanks: 'Terima Kasih Khusus', coreInfra: 'Infrastruktur Inti', 
@@ -103,7 +103,7 @@ const LANGUAGES = {
       modules: 'モジュール', system: 'システム', tools: 'AIツール', welcome: 'ようこそ', guest: 'ゲスト', 
       authRequired: '認証が必要', unlock: '解除', enterKey: 'ライセンスキーを入力', orUpload: 'またはキーをアップロード', authenticate: '認証する', 
       purchase: '購入', devOverride: '開発者オーバーライド', access: 'アクセス', customKey: 'Gemini APIキー', 
-      chatPlaceholder: 'メッセージを入力... (Shift+Enterで改行)', chatStart: 'CodeFixerXとチャットを開始！', edit: '編集', 
+      chatPlaceholder: 'メッセージを入力...', chatStart: 'CodeFixerXとチャットを開始！', edit: '編集', 
       privacy: 'プライバシーポリシー', terms: '利用規約', about: '私たちについて', infra: 'インフラストラクチャ', guide: 'ユーザーマニュアル', 
       roleUser: 'ユーザー', roleAI: 'CodeFixerX', buyKey: '今すぐキーを購入', dontHaveKey: "キーをお持ちでないですか？", 
       originTitle: 'Aleocrophicの起源', specialThanks: '特別感謝', coreInfra: 'コアインフラストラクチャ', 
@@ -134,7 +134,7 @@ const LANGUAGES = {
       modules: 'وحدات', system: 'نظام', tools: 'أدوات الذكاء الاصطناعي', welcome: 'أهلا بك', guest: 'زائر', 
       authRequired: 'مطلوب المصادقة', unlock: 'فتح', enterKey: 'أدخل مفتاح الترخيص', orUpload: 'أو تحميل المفتاح', authenticate: 'توثيق', 
       purchase: 'شراء', devOverride: 'تجاوز المطور', access: 'وصول', customKey: 'مفتاح Gemini API', 
-      chatPlaceholder: 'أكتب رسالة... (Shift+Enter للسطر الجديد)', chatStart: 'ابدأ الدردشة مع CodeFixerX!', edit: 'تعديل', 
+      chatPlaceholder: 'أكتب رسالة...', chatStart: 'ابدأ الدردشة مع CodeFixerX!', edit: 'تعديل', 
       privacy: 'سياسة الخصوصية', terms: 'شروط الخدمة', about: 'معلومات عنا', infra: 'بنية تحتية', guide: 'دليل المستخدم', 
       roleUser: 'مستخدم', roleAI: 'CodeFixerX', buyKey: 'شراء المفتاح الآن', dontHaveKey: "ليس لديك مفتاح؟", 
       originTitle: 'أصل Aleocrophic', specialThanks: 'شكر خاص', coreInfra: 'البنية التحتية الأساسية', 
@@ -165,7 +165,7 @@ const LANGUAGES = {
       modules: 'Модули', system: 'Система', tools: 'AI Инструменты', welcome: 'Добро пожаловать', guest: 'Гость', 
       authRequired: 'Требуется вход', unlock: 'Открыть', enterKey: 'Введите ключ', orUpload: 'ИЛИ ЗАГРУЗИТЬ', authenticate: 'АУТЕНТИФИКАЦИЯ', 
       purchase: 'Купить', devOverride: 'Режим разработчика', access: 'ДОСТУП', customKey: 'API ключ Gemini', 
-      chatPlaceholder: 'Введите сообщение... (Shift+Enter для новой строки)', chatStart: 'Начать чат с CodeFixerX!', edit: 'Изменить', 
+      chatPlaceholder: 'Введите сообщение...', chatStart: 'Начать чат с CodeFixerX!', edit: 'Изменить', 
       privacy: 'Конфиденциальность', terms: 'Условия', about: 'О нас', infra: 'Инфраструктура', guide: 'Руководство', 
       roleUser: 'Пользователь', roleAI: 'CodeFixerX', buyKey: 'КУПИТЬ КЛЮЧ', dontHaveKey: "НЕТ КЛЮЧА?", 
       originTitle: 'Происхождение Aleocrophic', specialThanks: 'Особая благодарность', coreInfra: 'Базовая инфраструктура', 
@@ -196,7 +196,7 @@ const LANGUAGES = {
       modules: 'Module', system: 'System', tools: 'KI-Tools', welcome: 'Willkommen', guest: 'Gast', 
       authRequired: 'Anmeldung erforderlich', unlock: 'Entsperren', enterKey: 'Lizenzschlüssel eingeben', orUpload: 'ODER SCHLÜSSEL HOCHLADEN', authenticate: 'AUTHENTIFIZIEREN', 
       purchase: 'Kaufen', devOverride: 'Entwicklerzugriff', access: 'ZUGRIFF', customKey: 'Gemini API-Schlüssel', 
-      chatPlaceholder: 'Nachricht eingeben... (Umschalt+Eingabe für neue Zeile)', chatStart: 'Chat mit CodeFixerX starten!', edit: 'Bearbeiten', 
+      chatPlaceholder: 'Nachricht eingeben...', chatStart: 'Chat mit CodeFixerX starten!', edit: 'Bearbeiten', 
       privacy: 'Datenschutz', terms: 'Nutzungsbedingungen', about: 'Über uns', infra: 'Infrastruktur', guide: 'Benutzerhandbuch', 
       roleUser: 'Benutzer', roleAI: 'CodeFixerX', buyKey: 'SCHLÜSSEL KAUFEN', dontHaveKey: "KEINEN SCHLÜSSEL?", 
       originTitle: 'Ursprung von Aleocrophic', specialThanks: 'Besonderer Dank', coreInfra: 'Kerninfrastruktur', 
@@ -227,7 +227,7 @@ const LANGUAGES = {
       modules: 'Módulos', system: 'Sistema', tools: 'Herramientas IA', welcome: 'Bienvenido', guest: 'Invitado', 
       authRequired: 'Autenticación requerida', unlock: 'Desbloquear', enterKey: 'Introducir clave', orUpload: 'O SUBIR CLAVE', authenticate: 'AUTENTICAR', 
       purchase: 'Comprar', devOverride: 'Acceso Desarrollador', access: 'ACCESO', customKey: 'Clave API Gemini', 
-      chatPlaceholder: 'Escribe un mensaje... (Shift+Enter para nueva línea)', chatStart: '¡Empieza a chatear con CodeFixerX!', edit: 'Editar', 
+      chatPlaceholder: 'Escribe un mensaje...', chatStart: '¡Empieza a chatear con CodeFixerX!', edit: 'Editar', 
       privacy: 'Privacidad', terms: 'Términos', about: 'Sobre nosotros', infra: 'Infraestructura', guide: 'Manual de usuario', 
       roleUser: 'Usuario', roleAI: 'CodeFixerX', buyKey: 'COMPRAR CLAVE', dontHaveKey: "¿NO TIENES CLAVE?", 
       originTitle: 'Origen de Aleocrophic', specialThanks: 'Agradecimientos', coreInfra: 'Infraestructura Principal', 
@@ -756,7 +756,12 @@ export default function App() {
   } 
  
   const handleChatInputKeyDown = (e) => { 
-    if (e.key === 'Enter' && !e.shiftKey) { 
+    // MOBILE CHECK: if screen is less than 768px (Tailwind md breakpoint) 
+    // On Mobile: Enter = New Line (Default behavior), so we DO NOTHING and let event propagate 
+    // On Desktop: Enter = Send, Shift+Enter = New Line 
+    const isMobile = window.innerWidth < 768; 
+ 
+    if (!isMobile && e.key === 'Enter' && !e.shiftKey) { 
       e.preventDefault(); 
       handleChatSend(); 
     } 
@@ -1056,7 +1061,7 @@ export default function App() {
                                 <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-4 hover:border-cyan-500/30 transition"> 
                                   <div className="w-12 h-12 bg-cyan-900 rounded-full flex items-center justify-center font-bold text-cyan-400 border border-cyan-700">RD</div> 
                                   <div> 
-                                    <div className="text-white font-bold text-sm">Rayhan Dzaky</div> 
+                                    <div className="text-white font-bold text-sm">Rayhan Dzaky Al Mubarok</div> 
                                     <div className="text-[10px] text-slate-500">Founder & Lead Architect</div> 
                                   </div> 
                                 </div> 
