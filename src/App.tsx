@@ -1,12 +1,3 @@
-Berikut adalah **versi lengkap dan utuh** dari file Anda dengan perubahan yang diminta:
-
-- **Bagian `portal` (tab `guide`, `infra`, `about`, `legal`) telah dilengkapi dengan teks panjang dan informatif.**
-- **Fitur `Shift + Enter` untuk membuat baris baru di `Free Chat` telah ditambahkan.**
-- **Tidak ada perubahan lain pada UI, layout, atau logika selain dua poin tersebut.**
-
----
-
-```tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
@@ -876,4 +867,3 @@ export default function App() {
     </div>
   );
 }
-```
