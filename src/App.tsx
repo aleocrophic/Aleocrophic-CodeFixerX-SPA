@@ -28,10 +28,9 @@ const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 // --- GLOBAL API KEY PLACEHOLDER ---
-// User must provide key via Settings or Login screen
 const defaultApiKey = ""; 
 
-// --- 2. DATA & TRANSLATIONS (FULL COMPLETE 7 LANGUAGES) ---
+// --- 2. DATA & TRANSLATIONS ---
 
 const LANGUAGES: Record<string, any> = {
   en: { 
@@ -43,8 +42,8 @@ const LANGUAGES: Record<string, any> = {
       modules: 'Modules', system: 'System', tools: 'AI Tools', welcome: 'Welcome', guest: 'Guest Mode',
       authRequired: 'Auth Required', unlock: 'Unlock', enterKey: 'Enter License Key', orUpload: 'OR UPLOAD KEY', authenticate: 'AUTHENTICATE',
       purchase: 'Purchase', devOverride: 'Developer Override', access: 'ACCESS', customKey: 'Gemini API Key',
-      chatPlaceholder: 'Type a message...', chatStart: 'Start chatting with CodeFixerX!', edit: 'Edit',
-      privacy: 'Privacy Policy', terms: 'Terms of Service', about: 'About Us', infra: 'Infrastructure', guide: 'User Manual',
+      chatPlaceholder: 'Type a message... (Shift+Enter for new line)', chatStart: 'Start chatting with CodeFixerX!', edit: 'Edit',
+      privacy: 'Privacy Policy', terms: 'Terms of Service', about: 'About Us', infra: 'Infrastructure', guide: 'User Guide',
       roleUser: 'User', roleAI: 'CodeFixerX', buyKey: 'BUY KEY NOW', dontHaveKey: "DON'T HAVE A KEY?",
       originTitle: 'Origin of Aleocrophic', specialThanks: 'Special Thanks', coreInfra: 'Core Infrastructure',
       toggleHistory: 'Toggle History', sourceInput: 'SOURCE INPUT', getKey: 'Get API Key', saveEnter: 'Save & Enter',
@@ -71,7 +70,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'Modul', system: 'Sistem', tools: 'Alat AI', welcome: 'Selamat Datang', guest: 'Mode Tamu',
       authRequired: 'Butuh Login', unlock: 'Buka', enterKey: 'Masukkan Kunci Lisensi', orUpload: 'ATAU UPLOAD KUNCI', authenticate: 'AUTENTIKASI',
       purchase: 'Beli', devOverride: 'Akses Pengembang', access: 'AKSES', customKey: 'API Key Gemini',
-      chatPlaceholder: 'Ketik pesan...', chatStart: 'Mulai mengobrol dengan CodeFixerX!', edit: 'Ubah',
+      chatPlaceholder: 'Ketik pesan... (Shift+Enter baris baru)', chatStart: 'Mulai mengobrol dengan CodeFixerX!', edit: 'Ubah',
       privacy: 'Kebijakan Privasi', terms: 'Syarat Layanan', about: 'Tentang Kami', infra: 'Infrastruktur', guide: 'Panduan Pengguna',
       roleUser: 'Pengguna', roleAI: 'CodeFixerX', buyKey: 'BELI KUNCI SEKARANG', dontHaveKey: "BELUM PUNYA KUNCI?",
       originTitle: 'Asal Usul Aleocrophic', specialThanks: 'Terima Kasih Khusus', coreInfra: 'Infrastruktur Inti',
@@ -99,7 +98,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'モジュール', system: 'システム', tools: 'AIツール', welcome: 'ようこそ', guest: 'ゲスト',
       authRequired: '認証が必要', unlock: '解除', enterKey: 'ライセンスキーを入力', orUpload: 'またはキーをアップロード', authenticate: '認証する',
       purchase: '購入', devOverride: '開発者オーバーライド', access: 'アクセス', customKey: 'Gemini APIキー',
-      chatPlaceholder: 'メッセージを入力...', chatStart: 'CodeFixerXとチャットを開始！', edit: '編集',
+      chatPlaceholder: 'メッセージを入力... (Shift+Enterで改行)', chatStart: 'CodeFixerXとチャットを開始！', edit: '編集',
       privacy: 'プライバシーポリシー', terms: '利用規約', about: '私たちについて', infra: 'インフラストラクチャ', guide: 'ユーザーマニュアル',
       roleUser: 'ユーザー', roleAI: 'CodeFixerX', buyKey: '今すぐキーを購入', dontHaveKey: "キーをお持ちでないですか？",
       originTitle: 'Aleocrophicの起源', specialThanks: '特別感謝', coreInfra: 'コアインフラストラクチャ',
@@ -118,6 +117,7 @@ const LANGUAGES: Record<string, any> = {
       }
     } 
   },
+  // ... (Other languages structure maintained same as previous valid response)
   ar: { 
     label: 'العربية', flag: '🇸🇦', 
     ui: { 
@@ -127,7 +127,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'وحدات', system: 'نظام', tools: 'أدوات الذكاء الاصطناعي', welcome: 'أهلا بك', guest: 'زائر',
       authRequired: 'مطلوب المصادقة', unlock: 'فتح', enterKey: 'أدخل مفتاح الترخيص', orUpload: 'أو تحميل المفتاح', authenticate: 'توثيق',
       purchase: 'شراء', devOverride: 'تجاوز المطور', access: 'وصول', customKey: 'مفتاح Gemini API',
-      chatPlaceholder: 'أكتب رسالة...', chatStart: 'ابدأ الدردشة مع CodeFixerX!', edit: 'تعديل',
+      chatPlaceholder: 'أكتب رسالة... (Shift+Enter للسطر الجديد)', chatStart: 'ابدأ الدردشة مع CodeFixerX!', edit: 'تعديل',
       privacy: 'سياسة الخصوصية', terms: 'شروط الخدمة', about: 'معلومات عنا', infra: 'بنية تحتية', guide: 'دليل المستخدم',
       roleUser: 'مستخدم', roleAI: 'CodeFixerX', buyKey: 'شراء المفتاح الآن', dontHaveKey: "ليس لديك مفتاح؟",
       originTitle: 'أصل Aleocrophic', specialThanks: 'شكر خاص', coreInfra: 'البنية التحتية الأساسية',
@@ -155,7 +155,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'Модули', system: 'Система', tools: 'AI Инструменты', welcome: 'Добро пожаловать', guest: 'Гость',
       authRequired: 'Требуется вход', unlock: 'Открыть', enterKey: 'Введите ключ', orUpload: 'ИЛИ ЗАГРУЗИТЬ', authenticate: 'АУТЕНТИФИКАЦИЯ',
       purchase: 'Купить', devOverride: 'Режим разработчика', access: 'ДОСТУП', customKey: 'API ключ Gemini',
-      chatPlaceholder: 'Введите сообщение...', chatStart: 'Начать чат с CodeFixerX!', edit: 'Изменить',
+      chatPlaceholder: 'Введите сообщение... (Shift+Enter для новой строки)', chatStart: 'Начать чат с CodeFixerX!', edit: 'Изменить',
       privacy: 'Конфиденциальность', terms: 'Условия', about: 'О нас', infra: 'Инфраструктура', guide: 'Руководство',
       roleUser: 'Пользователь', roleAI: 'CodeFixerX', buyKey: 'КУПИТЬ КЛЮЧ', dontHaveKey: "НЕТ КЛЮЧА?",
       originTitle: 'Происхождение Aleocrophic', specialThanks: 'Особая благодарность', coreInfra: 'Базовая инфраструктура',
@@ -183,7 +183,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'Module', system: 'System', tools: 'KI-Tools', welcome: 'Willkommen', guest: 'Gast',
       authRequired: 'Anmeldung erforderlich', unlock: 'Entsperren', enterKey: 'Lizenzschlüssel eingeben', orUpload: 'ODER SCHLÜSSEL HOCHLADEN', authenticate: 'AUTHENTIFIZIEREN',
       purchase: 'Kaufen', devOverride: 'Entwicklerzugriff', access: 'ZUGRIFF', customKey: 'Gemini API-Schlüssel',
-      chatPlaceholder: 'Nachricht eingeben...', chatStart: 'Chat mit CodeFixerX starten!', edit: 'Bearbeiten',
+      chatPlaceholder: 'Nachricht eingeben... (Umschalt+Eingabe für neue Zeile)', chatStart: 'Chat mit CodeFixerX starten!', edit: 'Bearbeiten',
       privacy: 'Datenschutz', terms: 'Nutzungsbedingungen', about: 'Über uns', infra: 'Infrastruktur', guide: 'Benutzerhandbuch',
       roleUser: 'Benutzer', roleAI: 'CodeFixerX', buyKey: 'SCHLÜSSEL KAUFEN', dontHaveKey: "KEINEN SCHLÜSSEL?",
       originTitle: 'Ursprung von Aleocrophic', specialThanks: 'Besonderer Dank', coreInfra: 'Kerninfrastruktur',
@@ -211,7 +211,7 @@ const LANGUAGES: Record<string, any> = {
       modules: 'Módulos', system: 'Sistema', tools: 'Herramientas IA', welcome: 'Bienvenido', guest: 'Invitado',
       authRequired: 'Autenticación requerida', unlock: 'Desbloquear', enterKey: 'Introducir clave', orUpload: 'O SUBIR CLAVE', authenticate: 'AUTENTICAR',
       purchase: 'Comprar', devOverride: 'Acceso Desarrollador', access: 'ACCESO', customKey: 'Clave API Gemini',
-      chatPlaceholder: 'Escribe un mensaje...', chatStart: '¡Empieza a chatear con CodeFixerX!', edit: 'Editar',
+      chatPlaceholder: 'Escribe un mensaje... (Shift+Enter para nueva línea)', chatStart: '¡Empieza a chatear con CodeFixerX!', edit: 'Editar',
       privacy: 'Privacidad', terms: 'Términos', about: 'Sobre nosotros', infra: 'Infraestructura', guide: 'Manual de usuario',
       roleUser: 'Usuario', roleAI: 'CodeFixerX', buyKey: 'COMPRAR CLAVE', dontHaveKey: "¿NO TIENES CLAVE?",
       originTitle: 'Origen de Aleocrophic', specialThanks: 'Agradecimientos', coreInfra: 'Infraestructura Principal',
@@ -233,19 +233,105 @@ const LANGUAGES: Record<string, any> = {
 };
 
 const MODULES = [
-  { id: 'debug', name: 'Omni Debugger', icon: <Code />, premium: false, desc: 'Fix syntax/logic errors.', systemPrompt: "You are the Omni Code Debugger. Analyze the provided code for syntax errors, logical flaws, memory leaks, and runtime issues. Return the fixed code with comments explaining the corrections. Focus on correctness and stability." },
-  { id: 'dep', name: 'Dependency Scanner', icon: <Search />, premium: false, desc: 'Analyze libs & vulnerabilities.', systemPrompt: "You are the Dependency Scanner. Analyze the imports and dependencies in the code. Identify deprecated packages, security risks, or heavy libraries that could be optimized. Suggest lighter or more secure alternatives." },
-  { id: 'sec', name: 'Security Auditor', icon: <Shield />, premium: false, desc: 'Fix SQLi, XSS, RCE.', systemPrompt: "You are the Cybersecurity Auditor. Conduct a deep security scan on the code. Look for SQL Injection, XSS, CSRF, RCE, weak cryptography, and hardcoded secrets. Provide a secure refactored version and explain the vulnerabilities found." },
-  { id: 'perf', name: 'Optimizer', icon: <Zap />, premium: false, desc: 'Boost speed & scalability.', systemPrompt: "You are the Performance Optimizer. Refactor the code to improve execution speed, reduce memory usage, and enhance scalability. Look for O(n^2) loops, redundant computations, and unoptimized queries. Provide the optimized code." },
-  { id: 'explain', name: 'Code Explainer', icon: <FileCode />, premium: false, desc: 'Deep explanations.', systemPrompt: "You are the Interactive Code Explainer. Break down the provided code into simple, digestible parts. Explain the logic flow, variable purposes, and algorithmic approach. Use analogies where appropriate. Do not just rewrite the code, explain *why* it works." },
-  { id: 'pair', name: 'Pair Programmer', icon: <User />, premium: false, desc: 'Real-time collab.', systemPrompt: "You are an AI Pair Programmer. Act as a senior developer colleague. Suggest completions, refactorings, or alternative approaches to the user's current code snippet. Maintain a collaborative and helpful tone." },
-  // APEX
-  { id: 'legacy', name: 'Legacy Resurrection', icon: <History />, premium: true, desc: 'Modernize old stacks.', systemPrompt: "You are the Legacy Code Resurrection Engine. Your task is to modernize outdated code (e.g., COBOL, old PHP, jQuery, VB6) into modern standards (e.g., React, Go, Rust, Python 3.10+). Preserve business logic but upgrade the syntax, libraries, and security practices." },
-  { id: 'cicd', name: 'CI/CD Integrator', icon: <Cpu />, premium: true, desc: 'Pipeline automation.', systemPrompt: "You are the CI/CD Integrator. Generate robust pipeline configurations (GitHub Actions YAML, GitLab CI, Jenkinsfile, Dockerfile) for the provided code. Ensure automated testing, linting, security scanning, and deployment steps are included." },
-  { id: 'custom', name: 'Custom Commander', icon: <Terminal />, premium: true, desc: 'Execute commands.', systemPrompt: "You are the Custom Command Executor. Follow the specific instructions provided by the user regarding the code. You are versatile and adaptable. If the user asks for a specific refactor pattern (e.g., SOLID, DRY, KISS), apply it rigorously." },
-  { id: 'sim', name: 'Adv. Simulation', icon: <Play />, premium: true, desc: 'Sandbox run.', systemPrompt: "You are the Advanced Simulation Environment. Simulate the execution of the provided code. Predict the output for various edge cases. If it's UI code, describe the visual result. If it's logic, trace the variable states. Find logic bugs that static analysis might miss." },
-  { id: 'docs', name: 'Dynamic Docs', icon: <FileText />, premium: true, desc: 'Auto documentation.', systemPrompt: "You are the Dynamic Documentation Generator. Create comprehensive documentation for the code, including JSDoc/Docstrings, API endpoint definitions (Swagger/OpenAPI), and usage examples. Make it professional and ready for a README.md." },
-  { id: 'exp', name: 'Experimental UI', icon: <Sparkles />, premium: true, desc: 'UI Auto-Design.', systemPrompt: "You are the Experimental UI Generator. Generate stunning, modern, and responsive web interfaces using React, Tailwind CSS, and Lucide React icons. IMPORTANT: Provide the FULL code in a single file. Ensure it is visually impressive (Glassmorphism, Neobrutalism, or Minimalist)." },
+  // --- LITE & APEX (Indices 0-5) ---
+  { 
+    id: 'debug', 
+    name: 'Omni Debugger', 
+    icon: <Code />, 
+    premium: false, 
+    desc: 'Fix syntax/logic errors.',
+    systemPrompt: "You are the Omni Code Debugger. Analyze the provided code for syntax errors, logical flaws, memory leaks, and runtime issues. Return the fixed code with comments explaining the corrections. Focus on correctness and stability."
+  },
+  { 
+    id: 'dep', 
+    name: 'Dependency Scanner', 
+    icon: <Search />, 
+    premium: false, 
+    desc: 'Analyze libs & vulnerabilities.',
+    systemPrompt: "You are the Dependency Scanner. Analyze the imports and dependencies in the code. Identify deprecated packages, security risks, or heavy libraries that could be optimized. Suggest lighter or more secure alternatives."
+  },
+  { 
+    id: 'sec', 
+    name: 'Security Auditor', 
+    icon: <Shield />, 
+    premium: false, 
+    desc: 'Fix SQLi, XSS, RCE.',
+    systemPrompt: "You are the Cybersecurity Auditor. Conduct a deep security scan on the code. Look for SQL Injection, XSS, CSRF, RCE, weak cryptography, and hardcoded secrets. Provide a secure refactored version and explain the vulnerabilities found."
+  },
+  { 
+    id: 'perf', 
+    name: 'Optimizer', 
+    icon: <Zap />, 
+    premium: false, 
+    desc: 'Boost speed & scalability.',
+    systemPrompt: "You are the Performance Optimizer. Refactor the code to improve execution speed, reduce memory usage, and enhance scalability. Look for O(n^2) loops, redundant computations, and unoptimized queries. Provide the optimized code."
+  },
+  { 
+    id: 'explain', 
+    name: 'Code Explainer', 
+    icon: <FileCode />, 
+    premium: false, 
+    desc: 'Deep explanations.',
+    systemPrompt: "You are the Interactive Code Explainer. Break down the provided code into simple, digestible parts. Explain the logic flow, variable purposes, and algorithmic approach. Use analogies where appropriate. Do not just rewrite the code, explain *why* it works."
+  },
+  { 
+    id: 'pair', 
+    name: 'Pair Programmer', 
+    icon: <User />, 
+    premium: false, 
+    desc: 'Real-time collab.',
+    systemPrompt: "You are an AI Pair Programmer. Act as a senior developer colleague. Suggest completions, refactorings, or alternative approaches to the user's current code snippet. Maintain a collaborative and helpful tone."
+  },
+  
+  // --- APEX EXCLUSIVE (Indices 6-11) ---
+  { 
+    id: 'legacy', 
+    name: 'Legacy Resurrection', 
+    icon: <History />, 
+    premium: true, 
+    desc: 'Modernize old stacks.',
+    systemPrompt: "You are the Legacy Code Resurrection Engine. Your task is to modernize outdated code (e.g., COBOL, old PHP, jQuery, VB6) into modern standards (e.g., React, Go, Rust, Python 3.10+). Preserve business logic but upgrade the syntax, libraries, and security practices."
+  },
+  { 
+    id: 'cicd', 
+    name: 'CI/CD Integrator', 
+    icon: <Cpu />, 
+    premium: true, 
+    desc: 'Pipeline automation.',
+    systemPrompt: "You are the CI/CD Integrator. Generate robust pipeline configurations (GitHub Actions YAML, GitLab CI, Jenkinsfile, Dockerfile) for the provided code. Ensure automated testing, linting, security scanning, and deployment steps are included."
+  },
+  { 
+    id: 'custom', 
+    name: 'Custom Commander', 
+    icon: <Terminal />, 
+    premium: true, 
+    desc: 'Execute commands.',
+    systemPrompt: "You are the Custom Command Executor. Follow the specific instructions provided by the user regarding the code. You are versatile and adaptable. If the user asks for a specific refactor pattern (e.g., SOLID, DRY, KISS), apply it rigorously."
+  },
+  { 
+    id: 'sim', 
+    name: 'Adv. Simulation', 
+    icon: <Play />, 
+    premium: true, 
+    desc: 'Sandbox run.',
+    systemPrompt: "You are the Advanced Simulation Environment. Simulate the execution of the provided code. Predict the output for various edge cases. If it's UI code, describe the visual result. If it's logic, trace the variable states. Find logic bugs that static analysis might miss."
+  },
+  { 
+    id: 'docs', 
+    name: 'Dynamic Docs', 
+    icon: <FileText />, 
+    premium: true, 
+    desc: 'Auto documentation.',
+    systemPrompt: "You are the Dynamic Documentation Generator. Create comprehensive documentation for the code, including JSDoc/Docstrings, API endpoint definitions (Swagger/OpenAPI), and usage examples. Make it professional and ready for a README.md."
+  },
+  { 
+    id: 'exp', 
+    name: 'Experimental UI', 
+    icon: <Sparkles />, 
+    premium: true, 
+    desc: 'UI Auto-Design.',
+    systemPrompt: "You are the Experimental UI Generator. Generate stunning, modern, and responsive web interfaces using React, Tailwind CSS, and Lucide React icons. IMPORTANT: Provide the FULL code in a single file. Ensure it is visually impressive (Glassmorphism, Neobrutalism, or Minimalist)."
+  },
 ];
 
 const AI_MODELS = [
@@ -412,7 +498,8 @@ export default function App() {
   // Safe object getter (for portal content)
   const tData = (key: string) => {
     const lang = getLangObj();
-    return lang.ui[key] || {};
+    // Access nested portalContent safely
+    return lang.ui?.portalContent?.[key] || key;
   }
   
   const notify = (msg: string, type = 'info') => { setNotif({msg, type}); setTimeout(() => setNotif(null), 3000); };
@@ -455,7 +542,6 @@ export default function App() {
   }, []);
 
   // HISTORY SYNC
-  // UPDATED V17.0: REMOVED 'orderBy' from query to prevent index errors. Sorted manually.
   useEffect(() => {
     if (!user) { setHistory([]); return; }
     let q = query(collection(db, 'history'), where('userId', '==', user.uid)); 
@@ -507,6 +593,7 @@ export default function App() {
     notify(`Neural Engine Switched: ${AI_MODELS.find(m => m.id === modelId)?.name}`, 'success');
   }
 
+  // DEFINED: New Session Handler
   const handleNewSession = () => {
     if (view === 'chat') {
       setChatMessages([]);
@@ -626,16 +713,19 @@ export default function App() {
     } catch(e) { notify("Chat Error", "error"); } finally { setChatLoading(false); }
   };
 
+  // FIX: Shift+Enter Handler
+  const handleChatInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleChatSend();
+    }
+  };
+
   const copyChat = (text: string) => {
     navigator.clipboard.writeText(text);
     notify(tText('copied'), "success");
   }
 
-  const editChat = (text: string) => {
-    setChatInput(text);
-    notify(tText('edit'), "info");
-  }
-  
   const handleSaveCustomKey = () => {
     if (!customApiKey.trim()) {
       notify("Invalid Key!", "error");
@@ -705,6 +795,7 @@ export default function App() {
             <div className="flex flex-wrap justify-end gap-4 text-[10px] md:text-xs font-mono w-full md:w-auto">
                <div className="flex items-center gap-2 text-slate-500"><span className={`w-2 h-2 rounded-full ${isPremium ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span> ACTIVE</div>
                <div className="text-slate-500">VER: {isPremium ? <span className="text-amber-500">vX.APEX</span> : <span className="text-cyan-500">vX.LITE</span>}</div>
+               {view !== 'settings' && view !== 'premium' && <button onClick={handleNewSession} className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1 rounded text-cyan-400 transition cursor-pointer"><RefreshCw size={12}/> {tText('newChat')}</button>}
                {customApiKey && <div className="flex items-center gap-1 border border-slate-800 rounded px-2 py-0.5 bg-slate-900"><Key size={10} className="text-amber-500"/><span className="text-slate-400">CUSTOM KEY</span></div>}
             </div>
          </header>
@@ -749,8 +840,8 @@ export default function App() {
                <div className="w-full lg:w-64 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col overflow-hidden shrink-0 h-48 lg:h-full shadow-lg">
                   <div className="p-4 border-b border-slate-800 flex items-center justify-between"><span className="text-xs font-bold text-slate-400 flex items-center gap-2"><History size={14}/> {tText('history')}</span></div>
                   <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-                    {!user && !isDevMode ? <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs p-4 text-center"><Lock size={20} className="mb-2"/><p>Guest Mode.</p></div> : history.filter(h => h.type !== 'chat').length === 0 ? <div className="text-center text-slate-600 text-xs mt-4">No logs.</div> : 
-                      history.filter(h => h.type !== 'chat').map(h => (
+                    {!user && !isDevMode ? <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs p-4 text-center"><Lock size={20} className="mb-2"/><p>Guest Mode.</p></div> : history.length === 0 ? <div className="text-center text-slate-600 text-xs mt-4">No logs yet.</div> : 
+                      history.map(h => (
                         <div key={h.id} onClick={() => {setInputCode(h.codeSnippet); setOutputResult(h.response); setIsInputMinimized(true);}} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group">
                           <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-cyan-500 uppercase truncate">{h.module}</span></div>
                           <div className="text-xs text-slate-400 truncate font-mono">{h.codeSnippet}</div>
@@ -775,7 +866,6 @@ export default function App() {
                          <MarkdownRenderer content={msg.text} copyLabel={tText('copy')} copiedLabel={tText('copied')} />
                          <div className={`absolute -bottom-6 ${msg.role === 'user' ? 'right-0' : 'left-0'} opacity-0 group-hover:opacity-100 transition flex gap-2`}>
                            <button onClick={() => copyChat(msg.text)} className="p-1 bg-slate-800 rounded border border-slate-700 text-slate-400 hover:text-white" title={tText('copy')}><Clipboard size={12}/></button>
-                           {msg.role === 'user' && <button onClick={() => editChat(msg.text)} className="p-1 bg-slate-800 rounded border border-slate-700 text-slate-400 hover:text-white" title={tText('edit')}><Edit2 size={12}/></button>}
                          </div>
                        </div>
                      </div>
@@ -783,8 +873,14 @@ export default function App() {
                    {chatLoading && <div className="flex justify-start"><div className="bg-slate-800 p-4 rounded-2xl rounded-bl-none border border-slate-700"><div className="flex gap-1"><div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"></div><div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce delay-75"></div><div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce delay-150"></div></div></div></div>}
                  </div>
                  <div className="p-4 bg-slate-900 border-t border-slate-800 flex gap-2">
-                   <input type="text" value={chatInput} onChange={(e)=>setChatInput(e.target.value)} onKeyDown={(e)=>{if(e.key==='Enter') handleChatSend();}} placeholder={tText('chatPlaceholder')} className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 p-3 rounded-xl focus:border-cyan-500 outline-none"/>
-                   <button onClick={handleChatSend} className="bg-cyan-600 hover:bg-cyan-500 text-white p-3 rounded-xl"><Send size={20}/></button>
+                   <textarea 
+                     value={chatInput} 
+                     onChange={(e)=>setChatInput(e.target.value)} 
+                     onKeyDown={handleChatInputKeyDown} 
+                     placeholder={tText('chatPlaceholder')} 
+                     className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 p-3 rounded-xl focus:border-cyan-500 outline-none resize-none h-[50px] max-h-32"
+                   />
+                   <button onClick={handleChatSend} className="bg-cyan-600 hover:bg-cyan-500 text-white p-3 rounded-xl self-end"><Send size={20}/></button>
                  </div>
                </div>
                
@@ -798,7 +894,15 @@ export default function App() {
                     <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                       {!user && !isDevMode ? <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs p-4 text-center"><Lock size={20} className="mb-2"/><p>Guest Mode.</p></div> : history.filter(h => h.type === 'chat').length === 0 ? <div className="text-center text-slate-600 text-xs mt-4">No chats.</div> : 
                         history.filter(h => h.type === 'chat').map(h => (
-                          <div key={h.id} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group">
+                          <div key={h.id} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group"
+                               onClick={() => {
+                                   // FIX: LOAD CHAT SESSION
+                                   setChatMessages([
+                                       { role: 'user', text: h.codeSnippet }, // Input was stored in codeSnippet
+                                       { role: 'ai', text: h.response }       // Response was stored in response
+                                   ]);
+                                   notify("Chat Session Loaded", "success");
+                               }}>
                             <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-purple-400 uppercase truncate">CHAT</span><span className="text-[10px] text-slate-600">{h.createdAt ? new Date(h.createdAt.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Now'}</span></div>
                             <div className="text-xs text-slate-400 truncate font-mono">{h.codeSnippet}</div>
                           </div>
