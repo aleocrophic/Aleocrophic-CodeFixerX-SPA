@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 
 // --- 1. FIREBASE CONFIGURATION (ROBUST FALLBACK SYSTEM) ---
-// Logic: Coba ambil dari global var dulu, kalau error/undefined, pake hardcoded config dari User.
 const getFirebaseConfig = () => {
   try {
     if (typeof __firebase_config !== 'undefined') {
@@ -36,7 +35,6 @@ const getFirebaseConfig = () => {
 };
 
 const firebaseConfig = getFirebaseConfig();
-// Use provided app ID or fallback to a default one to prevent path errors
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'codefixerx-web-app';
 
 const app = initializeApp(firebaseConfig);
@@ -44,7 +42,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // --- FIREBASE HELPERS ---
-// Note: Path harus konsisten biar gak permission denied
 const getUserCollection = (userId, colName) => collection(db, 'artifacts', appId, 'users', userId, colName);
 const getUserDoc = (userId, colName, docId) => doc(db, 'artifacts', appId, 'users', userId, colName, docId);
 
@@ -343,6 +340,51 @@ export default function App() {
   } 
     
   const notify = (msg, type = 'info') => { setNotif({msg, type}); setTimeout(() => setNotif(null), 3000); }; 
+
+  // --- ACTION HANDLERS (DUAL SYNC: LOCAL + CLOUD) ---
+  const updateLanguage = async (code) => {
+      setLangCode(code);
+      localStorage.setItem('cfx_lang', code);
+      if (user && !user.isAnonymous) {
+          try {
+              await setDoc(getUserDoc(user.uid, 'account', 'profile'), { language: code }, { merge: true });
+          } catch(e) { console.error("Lang sync failed", e); }
+      }
+  };
+
+  const handleLangSelect = (code) => {
+      updateLanguage(code);
+      setView('apikey_gate');
+  }
+
+  const changeAiModel = async (modelId) => { 
+    setAiModel(modelId); 
+    localStorage.setItem('cfx_ai_model', modelId); 
+    if(user && !user.isAnonymous) { 
+        try { 
+            await setDoc(getUserDoc(user.uid, 'account', 'profile'), { aiModel: modelId }, { merge: true }); 
+        } catch(e) { console.error("Model sync failed", e); } 
+    } 
+    notify(`Neural Engine Switched: ${AI_MODELS.find(m => m.id === modelId)?.name}`, 'success'); 
+  }
+
+  const handleSaveCustomKey = async () => { 
+    if (!customApiKey.trim()) { 
+      notify("Invalid Key!", "error"); 
+      return; 
+    } 
+    localStorage.setItem('cfx_api_key', customApiKey); 
+    // Option: You can sync this to cloud if you want, but typically API keys are kept local for security
+    // If requested to sync EVERYTHING:
+    if(user && !user.isAnonymous) {
+        try {
+            await setDoc(getUserDoc(user.uid, 'account', 'profile'), { apiKey: customApiKey }, { merge: true });
+        } catch(e) { console.error("Key sync failed", e); }
+    }
+
+    notify("Custom Key Saved & Ready!", "success"); 
+    setApiStatus('idle'); 
+  } 
  
   useEffect(() => { 
     const initAuth = async () => {
@@ -393,16 +435,52 @@ export default function App() {
             try { 
               const docRef = getUserDoc(u.uid, 'account', 'profile'); 
               const docSnap = await getDoc(docRef); 
+              
               if (docSnap.exists()) { 
+                // --- CLOUD TO LOCAL SYNC ---
                 const data = docSnap.data(); 
-                if (data.language && LANGUAGES[data.language]) setLangCode(data.language); 
-                if (data.isPremium) { 
+                
+                if (data.language && LANGUAGES[data.language]) {
+                    setLangCode(data.language);
+                    localStorage.setItem('cfx_lang', data.language);
+                }
+                
+                if (data.isPremium === true) { 
                     setIsPremium(true); 
                     localStorage.setItem('cfx_is_premium', 'true'); 
-                } 
-                if (data.aiModel) setAiModel(data.aiModel); 
-              } 
-            } catch (e) {} 
+                } else {
+                    setIsPremium(false);
+                    localStorage.removeItem('cfx_is_premium');
+                }
+                
+                if (data.aiModel) {
+                    setAiModel(data.aiModel);
+                    localStorage.setItem('cfx_ai_model', data.aiModel);
+                }
+
+                if (data.apiKey) {
+                    setCustomApiKey(data.apiKey);
+                    localStorage.setItem('cfx_api_key', data.apiKey);
+                }
+
+                notify("Profile Synced from Cloud ☁️", "success");
+
+              } else {
+                 // --- LOCAL TO CLOUD SYNC (New Google User) ---
+                 const initialData = {
+                     language: langCode,
+                     isPremium: isPremium, // Assuming default false, but good to explicit
+                     aiModel: aiModel,
+                     createdAt: serverTimestamp()
+                 };
+                 if (customApiKey) initialData.apiKey = customApiKey;
+
+                 await setDoc(docRef, initialData, { merge: true });
+                 notify("Local Settings Saved to Cloud ☁️", "success");
+              }
+            } catch (e) {
+                console.error("Profile Sync Error:", e);
+            } 
         } 
       } else { 
         setIsPremium(false); 
@@ -479,12 +557,6 @@ export default function App() {
       return () => unsub();
   }, [user, view]);
  
-  const handleLangSelect = (code) => {
-      setLangCode(code);
-      localStorage.setItem('cfx_lang', code);
-      setView('apikey_gate');
-  }
-
   const handleGateSubmit = () => { 
       if (!gateApiKey.trim() || gateApiKey.length < 10) { 
           notify("Invalid API Key Format", "error"); 
@@ -528,12 +600,6 @@ export default function App() {
       } 
   } 
  
-  const changeAiModel = async (modelId) => { 
-    setAiModel(modelId); localStorage.setItem('cfx_ai_model', modelId); 
-    if(user) { try { await setDoc(getUserDoc(user.uid, 'account', 'profile'), { aiModel: modelId }, { merge: true }); } catch(e) {} } 
-    notify(`Neural Engine Switched: ${AI_MODELS.find(m => m.id === modelId)?.name}`, 'success'); 
-  } 
- 
   const handleNewSession = () => { 
     if (view === 'chat') { 
       setChatMessages([]); 
@@ -564,7 +630,7 @@ export default function App() {
       notify("APEX UNLOCKED", "success"); 
       setView('dashboard'); 
        
-      if (user) {
+      if (user && !user.isAnonymous) {
           try { 
             await setDoc(getUserDoc(user.uid, 'account', 'profile'), { isPremium: true }, { merge: true }); 
             notify("License Synced to Cloud ☁️", "success"); 
@@ -784,16 +850,6 @@ export default function App() {
     notify(tText('copied'), "success"); 
   } 
     
-  const handleSaveCustomKey = () => { 
-    if (!customApiKey.trim()) { 
-      notify("Invalid Key!", "error"); 
-      return; 
-    } 
-    localStorage.setItem('cfx_api_key', customApiKey); 
-    notify("Custom Key Saved & Ready!", "success"); 
-    setApiStatus('idle'); 
-  } 
- 
   const handleChatInputKeyDown = (e) => { 
     const isMobile = window.innerWidth < 768; 
     if (!isMobile && e.key === 'Enter' && !e.shiftKey) { 
@@ -1074,16 +1130,14 @@ export default function App() {
            <button onClick={() => {setView('portal'); if(window.innerWidth < 768) setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-400 hover:bg-slate-800 transition ${view==='portal'?'bg-indigo-500/20 text-indigo-300':''}`}><BookOpen size={16}/> {tText('portalLabel')}</button> 
          </div> 
          <div className="p-4 border-t border-slate-800 bg-slate-900"> 
-           {/* UPDATE LOGIC: Tombol Upgrade selalu muncul kecuali udah premium. Kalo Guest diklik, redirect login. Kalo Dev diklik, masuk halaman input key. */}
-           {!isPremium && (
+           {(!isPremium || isDevMode) && (
              <button 
                onClick={() => {
-                 if (user && user.isAnonymous && !isDevMode) {
+                 if (isDevMode || (user && !user.isAnonymous)) {
+                   setView('premium');
+                 } else {
                    notify("Eits! Login Google dulu bosku! 🔒", "error");
                    setView('login');
-                 } else {
-                   // Masuk sini kalau User Google atau Dev Mode
-                   setView('premium');
                  }
                }} 
                className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs font-bold rounded-lg transition shadow-lg shadow-amber-500/20 mb-2 flex items-center justify-center gap-2"
@@ -1161,7 +1215,7 @@ export default function App() {
                                 <button onClick={handleCopyOutput} className="text-xs flex items-center gap-1 text-slate-400 hover:text-white"><CheckCircle size={12}/> {tText('copy')}</button> 
                               </div> 
                            </div> 
-                           <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-950"> 
+                           <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-900"> 
                               <MarkdownRenderer content={outputResult} copyLabel={tText('copyCode')} copiedLabel={tText('copied')} /> 
                            </div> 
                         </div> 
