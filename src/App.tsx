@@ -434,51 +434,56 @@ export default function App() {
               
             try { 
               const docRef = getUserDoc(u.uid, 'account', 'profile'); 
-              const docSnap = await getDoc(docRef); 
-              
-              if (docSnap.exists()) { 
-                // --- CLOUD TO LOCAL SYNC (Cloud is Master) ---
-                const data = docSnap.data(); 
-                
-                if (data.language && LANGUAGES[data.language]) {
-                    setLangCode(data.language);
-                    localStorage.setItem('cfx_lang', data.language);
-                }
-                
-                if (data.isPremium === true) { 
-                    setIsPremium(true); 
-                    localStorage.setItem('cfx_is_premium', 'true'); 
-                } else {
-                    setIsPremium(false);
-                    localStorage.removeItem('cfx_is_premium');
-                }
-                
-                if (data.aiModel) {
-                    setAiModel(data.aiModel);
-                    localStorage.setItem('cfx_ai_model', data.aiModel);
-                }
+              // WRAP IN TRY-CATCH to handle permission errors if collection is not ready
+              try {
+                  const docSnap = await getDoc(docRef); 
+                  
+                  if (docSnap.exists()) { 
+                    // --- CLOUD TO LOCAL SYNC (Cloud is Master) ---
+                    const data = docSnap.data(); 
+                    
+                    if (data.language && LANGUAGES[data.language]) {
+                        setLangCode(data.language);
+                        localStorage.setItem('cfx_lang', data.language);
+                    }
+                    
+                    if (data.isPremium === true) { 
+                        setIsPremium(true); 
+                        localStorage.setItem('cfx_is_premium', 'true'); 
+                    } else {
+                        setIsPremium(false);
+                        localStorage.removeItem('cfx_is_premium');
+                    }
+                    
+                    if (data.aiModel) {
+                        setAiModel(data.aiModel);
+                        localStorage.setItem('cfx_ai_model', data.aiModel);
+                    }
 
-                if (data.apiKey) {
-                    setCustomApiKey(data.apiKey);
-                    setGateApiKey(data.apiKey);
-                    localStorage.setItem('cfx_api_key', data.apiKey);
-                }
+                    if (data.apiKey) {
+                        setCustomApiKey(data.apiKey);
+                        setGateApiKey(data.apiKey);
+                        localStorage.setItem('cfx_api_key', data.apiKey);
+                    }
 
-                notify("Profile Synced from Cloud ☁️", "success");
+                    notify("Profile Synced from Cloud ☁️", "success");
 
-              } else {
-                 // --- LOCAL TO CLOUD SYNC (First Time Login / New User) ---
-                 // Push local settings to cloud to persist them
-                 const initialData = {
-                     language: langCode,
-                     isPremium: isPremium,
-                     aiModel: aiModel,
-                     apiKey: customApiKey, // Optional: Sync key
-                     createdAt: serverTimestamp()
-                 };
+                  } else {
+                     // --- LOCAL TO CLOUD SYNC (First Time Login / New User) ---
+                     // Push local settings to cloud to persist them
+                     const initialData = {
+                         language: langCode,
+                         isPremium: isPremium,
+                         aiModel: aiModel,
+                         apiKey: customApiKey, // Optional: Sync key
+                         createdAt: serverTimestamp()
+                     };
 
-                 await setDoc(docRef, initialData, { merge: true });
-                 notify("Local Settings Saved to Cloud ☁️", "success");
+                     await setDoc(docRef, initialData, { merge: true });
+                     notify("Local Settings Saved to Cloud ☁️", "success");
+                  }
+              } catch (profileErr) {
+                  console.warn("Profile Sync Warning (Permission/Network):", profileErr.message);
               }
             } catch (e) {
                 console.error("Profile Sync Error:", e);
@@ -501,6 +506,7 @@ export default function App() {
   useEffect(() => { 
     if (!user) { setHistory([]); return; } 
     const colRef = getUserCollection(user.uid, 'history');
+    // Defensive listener with explicit error handling
     const unsub = onSnapshot(colRef, (snap) => { 
       const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
       fetched.sort((a, b) => { 
@@ -510,7 +516,12 @@ export default function App() {
       }); 
       setHistory(fetched); 
     }, (error) => { 
-        console.error("Firestore History Error:", error); 
+        // Silent fail on permission errors to avoid console spam
+        if (error.code === 'permission-denied') {
+            console.warn("History Sync: Permission Denied (Likely auth stale or path issue)");
+        } else {
+            console.error("Firestore History Error:", error); 
+        }
     }); 
     return () => unsub(); 
   }, [user]);
@@ -548,7 +559,8 @@ export default function App() {
                       { name: 'App.tsx', content: 'const App = () => {\n  return (\n    <div className="text-center p-10">\n       <h1 className="text-3xl font-bold text-pink-500">Hello TSX!</h1>\n       <p className="text-slate-300">This is compiled in-browser.</p>\n    </div>\n  );\n};\n\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(<App />);' }
                   ];
                   defaults.forEach(async (f) => {
-                      await addDoc(colRef, { ...f, createdAt: serverTimestamp() });
+                      // Try-catch individual file adds
+                      try { await addDoc(colRef, { ...f, createdAt: serverTimestamp() }); } catch(e){}
                   });
               }
           } else {
@@ -556,6 +568,13 @@ export default function App() {
               if (!unsavedChanges) {
                   setFiles(fetched);
               } 
+          }
+      }, (error) => {
+          // Silent fail on permission errors to avoid console spam
+          if (error.code === 'permission-denied') {
+              console.warn("Playground Sync: Permission Denied");
+          } else {
+              console.error("Playground Sync Error:", error);
           }
       });
       return () => unsub();
@@ -783,8 +802,8 @@ export default function App() {
                 createdAt: serverTimestamp()  
              }); 
          } catch (saveError) {
-             console.error("Failed to save history:", saveError);
-             notify("History Save Failed", "error");
+             // Silent fail usually, or minor warn
+             console.warn("History Save Failed (Network/Perms)");
          }
       } 
  
@@ -841,7 +860,7 @@ export default function App() {
                 createdAt: serverTimestamp()  
             }); 
         } catch(saveErr) {
-            console.error("Chat history failed", saveErr);
+            console.warn("Chat history failed (Network/Perms)");
         }
       } 
  
