@@ -12,15 +12,39 @@ import {
   PlayCircle, FileJson, Download, FilePlus, MonitorPlay, AlertOctagon, Crown, EyeOff, Maximize, Minimize, FolderOpen, File, ChevronDown, FolderPlus, Save, Edit3, MoreVertical, Circle, Cloud, CloudOff, Check
 } from 'lucide-react';
 
-// --- 1. FIREBASE CONFIGURATION ---
-const firebaseConfig = JSON.parse(__firebase_config);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+// --- 1. FIREBASE CONFIGURATION (ROBUST FALLBACK SYSTEM) ---
+// Logic: Coba ambil dari global var dulu, kalau error/undefined, pake hardcoded config dari User.
+const getFirebaseConfig = () => {
+  try {
+    if (typeof __firebase_config !== 'undefined') {
+      return JSON.parse(__firebase_config);
+    }
+  } catch (e) {
+    console.warn("Global config not found, switching to fallback...");
+  }
+  
+  // FALLBACK CONFIG (remchat-fd4ea)
+  return {
+    apiKey: "AIzaSyBpXhfpTR7KGfW5ESH_Z-9Wc8QyJ9YHxv8",
+    authDomain: "remchat-fd4ea.firebaseapp.com",
+    projectId: "remchat-fd4ea",
+    storageBucket: "remchat-fd4ea.firebasestorage.app",
+    messagingSenderId: "369353956112",
+    appId: "1:369353956112:web:7aff645b1724ec80bfa395",
+    measurementId: "G-QTHRQNXJKF"
+  };
+};
+
+const firebaseConfig = getFirebaseConfig();
+// Use provided app ID or fallback to a default one to prevent path errors
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'codefixerx-web-app';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 // --- FIREBASE HELPERS ---
+// Note: Path harus konsisten biar gak permission denied
 const getUserCollection = (userId, colName) => collection(db, 'artifacts', appId, 'users', userId, colName);
 const getUserDoc = (userId, colName, docId) => doc(db, 'artifacts', appId, 'users', userId, colName, docId);
 
@@ -447,22 +471,9 @@ export default function App() {
               }
           } else {
               // Firestore has data, it wins over local if we assume cloud sync
-              // We can be smarter here but for now, simple sync is safer
-              // To avoid overwriting user's un-synced work, we could check timestamps, 
-              // but simplicity first: Cloud wins if user refreshes.
-              // DURING editing, we don't want this to overwrite. 
-              // So we'll update `files` only if it's vastly different or on initial load?
-              // Actually, `onSnapshot` is realtime. Let's just use it. 
-              // *Optimization*: Only update if NOT currently editing? 
-              // For now, let's trust the snapshot for structure updates (new files from other devices).
-              // Editing content locally updates state immediately, so snapshot might revert it if not careful.
-              // *Fix*: We won't sync content from snapshot aggressively if we have unsaved changes.
               if (!unsavedChanges) {
                   setFiles(fetched);
-              } else {
-                  // If unsaved, only sync file LIST structure (names/ids), not content?
-                  // Too complex. Let's just sync. User should save often.
-              }
+              } 
           }
       });
       return () => unsub();
@@ -539,8 +550,9 @@ export default function App() {
   }; 
  
   const handleUnlock = async () => { 
-    if ((!user || user.isAnonymous) && !isDevMode) { 
-        notify("SECURITY ALERT: Guest Access Denied! 🛡️", "error"); 
+    // If user is a GUEST and trying to upgrade -> Redirect to Login first
+    if (user && user.isAnonymous && !isDevMode) { 
+        notify("Please Login with Google to Upgrade! 🔒", "error"); 
         setView('login');
         return; 
     } 
@@ -1062,14 +1074,16 @@ export default function App() {
            <button onClick={() => {setView('portal'); if(window.innerWidth < 768) setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-400 hover:bg-slate-800 transition ${view==='portal'?'bg-indigo-500/20 text-indigo-300':''}`}><BookOpen size={16}/> {tText('portalLabel')}</button> 
          </div> 
          <div className="p-4 border-t border-slate-800 bg-slate-900"> 
-           {(!isPremium || isDevMode) && (
+           {/* UPDATE LOGIC: Tombol Upgrade selalu muncul kecuali udah premium. Kalo Guest diklik, redirect login. Kalo Dev diklik, masuk halaman input key. */}
+           {!isPremium && (
              <button 
                onClick={() => {
-                 if (isDevMode || (user && !user.isAnonymous)) {
-                   setView('premium');
-                 } else {
+                 if (user && user.isAnonymous && !isDevMode) {
                    notify("Eits! Login Google dulu bosku! 🔒", "error");
-                   setView('login'); // Redirect Guest
+                   setView('login');
+                 } else {
+                   // Masuk sini kalau User Google atau Dev Mode
+                   setView('premium');
                  }
                }} 
                className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs font-bold rounded-lg transition shadow-lg shadow-amber-500/20 mb-2 flex items-center justify-center gap-2"
@@ -1081,7 +1095,6 @@ export default function App() {
              <>
                <div className="flex items-center gap-3 px-2 mb-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${isDevMode ? 'bg-red-900 border-red-500 text-red-200' : 'bg-cyan-900 border-cyan-700 text-cyan-200'}`}>{isDevMode ? 'DEV' : (user.email ? user.email[0].toUpperCase() : 'G')}</div><div className="flex-1 overflow-hidden"><div className="text-xs font-bold truncate">{isDevMode ? 'Developer' : (user.displayName || 'Guest User')}</div><div className="text-[10px] text-slate-500">{isDevMode ? 'System Root' : 'Online'}</div></div><button onClick={() => { signOut(auth); setView('login'); }}><LogOut size={16} className="text-slate-500 hover:text-red-400"/></button></div>
                
-               {/* BUY KEY - Visible for Dev Mode AND Lite Users */}
                {(!isPremium || isDevMode) && (
                  <a href="https://lynk.id/zetago-aurum/yjzz3v78oq13" target="_blank" rel="noreferrer" className="w-full py-2 mt-2 bg-slate-800 hover:bg-slate-700 border border-amber-500/50 text-amber-400 text-[10px] font-bold rounded-lg flex items-center justify-center gap-2 transition group"><ShoppingCart size={12} className="group-hover:scale-110 transition-transform"/> {tText('buyKey')}</a> 
                )}
