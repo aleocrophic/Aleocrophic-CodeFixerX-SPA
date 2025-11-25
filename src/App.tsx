@@ -9,7 +9,7 @@ import {
   Menu, X, ChevronRight, Command, LogIn, Info, 
   Server, Globe, Copyright, FileText, Eye, Maximize2, Minimize2, 
   Settings, Box, Activity, Languages, BookOpen, Key, Database, Layers, Clipboard, AlertTriangle, Heart, Briefcase, Laptop, Bug, Upload, Brain, MessageSquare, PlusCircle, RefreshCw, Send, ShoppingCart, Edit2, Trash2, PanelRight, ExternalLink, Github, Wifi, WifiOff, Fingerprint, Sidebar, SidebarClose, SidebarOpen, LogIn as LoginIcon,
-  PlayCircle, FileJson, Download, FilePlus, MonitorPlay, AlertOctagon, Crown, EyeOff, Maximize, Minimize, FolderOpen, File, ChevronDown, FolderPlus, Save, Edit3, MoreVertical, Circle, Cloud, CloudOff, Check
+  PlayCircle, FileJson, Download, FilePlus, MonitorPlay, AlertOctagon, Crown, EyeOff, Maximize, Minimize, FolderOpen, File, ChevronDown, FolderPlus, Save, Edit3, MoreVertical, Circle, Cloud, CloudOff, Check, Plus, XCircle
 } from 'lucide-react';
 
 // --- 1. FIREBASE CONFIGURATION (ROBUST FALLBACK SYSTEM) ---
@@ -274,6 +274,46 @@ const CodeBlock = ({ lang, code, copyLabel, copiedLabel }) => {
     </div> 
   ); 
 } 
+
+// --- MODAL COMPONENT (REPLACES PROMPT/CONFIRM) ---
+const Modal = ({ isOpen, title, type, value, onClose, onConfirm, message }) => {
+  const [inputValue, setInputValue] = useState(value || '');
+  
+  useEffect(() => { if(isOpen) setInputValue(value || ''); }, [isOpen, value]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl transform transition-all">
+        <h3 className="text-lg font-bold text-white mb-4">{title}</h3>
+        {message && <p className="text-slate-400 text-sm mb-4">{message}</p>}
+        
+        {(type === 'input' || type === 'filename' || type === 'foldername') && (
+          <input 
+            type="text" 
+            value={inputValue} 
+            onChange={(e) => setInputValue(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white text-sm focus:border-cyan-500 outline-none mb-4"
+            placeholder={type === 'foldername' ? 'e.g., components' : 'e.g., App.tsx'}
+            autoFocus
+            onKeyDown={(e) => e.key === 'Enter' && onConfirm(inputValue)}
+          />
+        )}
+
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 text-slate-400 hover:text-white text-sm font-bold">Cancel</button>
+          <button 
+            onClick={() => onConfirm(inputValue)} 
+            className={`px-6 py-2 rounded-xl text-sm font-bold text-slate-900 transition ${type==='delete' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-cyan-500 hover:bg-cyan-400'}`}
+          >
+            {type === 'delete' ? 'Delete' : 'Confirm'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
  
 // --- 4. MAIN APP --- 
 export default function App() {  
@@ -318,6 +358,9 @@ export default function App() {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [isLocalSyncing, setIsLocalSyncing] = useState(false); // Visual for local storage
   
+  // MODAL STATE (Replaces Prompt)
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', title: '', value: '', message: '', onConfirm: () => {} });
+
   const [sidebarOpen, setSidebarOpen] = useState(false);  
   const [premiumKey, setPremiumKey] = useState(''); 
   const [notif, setNotif] = useState(null); 
@@ -326,6 +369,7 @@ export default function App() {
   const [hoshinoImgError, setHoshinoImgError] = useState(false); 
  
   const [historySidebarOpen, setHistorySidebarOpen] = useState(true); 
+  const [historyError, setHistoryError] = useState(false);
  
   const getLangObj = () => LANGUAGES[langCode] || LANGUAGES['en']; 
     
@@ -502,7 +546,7 @@ export default function App() {
     return () => { unsub(); window.removeEventListener('resize', handleResize); }; 
   }, []); 
 
-  // --- HISTORY SYNC ---
+  // --- HISTORY SYNC (ROBUST ERROR HANDLING) ---
   useEffect(() => { 
     if (!user) { setHistory([]); return; } 
     const colRef = getUserCollection(user.uid, 'history');
@@ -515,10 +559,12 @@ export default function App() {
         return timeB - timeA; 
       }); 
       setHistory(fetched); 
+      setHistoryError(false);
     }, (error) => { 
         // Silent fail on permission errors to avoid console spam
-        if (error.code === 'permission-denied') {
-            console.warn("History Sync: Permission Denied (Likely auth stale or path issue)");
+        setHistoryError(true);
+        if (error.code === 'permission-denied' || error.message.includes('BLOCKED_BY_CLIENT')) {
+            console.warn("History Sync: Permission Denied or Blocked. (AdBlocker?)");
         } else {
             console.error("Firestore History Error:", error); 
         }
@@ -571,8 +617,8 @@ export default function App() {
           }
       }, (error) => {
           // Silent fail on permission errors to avoid console spam
-          if (error.code === 'permission-denied') {
-              console.warn("Playground Sync: Permission Denied");
+          if (error.code === 'permission-denied' || error.message.includes('BLOCKED_BY_CLIENT')) {
+              console.warn("Playground Sync: Permission Denied or Blocked.");
           } else {
               console.error("Playground Sync Error:", error);
           }
@@ -968,57 +1014,78 @@ export default function App() {
       }
   };
 
-  // --- REAL FILE MANAGER ACTIONS (FIRESTORE) ---
-  const handleNewFile = async () => {
-      const fileName = prompt("Enter file name (e.g., utils.js):");
-      if (fileName) {
-          try {
-              await addDoc(getUserCollection(user.uid, 'playground_files'), {
-                  name: fileName,
-                  content: '// New File',
-                  createdAt: serverTimestamp()
-              });
-              notify(`Created ${fileName}`, "success");
-          } catch(e) { notify("Create Failed", "error"); }
-      }
+  // --- REAL FILE MANAGER ACTIONS (MODAL-BASED, NO PROMPT) ---
+  const openModal = (type, title, value = '', message = '', onConfirm) => {
+      setModalConfig({ isOpen: true, type, title, value, message, onConfirm });
   };
 
-  const handleNewFolder = async () => {
-      const folderName = prompt("Enter folder name (e.g., components):");
-      if (folderName) {
-          const fileName = prompt(`Enter initial file for ${folderName}/ (e.g., Header.tsx):`);
+  const closeModal = () => {
+      setModalConfig({ ...modalConfig, isOpen: false });
+  };
+
+  const handleNewFile = () => {
+      openModal('filename', 'Create New File', '', '', async (fileName) => {
           if (fileName) {
-             try {
-                 await addDoc(getUserCollection(user.uid, 'playground_files'), {
-                     name: `${folderName}/${fileName}`,
-                     content: '// Folder File',
-                     createdAt: serverTimestamp()
-                 });
-                 notify(`Created folder ${folderName}`, "success");
-             } catch(e) { notify("Folder Create Failed", "error"); }
+              try {
+                  await addDoc(getUserCollection(user.uid, 'playground_files'), {
+                      name: fileName,
+                      content: '// New File',
+                      createdAt: serverTimestamp()
+                  });
+                  notify(`Created ${fileName}`, "success");
+              } catch(e) { notify("Create Failed", "error"); }
           }
-      }
+          closeModal();
+      });
   };
 
-  const handleDeleteFile = async (fileId, fileName) => {
+  const handleNewFolder = () => {
+      openModal('foldername', 'Create New Folder', '', '', (folderName) => {
+          if (folderName) {
+              // Nested modal for file inside folder
+              setTimeout(() => {
+                  openModal('filename', `File inside ${folderName}/`, '', '', async (fileName) => {
+                      if (fileName) {
+                         try {
+                             await addDoc(getUserCollection(user.uid, 'playground_files'), {
+                                 name: `${folderName}/${fileName}`,
+                                 content: '// Folder File',
+                                 createdAt: serverTimestamp()
+                             });
+                             notify(`Created folder ${folderName}`, "success");
+                         } catch(e) { notify("Folder Create Failed", "error"); }
+                      }
+                      closeModal();
+                  });
+              }, 300); // Small delay for visual transition
+          } else {
+              closeModal();
+          }
+      });
+  };
+
+  const handleDeleteFile = (fileId, fileName) => {
       if (files.length <= 1) return notify("Cannot delete the last file!", "error");
-      if (confirm(`Delete ${fileName}? This cannot be undone.`)) {
+      openModal('delete', 'Delete File?', '', `Are you sure you want to delete ${fileName}?`, async () => {
           try {
               await deleteDoc(getUserDoc(user.uid, 'playground_files', fileId));
               notify("File Deleted", "success");
               setActiveFileIndex(0);
           } catch(e) { notify("Delete Failed", "error"); }
-      }
+          closeModal();
+      });
   };
 
-  const handleRenameFile = async (fileId, oldName) => {
-      const newName = prompt("Rename file to:", oldName);
-      if (newName && newName !== oldName) {
-          try {
-              await updateDoc(getUserDoc(user.uid, 'playground_files', fileId), { name: newName });
-              notify("Renamed!", "success");
-          } catch(e) { notify("Rename Failed", "error"); }
-      }
+  const handleRenameFile = (fileId, oldName) => {
+      openModal('filename', 'Rename File', oldName, '', async (newName) => {
+          if (newName && newName !== oldName) {
+              try {
+                  await updateDoc(getUserDoc(user.uid, 'playground_files', fileId), { name: newName });
+                  notify("Renamed!", "success");
+              } catch(e) { notify("Rename Failed", "error"); }
+          }
+          closeModal();
+      });
   };
 
   const handleSaveFile = async () => {
@@ -1138,6 +1205,16 @@ export default function App() {
  
   return ( 
     <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-200 font-sans selection:bg-cyan-500/30"> 
+      <Modal 
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        value={modalConfig.value}
+        message={modalConfig.message}
+        onConfirm={modalConfig.onConfirm}
+        onClose={closeModal}
+      />
+
       {notif && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-lg border animate-bounce ${notif.type==='success'?'bg-emerald-500/20 border-emerald-500 text-emerald-300':'bg-red-500/20 border-red-500 text-red-300'}`}>{notif.msg}</div>} 
  
       {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm" onClick={()=>setSidebarOpen(false)}></div>} 
@@ -1267,6 +1344,12 @@ export default function App() {
                               <button onClick={() => setHistorySidebarOpen(false)} className="lg:hidden text-slate-400"><X size={14}/></button> 
                           </div> 
                           <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar"> 
+                            {historyError && (
+                                <div className="p-3 bg-red-900/20 border border-red-500/50 rounded-lg mb-2">
+                                    <p className="text-[10px] text-red-300 mb-1">Network blocked. AdBlocker?</p>
+                                    <button onClick={() => window.location.reload()} className="text-[10px] bg-red-900/50 px-2 py-1 rounded hover:bg-red-800 text-white w-full">Force Refresh</button>
+                                </div>
+                            )}
                             {!user && !isDevMode ? <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs p-4 text-center"><Lock size={20} className="mb-2"/><p>Guest Mode.</p></div> : history.length === 0 ? <div className="text-center text-slate-600 text-xs mt-4">No logs yet.</div> :    
                               history.map(h => ( 
                                 <div key={h.id} onClick={() => {setInputCode(h.codeSnippet); setOutputResult(h.response); setIsInputMinimized(true); if(window.innerWidth < 1024) setHistorySidebarOpen(false); }} className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 hover:bg-slate-800 cursor-pointer transition group"> 
