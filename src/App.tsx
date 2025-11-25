@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, setDoc, getDoc, orderBy, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { 
   Code, Shield, Zap, Terminal, Cpu, Sparkles, 
   History, LogOut, User, Lock, Unlock, LayoutDashboard, 
   FileCode, Play, CheckCircle, Search, 
-  Menu, X, ChevronRight, Command, LogIn, Info, 
-  Server, Globe, Copyright, FileText, Eye, Maximize2, Minimize2, 
-  Settings, Box, Activity, Languages, BookOpen, Key, Database, Layers, Clipboard, AlertTriangle, Heart, Briefcase, Laptop, Bug, Upload, Brain, MessageSquare, PlusCircle, RefreshCw, Send, ShoppingCart, Edit2, Trash2, PanelRight, ExternalLink, Github, Wifi, WifiOff, Fingerprint, Sidebar, SidebarClose, SidebarOpen, LogIn as LoginIcon,
-  PlayCircle, FileJson, Download, FilePlus, MonitorPlay, AlertOctagon, Crown, EyeOff, Maximize, Minimize, FolderOpen, File, ChevronDown, FolderPlus, Save, Edit3, MoreVertical, Circle, Cloud, CloudOff, Check, Plus, XCircle
+  Menu, X, ChevronRight, LogIn, 
+  Server, Globe, FileText, Eye, Maximize2, Minimize2, 
+  Settings, BookOpen, Key, Database, Clipboard, Upload, Brain, MessageSquare, RefreshCw, Send, ShoppingCart, Edit2, Download, MonitorPlay, AlertOctagon, FolderOpen, File, SidebarClose, SidebarOpen, PlayCircle, Save, Circle, Cloud, CloudOff, Minimize, Maximize
 } from 'lucide-react';
 
 // --- 1. FIREBASE CONFIGURATION (ROBUST FALLBACK SYSTEM) ---
@@ -22,7 +21,7 @@ const getFirebaseConfig = () => {
     console.warn("Global config not found, switching to fallback...");
   }
   
-  // FALLBACK CONFIG (remchat-fd4ea)
+  // FALLBACK CONFIG
   return {
     apiKey: "AIzaSyBpXhfpTR7KGfW5ESH_Z-9Wc8QyJ9YHxv8",
     authDomain: "remchat-fd4ea.firebaseapp.com",
@@ -45,12 +44,41 @@ const db = getFirestore(app);
 const getUserCollection = (userId, colName) => collection(db, 'artifacts', appId, 'users', userId, colName);
 const getUserDoc = (userId, colName, docId) => doc(db, 'artifacts', appId, 'users', userId, colName, docId);
 
+// --- PERMANENT TEMPLATES (FIXED FILES) ---
+const PERMANENT_TEMPLATES = [
+  { 
+    id: 'tmpl_html', 
+    name: 'index.html', 
+    content: '<div class="container">\n  <h1 class="title">CodeFixerX Playground</h1>\n  <p>Edit styles.css to change looks!</p>\n  <div id="root"></div>\n</div>' 
+  },
+  { 
+    id: 'tmpl_css', 
+    name: 'styles.css', 
+    content: 'body { font-family: sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }\n.container { text-align: center; background: #1e293b; padding: 40px; border-radius: 20px; border: 1px solid #334155; }\n.title { color: #22d3ee; }' 
+  },
+  { 
+    id: 'tmpl_js', 
+    name: 'index.js', 
+    content: '// Vanilla JS Logic here\nconsole.log("Hello from Vanilla JS");' 
+  },
+  { 
+    id: 'tmpl_jsx', 
+    name: 'App.jsx', 
+    content: 'const App = () => {\n  return (\n    <div className="p-4 border border-pink-500 rounded mt-4">\n      <h2 className="text-pink-400 font-bold">Hello React JSX!</h2>\n    </div>\n  );\n};\n\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(<App />);' 
+  },
+  { 
+    id: 'tmpl_tsx', 
+    name: 'App.tsx', 
+    content: 'import React from "react";\n\nconst App = () => {\n  return (\n    <div className="p-4 border border-blue-500 rounded mt-4">\n      <h2 className="text-blue-400 font-bold">Hello React TSX!</h2>\n      <p className="text-xs text-slate-400">TypeScript Support Active</p>\n    </div>\n  );\n};\n\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(<App />);' 
+  }
+];
+
 // --- 2. DATA & TRANSLATIONS --- 
 const LANGUAGES = { 
   en: {  
     label: 'English', flag: '🇺🇸',  
     ui: {  
-      dashboard: 'Dashboard', chat: 'Free Chat', playground: 'IDE Playground', portalLabel: 'Portal System', history: 'History', upgrade: 'Upgrade Apex', login: 'Login',  
+      dashboard: 'Dashboard', chat: 'Free Chat', playground: 'Fixed Template IDE', portalLabel: 'Portal System', history: 'History', upgrade: 'Upgrade Apex', login: 'Login',  
       analyze: 'Initiate Fix', input: 'Source Code', output: 'Output', processing: 'Processing...', settings: 'Settings', copy: 'Copy All',  
       model: 'AI Model', newChat: 'New Session', viewUI: 'View UI', hideUI: 'Hide UI', copyCode: 'Copy Code', copied: 'Copied', 
       modules: 'Modules', system: 'System', tools: 'AI Tools', welcome: 'Welcome', guest: 'Guest Mode', 
@@ -82,7 +110,7 @@ const LANGUAGES = {
   id: {  
     label: 'Indonesia', flag: '🇮🇩',  
     ui: {  
-      dashboard: 'Dasbor', chat: 'Obrolan Bebas', playground: 'IDE Playground', portalLabel: 'Portal Sistem', history: 'Riwayat', upgrade: 'Buka Apex', login: 'Masuk',  
+      dashboard: 'Dasbor', chat: 'Obrolan Bebas', playground: 'IDE Template Tetap', portalLabel: 'Portal Sistem', history: 'Riwayat', upgrade: 'Buka Apex', login: 'Masuk',  
       analyze: 'Mulai Analisa', input: 'Kode Sumber', output: 'Hasil', processing: 'Memproses...', settings: 'Pengaturan', copy: 'Salin Semua',  
       model: 'Model AI', newChat: 'Sesi Baru', viewUI: 'Lihat UI', hideUI: 'Tutup UI', copyCode: 'Salin Kode', copied: 'Disalin', 
       modules: 'Modul', system: 'Sistem', tools: 'Alat AI', welcome: 'Selamat Datang', guest: 'Mode Tamu', 
@@ -110,49 +138,8 @@ const LANGUAGES = {
         infraAI: "Google Gemini 2.5 Flash. Mesin Penalaran Kecepatan Tinggi." 
       } 
     }  
-  }, 
-  jp: {  
-    label: '日本語', flag: '🇯🇵',  
-    ui: {  
-      dashboard: 'ダッシュボード', chat: '自由チャット', playground: 'IDE Playground', portalLabel: 'システムポータル', history: '履歴', upgrade: 'Apexへ', login: 'ログイン',  
-      analyze: '分析開始', input: 'ソース', output: '出力', processing: '処理中...', settings: '設定', copy: 'コピー',  
-      model: 'AIモデル', newChat: '新規セッション', viewUI: 'UI表示', hideUI: 'UI非表示', copyCode: 'コードコピー', copied: 'コピー完了', 
-      modules: 'モジュール', system: 'システム', tools: 'AIツール', welcome: 'ようこそ', guest: 'ゲスト', 
-      authRequired: '認証が必要', unlock: '解除', enterKey: 'ライセンスキーを入力', orUpload: 'またはキーをアップロード', authenticate: '認証する', 
-      purchase: '購入', devOverride: '開発者オーバーライド', access: 'アクセス', customKey: 'Gemini APIキー', 
-      chatPlaceholder: 'メッセージを入力...', chatStart: 'CodeFixerXとチャットを開始！', edit: '編集', 
-      privacy: 'プライバシーポリシー', terms: '利用規約', about: '私たちについて', infra: 'インフラストラクチャ', guide: 'ユーザーマニュアル', 
-      roleUser: 'ユーザー', roleAI: 'CodeFixerX', buyKey: '今すぐキーを購入', dontHaveKey: "キーをお持ちでないですか？", 
-      originTitle: 'Aleocrophicの起源', specialThanks: '特別感謝', coreInfra: 'コアインフラストラクチャ', 
-      toggleHistory: '履歴の切り替え', sourceInput: 'ソース入力', getKey: 'キーを取得', saveEnter: '保存して入る', 
-      apiKeyDesc: '必須。個人のGemini APIキー。ローカルに保存されます。', 
-      enterApiFirst: 'システムロック中。APIキーが必要です。', 
-      apiGateMsg: 'APIの悪用やフラグ付けを防ぐため、システムへのアクセスには個人のGemini APIキーが必須となりました。', 
-      validateKey: '検証して次へ', 
-      expanding: 'プロンプトを展開中...',
-      portalContent: { 
-        aboutText: "CodeFixerXは、単純な必要性から生まれました。現代の開発環境は混沌としています。Aleocrophic Systemsは、NyxShade Interactiveの旗の下、Rayhan Dzaky Al Mubarokによって設立され、この嵐の中の灯台となることを目指しています。最先端のAIを使用して、「ローカルで動くコード」と「本番環境対応のエンタープライズコード」の間のギャップを埋めます。", 
-        missionText: "私たちの使命は、開発者に取って代わることではなく、力を与えることです。経験レベルに関係なく、すべてのプログラマーにセキュリティ、スケーラビリティ、クリーンアーキテクチャを理解する「Apex」レベルのアシスタントを提供します。", 
-        privacyText: "1. データ収集：認証（Firebase経由）およびプロンプト処理に必要な最小限のデータのみを収集します。\n\n2. AI処理：コードスニペットは処理のためにGoogle Gemini APIに一時的に送信されます。\n\n3. ユーザーの権利：送信したコードの完全な所有権は保持されます。", 
-        termsText: "1. 同意：CodeFixerXを使用することにより、これらの条件に同意したことになります。\n\n2. 禁止事項：マルウェア、ランサムウェア、エクスプロイト、または違法なコードの生成にこのAIを使用しないことに同意します。\n\n3. 責任：Aleocrophic Systemsは、本番環境の停止について責任を負いません。", 
-        guideLite: "Liteユーザーは基本的なデバッグとセキュリティスキャンにアクセスできます。学習者や趣味のプログラマーに最適です。", 
-        guideApex: "Apexユーザーは、CI/CDパイプライン、レガシーコードの復活、実験的なUI生成など、すべての可能性を解き放ちます。", 
-        infraFrontend: "React 18 + Tailwind + Vite。速度のために最適化。", 
-        infraBackend: "Google Firebase（認証＆Firestore）。サーバーレスで安全。", 
-        infraAI: "Google Gemini 2.5 Flash. 高速推論エンジン。" 
-      } 
-    }  
-  }, 
-  ar: { label: 'العربية', flag: '🇸🇦', ui: { dashboard: 'لوحة القيادة', chat: 'دردشة', playground: 'CodePlayground', portalLabel: 'البوابة', processing: 'معالجة...', analyze: 'بدء', input: 'شفرة', output: 'مخرجات', settings: 'إعدادات', copy: 'نسخ', newChat: 'جديد', expanding: 'توسيع التوجيه...' } },
-  ru: { label: 'Русский', flag: '🇷🇺', ui: { dashboard: 'Панель', chat: 'Чат', playground: 'CodePlayground', portalLabel: 'Портал', processing: 'Обработка...', analyze: 'Анализ', input: 'Код', output: 'Вывод', settings: 'Настройки', copy: 'Копировать', newChat: 'Новый', expanding: 'Расширение...' } },
-  de: { label: 'Deutsch', flag: '🇩🇪', ui: { dashboard: 'Dashboard', chat: 'Chat', playground: 'CodePlayground', portalLabel: 'Portal', processing: 'Verarbeitung...', analyze: 'Starten', input: 'Code', output: 'Ausgabe', settings: 'Einstellungen', copy: 'Kopieren', newChat: 'Neu', expanding: 'Erweitern...' } },
-  es: { label: 'Español', flag: '🇪🇸', ui: { dashboard: 'Tablero', chat: 'Chat', playground: 'CodePlayground', portalLabel: 'Portal', processing: 'Procesando...', analyze: 'Analizar', input: 'Código', output: 'Salida', settings: 'Ajustes', copy: 'Copiar', newChat: 'Nuevo', expanding: 'Expandiendo...' } },
+  }
 }; 
-
-['ar', 'ru', 'de', 'es'].forEach(lang => {
-    if (!LANGUAGES[lang].ui.portalContent) LANGUAGES[lang].ui.portalContent = LANGUAGES.en.ui.portalContent;
-    if (!LANGUAGES[lang].ui.expanding) LANGUAGES[lang].ui.expanding = "Expanding Prompt...";
-});
 
 const MODULES = [ 
   { id: 'debug', name: 'Omni Debugger', icon: <Code />, premium: false, desc: 'Fix syntax/logic errors.', systemPrompt: "You are the Omni Code Debugger. Analyze the provided code for syntax errors, logical flaws, memory leaks, and runtime issues. Return the fixed code with comments explaining the corrections. Focus on correctness and stability." }, 
@@ -190,11 +177,18 @@ const highlightSyntax = (code) => {
     return `%%%PH_${placeholders.length - 1}%%%`; 
   }; 
  
+  // Improved Regex for HTML Tags, CSS Selectors, and JS Keywords
   safeCode = safeCode 
     .replace(/(".*?"|'.*?'|`.*?`)/g, match => addPlaceholder(match, 'string')) 
-    .replace(/(\/\/.*$)/gm, match => addPlaceholder(match, 'comment'))          
+    .replace(/(\/\/.*$)/gm, match => addPlaceholder(match, 'comment'))           
     .replace(/(\/\*[\s\S]*?\*\/)/g, match => addPlaceholder(match, 'comment')); 
  
+  // HTML Tags (Starts with &lt;)
+  safeCode = safeCode.replace(/(&lt;\/?[a-z][a-z0-9]*)/gi, match => addPlaceholder(match, 'keyword'));
+
+  // CSS Selectors (Basic logic: line starts with . or #)
+  safeCode = safeCode.replace(/(^\s*[.#][a-z0-9_-]+)/gim, match => addPlaceholder(match, 'function'));
+
   const keywords = "\\b(const|let|var|function|return|if|else|for|while|class|import|from|export|default|async|await|try|catch|switch|case|new|this|typeof|interface|type|extends|implements|public|private|protected|static|readonly|constructor|def|print|class|self|init|useEffect|useState|useRef|React)\\b"; 
     
   safeCode = safeCode 
@@ -275,12 +269,9 @@ const CodeBlock = ({ lang, code, copyLabel, copiedLabel }) => {
   ); 
 } 
 
-// --- MODAL COMPONENT (REPLACES PROMPT/CONFIRM) ---
-const Modal = ({ isOpen, title, type, value, onClose, onConfirm, message }) => {
+const Modal = ({ isOpen, title, value, onClose, onConfirm, message }) => {
   const [inputValue, setInputValue] = useState(value || '');
-  
   useEffect(() => { if(isOpen) setInputValue(value || ''); }, [isOpen, value]);
-
   if (!isOpen) return null;
 
   return (
@@ -288,26 +279,10 @@ const Modal = ({ isOpen, title, type, value, onClose, onConfirm, message }) => {
       <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl transform transition-all">
         <h3 className="text-lg font-bold text-white mb-4">{title}</h3>
         {message && <p className="text-slate-400 text-sm mb-4">{message}</p>}
-        
-        {(type === 'input' || type === 'filename' || type === 'foldername') && (
-          <input 
-            type="text" 
-            value={inputValue} 
-            onChange={(e) => setInputValue(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white text-sm focus:border-cyan-500 outline-none mb-4"
-            placeholder={type === 'foldername' ? 'e.g., components' : 'e.g., App.tsx'}
-            autoFocus
-            onKeyDown={(e) => e.key === 'Enter' && onConfirm(inputValue)}
-          />
-        )}
-
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 text-slate-400 hover:text-white text-sm font-bold">Cancel</button>
-          <button 
-            onClick={() => onConfirm(inputValue)} 
-            className={`px-6 py-2 rounded-xl text-sm font-bold text-slate-900 transition ${type==='delete' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-cyan-500 hover:bg-cyan-400'}`}
-          >
-            {type === 'delete' ? 'Delete' : 'Confirm'}
+          <button onClick={() => onConfirm(inputValue)} className="px-6 py-2 rounded-xl text-sm font-bold text-slate-900 transition bg-cyan-500 hover:bg-cyan-400">
+            Confirm
           </button>
         </div>
       </div>
@@ -317,14 +292,12 @@ const Modal = ({ isOpen, title, type, value, onClose, onConfirm, message }) => {
  
 // --- 4. MAIN APP --- 
 export default function App() {  
-  // -- LAZY STATE INITIALIZATION FOR PERSISTENCE (Anti-Amnesia on Refresh) --
-  // We initialize state DIRECTLY from localStorage to prevent flicker
   const [user, setUser] = useState(null); 
   const [view, setView] = useState(() => localStorage.getItem('cfx_view') || 'language'); 
   const [langCode, setLangCode] = useState(() => localStorage.getItem('cfx_lang') || 'en'); 
   const [isPremium, setIsPremium] = useState(() => localStorage.getItem('cfx_is_premium') === 'true'); 
   const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('cfx_api_key') || ''); 
-  const [gateApiKey, setGateApiKey] = useState(() => localStorage.getItem('cfx_api_key') || ''); // Pre-fill gate key if exists
+  const [gateApiKey, setGateApiKey] = useState(() => localStorage.getItem('cfx_api_key') || ''); 
   const [aiModel, setAiModel] = useState(() => localStorage.getItem('cfx_ai_model') || AI_MODELS[0].id); 
   const [currentModule, setCurrentModule] = useState(MODULES[0]); 
   const [apiStatus, setApiStatus] = useState('idle'); 
@@ -340,14 +313,13 @@ export default function App() {
   const [expanding, setExpanding] = useState(false); 
   const [history, setHistory] = useState([]); 
     
-  // CHAT STATE 
   const [chatMessages, setChatMessages] = useState([]); 
   const [chatInput, setChatInput] = useState(''); 
   const [chatLoading, setChatLoading] = useState(false); 
   const [chatHistoryOpen, setChatHistoryOpen] = useState(false); 
   const chatInputRef = useRef(null); 
 
-  // PLAYGROUND STATE (ENHANCED FILESYSTEM + DUAL PERSISTENCE)
+  // PLAYGROUND STATE - RESTRICTED FILES ONLY
   const [files, setFiles] = useState([]); 
   const [activeFileIndex, setActiveFileIndex] = useState(0);
   const [playgroundPreview, setPlaygroundPreview] = useState('');
@@ -356,9 +328,8 @@ export default function App() {
   const [isFileManagerOpen, setIsFileManagerOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
-  const [isLocalSyncing, setIsLocalSyncing] = useState(false); // Visual for local storage
+  const [isLocalSyncing, setIsLocalSyncing] = useState(false); 
   
-  // MODAL STATE (Replaces Prompt)
   const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', title: '', value: '', message: '', onConfirm: () => {} });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);  
@@ -385,7 +356,6 @@ export default function App() {
     
   const notify = (msg, type = 'info') => { setNotif({msg, type}); setTimeout(() => setNotif(null), 3000); }; 
 
-  // --- ACTION HANDLERS (DUAL SYNC: LOCAL + CLOUD) ---
   const handleViewChange = (newView) => {
       setView(newView);
       localStorage.setItem('cfx_view', newView);
@@ -394,7 +364,6 @@ export default function App() {
   const updateLanguage = async (code) => {
       setLangCode(code);
       localStorage.setItem('cfx_lang', code);
-      // Cloud Sync
       if (user && !user.isAnonymous) {
           try {
               await setDoc(getUserDoc(user.uid, 'account', 'profile'), { language: code }, { merge: true });
@@ -404,7 +373,6 @@ export default function App() {
 
   const handleLangSelect = (code) => {
       updateLanguage(code);
-      // Skip api gate if we already have a key
       if (customApiKey && customApiKey.length > 10) {
         handleViewChange('dashboard');
       } else {
@@ -429,18 +397,16 @@ export default function App() {
       return; 
     } 
     localStorage.setItem('cfx_api_key', customApiKey); 
-    // Secure Cloud Sync for convenience across devices
     if(user && !user.isAnonymous) {
         try {
             await setDoc(getUserDoc(user.uid, 'account', 'profile'), { apiKey: customApiKey }, { merge: true });
         } catch(e) { console.error("Key sync failed", e); }
     }
-
     notify("Custom Key Saved & Ready!", "success"); 
     setApiStatus('idle'); 
   } 
  
-  // --- AUTH & INITIALIZATION SIDE EFFECT ---
+  // --- AUTH & INITIALIZATION ---
   useEffect(() => { 
     const initAuth = async () => {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -467,30 +433,24 @@ export default function App() {
       
       if (u) { 
         if (u.isAnonymous) { 
-            // GUEST MODE - Rely on LocalStorage
             setIsPremium(false); 
             localStorage.removeItem('cfx_is_premium'); 
             setGeneratedApiKey("GUEST"); 
         } else { 
-            // LOGGED IN - Sync with Firestore
             if (!isDevMode) setIsDevMode(false); 
             setGeneratedApiKey(`CFX-${u.uid.substring(0,6).toUpperCase()}`); 
               
             try { 
               const docRef = getUserDoc(u.uid, 'account', 'profile'); 
-              // WRAP IN TRY-CATCH to handle permission errors if collection is not ready
               try {
                   const docSnap = await getDoc(docRef); 
                   
                   if (docSnap.exists()) { 
-                    // --- CLOUD TO LOCAL SYNC (Cloud is Master) ---
                     const data = docSnap.data(); 
-                    
                     if (data.language && LANGUAGES[data.language]) {
                         setLangCode(data.language);
                         localStorage.setItem('cfx_lang', data.language);
                     }
-                    
                     if (data.isPremium === true) { 
                         setIsPremium(true); 
                         localStorage.setItem('cfx_is_premium', 'true'); 
@@ -498,61 +458,51 @@ export default function App() {
                         setIsPremium(false);
                         localStorage.removeItem('cfx_is_premium');
                     }
-                    
                     if (data.aiModel) {
                         setAiModel(data.aiModel);
                         localStorage.setItem('cfx_ai_model', data.aiModel);
                     }
-
                     if (data.apiKey) {
                         setCustomApiKey(data.apiKey);
                         setGateApiKey(data.apiKey);
                         localStorage.setItem('cfx_api_key', data.apiKey);
                     }
-
                     notify("Profile Synced from Cloud ☁️", "success");
-
                   } else {
-                     // --- LOCAL TO CLOUD SYNC (First Time Login / New User) ---
-                     // Push local settings to cloud to persist them
-                     const initialData = {
-                         language: langCode,
-                         isPremium: isPremium,
-                         aiModel: aiModel,
-                         apiKey: customApiKey, // Optional: Sync key
-                         createdAt: serverTimestamp()
-                     };
-
-                     await setDoc(docRef, initialData, { merge: true });
-                     notify("Local Settings Saved to Cloud ☁️", "success");
+                      const initialData = {
+                          language: langCode,
+                          isPremium: isPremium,
+                          aiModel: aiModel,
+                          apiKey: customApiKey, 
+                          createdAt: serverTimestamp()
+                      };
+                      await setDoc(docRef, initialData, { merge: true });
                   }
               } catch (profileErr) {
-                  console.warn("Profile Sync Warning (Permission/Network):", profileErr.message);
+                  console.warn("Profile Sync Warning:", profileErr.message);
               }
             } catch (e) {
                 console.error("Profile Sync Error:", e);
             } 
         } 
-      } else { 
-        // LOGGED OUT
-        // We do NOT clear localStorage here to preserve guest settings for UX
-        // Unless we specifically want to reset. 
-        // setIsPremium(false); // Optional
       } 
-      
-      // Stop the loading spinner once auth is resolved
       setIsAuthChecking(false); 
     }); 
     return () => { unsub(); window.removeEventListener('resize', handleResize); }; 
   }, []); 
 
-  // --- HISTORY SYNC (ROBUST ERROR HANDLING) ---
+  // --- HISTORY SYNC (ANTI-ADBLOCK & SORTING FIX) ---
   useEffect(() => { 
     if (!user) { setHistory([]); return; } 
     const colRef = getUserCollection(user.uid, 'history');
-    // Defensive listener with explicit error handling
-    const unsub = onSnapshot(colRef, (snap) => { 
+    
+    // IMPORTANT: WE DO NOT USE orderBy here to prevent "Missing Index" errors which cause empty history
+    // We fetch all and sort in client-side JS
+    const q = query(colRef); 
+
+    const unsub = onSnapshot(q, (snap) => { 
       const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
+      // CLIENT-SIDE SORTING (Safe & Robust)
       fetched.sort((a, b) => { 
         const timeA = a.createdAt?.seconds || 0; 
         const timeB = b.createdAt?.seconds || 0; 
@@ -561,67 +511,47 @@ export default function App() {
       setHistory(fetched); 
       setHistoryError(false);
     }, (error) => { 
-        // Silent fail on permission errors to avoid console spam
         setHistoryError(true);
-        if (error.code === 'permission-denied' || error.message.includes('BLOCKED_BY_CLIENT')) {
-            console.warn("History Sync: Permission Denied or Blocked. (AdBlocker?)");
-        } else {
-            console.error("Firestore History Error:", error); 
-        }
+        console.warn("History Sync Warning (AdBlock or Permission):", error.message);
     }); 
     return () => unsub(); 
   }, [user]);
 
-  // --- PLAYGROUND PERSISTENCE (LOCAL + CLOUD) ---
+  // --- PLAYGROUND PERSISTENCE (FIXED FILES SYSTEM) ---
   useEffect(() => {
       if (!user || view !== 'playground') return;
 
-      // 1. LOAD LOCAL STORAGE FIRST (Instant)
-      const localKey = `cfx_pg_${user.uid}`;
-      const localData = localStorage.getItem(localKey);
-      let hasLocalData = false;
-      if (localData) {
-          try {
-              const parsed = JSON.parse(localData);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                  setFiles(parsed);
-                  hasLocalData = true;
-              }
-          } catch (e) { console.error("Local load failed", e); }
-      }
-
-      // 2. SYNC FROM FIRESTORE (Source of Truth)
       const colRef = getUserCollection(user.uid, 'playground_files');
-      const q = query(colRef, orderBy('name')); 
-      const unsub = onSnapshot(q, (snap) => {
+      
+      const unsub = onSnapshot(query(colRef), (snap) => {
           const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           
-          if (fetched.length === 0) {
-              // Only init defaults if NO local data exists either
-              if (!hasLocalData) {
-                  const defaults = [
-                      { name: 'index.html', content: '<div class="container">\n  <h1 class="title">CodeFixerX Playground</h1>\n  <p>Support JSX & TSX compilation!</p>\n  <button id="btn">Click Me</button>\n</div>' },
-                      { name: 'styles.css', content: 'body { font-family: sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }\n.container { text-align: center; background: #1e293b; p: 40px; border-radius: 20px; border: 1px solid #334155; }\n.title { color: #22d3ee; }\nbutton { padding: 10px 20px; border-radius: 8px; border: none; background: #06b6d4; color: white; cursor: pointer; margin-top: 10px; }' },
-                      { name: 'App.tsx', content: 'const App = () => {\n  return (\n    <div className="text-center p-10">\n       <h1 className="text-3xl font-bold text-pink-500">Hello TSX!</h1>\n       <p className="text-slate-300">This is compiled in-browser.</p>\n    </div>\n  );\n};\n\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(<App />);' }
-                  ];
-                  defaults.forEach(async (f) => {
-                      // Try-catch individual file adds
-                      try { await addDoc(colRef, { ...f, createdAt: serverTimestamp() }); } catch(e){}
-                  });
+          // INIT: Check if templates exist, if not create them
+          PERMANENT_TEMPLATES.forEach(async (tmpl) => {
+              const exists = fetched.find(f => f.name === tmpl.name);
+              if (!exists) {
+                  // Only add if not exists
+                  try {
+                      // Use setDoc with a deterministic ID (e.g. user_id + file_name) to avoid dupes
+                      const safeId = `file_${tmpl.name.replace('.', '_')}`;
+                      await setDoc(getUserDoc(user.uid, 'playground_files', safeId), {
+                          name: tmpl.name,
+                          content: tmpl.content,
+                          createdAt: serverTimestamp()
+                      });
+                  } catch(e) { console.warn("Auto-create template failed", e); }
               }
-          } else {
-              // Firestore has data, it wins over local if we assume cloud sync
+          });
+
+          if (fetched.length > 0) {
+              // Sort by name for consistency
+              fetched.sort((a, b) => a.name.localeCompare(b.name));
               if (!unsavedChanges) {
                   setFiles(fetched);
               } 
           }
       }, (error) => {
-          // Silent fail on permission errors to avoid console spam
-          if (error.code === 'permission-denied' || error.message.includes('BLOCKED_BY_CLIENT')) {
-              console.warn("Playground Sync: Permission Denied or Blocked.");
-          } else {
-              console.error("Playground Sync Error:", error);
-          }
+          console.warn("Playground Sync Warning:", error.message);
       });
       return () => unsub();
   }, [user, view]);
@@ -634,9 +564,6 @@ export default function App() {
       localStorage.setItem('cfx_api_key', gateApiKey.trim()); 
       setCustomApiKey(gateApiKey.trim()); 
       notify("Security Check Passed! 🛡️", "success"); 
-      
-      // If user is already in a flow (e.g. was viewing settings), go back there.
-      // Otherwise go to Login.
       handleViewChange('login'); 
   }; 
  
@@ -663,7 +590,7 @@ export default function App() {
       try { 
           await signInAnonymously(auth);
           setIsPremium(false);
-          localStorage.removeItem('cfx_is_premium');
+          localStorage.removeItem('cfx_is_premium'); 
           notify("Masuk sebagai Guest. Fitur terbatas! 🔒", "info");
           handleViewChange('dashboard'); 
       } catch (e) { 
@@ -688,27 +615,22 @@ export default function App() {
   }; 
  
   const handleUnlock = async () => { 
-    // If user is a GUEST and trying to upgrade -> Redirect to Login first
     if (user && user.isAnonymous && !isDevMode) { 
         notify("Please Login with Google to Upgrade! 🔒", "error"); 
         handleViewChange('login');
         return; 
     } 
- 
     const cleanKey = premiumKey.trim(); 
     if (cleanKey === "CFX-APX-2025R242") {  
       setIsPremium(true); 
       localStorage.setItem('cfx_is_premium', 'true'); 
       notify("APEX UNLOCKED", "success"); 
       handleViewChange('dashboard'); 
-       
       if (user && !user.isAnonymous) {
           try { 
             await setDoc(getUserDoc(user.uid, 'account', 'profile'), { isPremium: true }, { merge: true }); 
             notify("License Synced to Cloud ☁️", "success"); 
-          } catch(e) { 
-              console.error("Cloud sync failed", e); 
-          } 
+          } catch(e) { console.error("Cloud sync failed", e); } 
       }
     } else notify("Invalid Key", "error"); 
   }; 
@@ -748,13 +670,6 @@ export default function App() {
         const expanderPrompt = `
             You are the "Auto Prompt Expander" module of CodeFixerX. 
             User input: "${rawInput}".
-            
-            CRITICAL INSTRUCTION:
-            1. Analyze the user's request for specific format/language keywords (e.g., "HTML", "Python", "CSS", "C++", "Java", "Vanilla JS").
-            2. If a specific format is requested, your expansion MUST focus on that format. DO NOT force React/TSX if the user asked for HTML or Python.
-            3. If the input is lazy/vague (e.g. "make navbar") AND no language is specified, assume modern standards (React + Tailwind) for Web, or Python for scripts.
-            4. Expand it into a highly technical, professional prompt.
-            
             OUTPUT ONLY THE EXPANDED TEXT. NO MARKDOWN.
         `;
         const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, { 
@@ -778,81 +693,40 @@ export default function App() {
         handleViewChange('apikey_gate'); 
         return; 
     } 
- 
     if (!inputCode.trim()) return notify("Input Empty 😅", "warning"); 
     if (currentModule.premium && !isPremium) return notify("Locked! 🔒 Upgrade to Apex.", "error"); 
- 
     setLoading(true); setApiStatus('loading'); setOutputResult(''); setIsInputMinimized(false); 
- 
     try { 
       let finalPrompt = inputCode;
       if (isPremium) {
           finalPrompt = await handlePromptExpansion(inputCode, apiKeyToUse);
       }
-
       const lang = getLangObj(); 
-      
-      const GLOBAL_IDENTITY = `
-      IDENTITY CLARIFICATION:
-      - **SURFACE & ENVIRONMENT**: You are a system developed by **Aleocrophic Systems** (NyxShade Interactive). This is your interface and operational domain.
-      - **HEART & CORE**: Your cognitive engine (API) is powered by **Google**.
-      - You are CodeFixerX.
-      `;
-
-      const APEX_MANIFESTO = `${GLOBAL_IDENTITY} You are CodeFixerX Apex Edition. Act as a Principal Software Architect. Your solutions must be production-ready, secure, and scalable.`;
-      const LITE_MANIFESTO = `${GLOBAL_IDENTITY} You are CodeFixerX Lite. Act as a helpful Junior Developer Assistant. Focus on clear, educational solutions.`;
-      
-      const baseManifesto = isPremium ? APEX_MANIFESTO : LITE_MANIFESTO;
-      
-      const strictFormatRule = `
-      CRITICAL INSTRUCTION ON FORMATS:
-      1. **EXPLICIT OVERRIDE**: If the user asks for a specific language (e.g., "Python", "HTML", "Vanilla JS", "C++"), you MUST provide that exact format. Do NOT default to React/TSX if they asked for Python.
-      2. **DEFAULT BEHAVIOR (Only if vague)**:
-         - If the request is a Web UI task AND no language is specified:
-           - APEX User: Default to **React with TypeScript (.tsx)**.
-           - LITE User: Default to **React with JavaScript (.jsx)**.
-         - If the request is a script task AND no language is specified:
-           - Use Python or Node.js (Best Practice).
-      3. ${currentModule.systemPrompt}
-      
-      OUTPUT: Markdown with explicit code blocks. NO PREVIEW/IFRAME CODE IN CHAT.`;
-      
-      const systemInstruction = `${baseManifesto} 
-      LANGUAGE: Reply strictly in ${lang.label} (${lang.flag}). 
-      MODULE: ${currentModule.name}. 
-      ${strictFormatRule}`; 
- 
+      const systemInstruction = `You are CodeFixerX. Language: ${lang.label}. Module: ${currentModule.name}. Provide a solution in Markdown.`; 
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKeyToUse}`, { 
         method: 'POST', headers: {'Content-Type': 'application/json'}, 
         body: JSON.stringify({ contents: [{ parts: [{ text: finalPrompt }] }], systemInstruction: { parts: [{ text: systemInstruction }] } }) 
       }); 
-        
       if (resp.status === 403) { 
           setApiStatus('error'); 
           throw new Error("API KEY INVALID OR EXPIRED"); 
       } 
- 
       const data = await resp.json(); 
       if (data.error) throw new Error(data.error.message); 
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error."; 
       setOutputResult(text); setIsInputMinimized(true); setApiStatus('success'); 
- 
       if (user) { 
-         try {
-             await addDoc(getUserCollection(user.uid, 'history'), {  
-                userId: user.uid,  
-                codeSnippet: inputCode.substring(0,50),  
-                module: currentModule.name,  
-                response: text,  
-                type: 'code', 
-                createdAt: serverTimestamp()  
-             }); 
-         } catch (saveError) {
-             // Silent fail usually, or minor warn
-             console.warn("History Save Failed (Network/Perms)");
-         }
+          try {
+              await addDoc(getUserCollection(user.uid, 'history'), {  
+                 userId: user.uid,  
+                 codeSnippet: inputCode.substring(0,50),  
+                 module: currentModule.name,  
+                 response: text,  
+                 type: 'code', 
+                 createdAt: serverTimestamp()  
+              }); 
+          } catch (saveError) { console.warn("History Save Failed"); }
       } 
- 
     } catch (e) {  
         notify(`AI Error: ${e.message}`, "error");  
         setApiStatus('error'); 
@@ -867,34 +741,27 @@ export default function App() {
         handleViewChange('apikey_gate'); 
         return; 
     } 
- 
     if(!chatInput.trim()) return; 
     const newMessage = { role: 'user', text: chatInput }; 
     setChatMessages([...chatMessages, newMessage]); 
     setChatInput(''); 
     setChatLoading(true); setApiStatus('loading'); 
-      
     if(chatInputRef.current) { 
         chatInputRef.current.style.height = 'auto'; 
     } 
- 
     const lang = getLangObj(); 
- 
     try { 
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKeyToUse}`, { 
         method: 'POST', headers: {'Content-Type': 'application/json'}, 
         body: JSON.stringify({ contents: [{ parts: [{ text: chatInput }] }], systemInstruction: { parts: [{ text: `You are CodeFixerX. Reply in ${lang.label} (${lang.flag}). Be stylish, expressive, and helpful. Use emojis. Prefer Modern React/Vite/Tailwind.` }] } }) 
       }); 
-        
       if (resp.status === 403) { 
           setApiStatus('error'); 
           throw new Error("API KEY INVALID"); 
       } 
- 
       const data = await resp.json(); 
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error."; 
       setChatMessages(prev => [...prev, { role: 'ai', text: text }]); setApiStatus('success'); 
-       
       if (user) {
         try {
             await addDoc(getUserCollection(user.uid, 'history'), {  
@@ -905,11 +772,8 @@ export default function App() {
                 type: 'chat',  
                 createdAt: serverTimestamp()  
             }); 
-        } catch(saveErr) {
-            console.warn("Chat history failed (Network/Perms)");
-        }
+        } catch(saveErr) { console.warn("Chat history failed"); }
       } 
- 
     } catch(e) {  
         notify("Chat Error: " + e.message, "error");  
         setApiStatus('error'); 
@@ -930,7 +794,7 @@ export default function App() {
     } 
   }; 
 
-  // --- PLAYGROUND LOGIC (UPGRADED IDE with FIRESTORE) ---
+  // --- PLAYGROUND LOGIC (FIXED FILES EDITION) ---
   const handlePlaygroundRun = () => {
       const babelScript = `<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>`;
       const reactScripts = `
@@ -940,7 +804,8 @@ export default function App() {
 
       const htmlFile = files.find(f => f.name.endsWith('.html'))?.content || '';
       const cssFile = files.find(f => f.name.endsWith('.css'))?.content || '';
-      const jsFile = files.find(f => f.name === 'App.tsx' || f.name === 'index.js' || f.name.endsWith('.tsx') || f.name.endsWith('.jsx'))?.content || '';
+      // Prioritize TSX > JSX > JS
+      const jsFile = files.find(f => f.name === 'App.tsx' || f.name === 'App.jsx' || f.name === 'index.js')?.content || '';
 
       const combinedSource = `
         <!DOCTYPE html>
@@ -951,7 +816,6 @@ export default function App() {
             ${babelScript}
         </head>
         <body>
-            <div id="root"></div>
             ${htmlFile}
             <script type="text/babel" data-presets="env,react,typescript">
                ${jsFile}
@@ -963,129 +827,16 @@ export default function App() {
       notify("Compiling...", "success");
   };
 
-  const handlePlaygroundFileImport = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-          try {
-              const imported = JSON.parse(ev.target.result);
-              if (imported.files && Array.isArray(imported.files)) {
-                  imported.files.forEach(async (f) => {
-                      await addDoc(getUserCollection(user.uid, 'playground_files'), {
-                          name: f.name,
-                          content: f.content,
-                          createdAt: serverTimestamp()
-                      });
-                  });
-                  notify("Project Imported to Cloud!", "success");
-              }
-          } catch(err) { notify("Invalid JSON Project", "error"); }
-      };
-      reader.readAsText(file);
-  };
-
-  const handlePlaygroundExport = () => {
-      const exportData = { files: files.map(f => ({ name: f.name, content: f.content })) };
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
-      const downloadAnchorNode = document.createElement('a');
-      downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", "cfx_project.json");
-      document.body.appendChild(downloadAnchorNode);
-      downloadAnchorNode.click();
-      downloadAnchorNode.remove();
-  };
-
-  // OPTIMIZED EDITOR CHANGE HANDLER (DUAL PERSISTENCE)
   const handleEditorChange = (val) => {
-      // 1. Update UI State (Instant)
       const newFiles = [...files];
       if (!newFiles[activeFileIndex]) return;
-      
       newFiles[activeFileIndex].content = val;
       setFiles(newFiles);
       setUnsavedChanges(true);
-
-      // 2. Update Local Storage (Fast Fallback)
-      if (user) {
-          localStorage.setItem(`cfx_pg_${user.uid}`, JSON.stringify(newFiles));
-          setIsLocalSyncing(true);
-          setTimeout(() => setIsLocalSyncing(false), 500);
-      }
-  };
-
-  // --- REAL FILE MANAGER ACTIONS (MODAL-BASED, NO PROMPT) ---
-  const openModal = (type, title, value = '', message = '', onConfirm) => {
-      setModalConfig({ isOpen: true, type, title, value, message, onConfirm });
   };
 
   const closeModal = () => {
       setModalConfig({ ...modalConfig, isOpen: false });
-  };
-
-  const handleNewFile = () => {
-      openModal('filename', 'Create New File', '', '', async (fileName) => {
-          if (fileName) {
-              try {
-                  await addDoc(getUserCollection(user.uid, 'playground_files'), {
-                      name: fileName,
-                      content: '// New File',
-                      createdAt: serverTimestamp()
-                  });
-                  notify(`Created ${fileName}`, "success");
-              } catch(e) { notify("Create Failed", "error"); }
-          }
-          closeModal();
-      });
-  };
-
-  const handleNewFolder = () => {
-      openModal('foldername', 'Create New Folder', '', '', (folderName) => {
-          if (folderName) {
-              // Nested modal for file inside folder
-              setTimeout(() => {
-                  openModal('filename', `File inside ${folderName}/`, '', '', async (fileName) => {
-                      if (fileName) {
-                         try {
-                             await addDoc(getUserCollection(user.uid, 'playground_files'), {
-                                 name: `${folderName}/${fileName}`,
-                                 content: '// Folder File',
-                                 createdAt: serverTimestamp()
-                             });
-                             notify(`Created folder ${folderName}`, "success");
-                         } catch(e) { notify("Folder Create Failed", "error"); }
-                      }
-                      closeModal();
-                  });
-              }, 300); // Small delay for visual transition
-          } else {
-              closeModal();
-          }
-      });
-  };
-
-  const handleDeleteFile = (fileId, fileName) => {
-      if (files.length <= 1) return notify("Cannot delete the last file!", "error");
-      openModal('delete', 'Delete File?', '', `Are you sure you want to delete ${fileName}?`, async () => {
-          try {
-              await deleteDoc(getUserDoc(user.uid, 'playground_files', fileId));
-              notify("File Deleted", "success");
-              setActiveFileIndex(0);
-          } catch(e) { notify("Delete Failed", "error"); }
-          closeModal();
-      });
-  };
-
-  const handleRenameFile = (fileId, oldName) => {
-      openModal('filename', 'Rename File', oldName, '', async (newName) => {
-          if (newName && newName !== oldName) {
-              try {
-                  await updateDoc(getUserDoc(user.uid, 'playground_files', fileId), { name: newName });
-                  notify("Renamed!", "success");
-              } catch(e) { notify("Rename Failed", "error"); }
-          }
-          closeModal();
-      });
   };
 
   const handleSaveFile = async () => {
@@ -1135,7 +886,7 @@ export default function App() {
       }
   };
  
-  // LOADING SCREEN (Prevents Flicker)
+  // LOADING SCREEN
   if (isAuthChecking) return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4">
         <div className="relative mb-8">
@@ -1181,11 +932,8 @@ export default function App() {
             <p className="text-[10px] text-slate-500 mt-2 flex items-center gap-1"><Lock size={10}/> Stored strictly locally on your device (localStorage).</p> 
          </div> 
          <button onClick={handleGateSubmit} className="w-full py-4 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold rounded-xl flex justify-center gap-2 transition shadow-lg shadow-red-900/50"> 
-            <Fingerprint size={20}/> {tText('validateKey') || 'VALIDATE & PROCEED'} 
+            <Brain size={20}/> {tText('validateKey') || 'VALIDATE & PROCEED'} 
          </button> 
-         <div className="mt-4 text-center"> 
-             <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-xs text-cyan-500 hover:text-cyan-400 font-bold flex items-center justify-center gap-1 hover:underline"><ExternalLink size={10}/> Get Free Gemini API Key</a> 
-         </div> 
        </div> 
     </div> 
   ); 
@@ -1207,7 +955,6 @@ export default function App() {
     <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-200 font-sans selection:bg-cyan-500/30"> 
       <Modal 
         isOpen={modalConfig.isOpen}
-        type={modalConfig.type}
         title={modalConfig.title}
         value={modalConfig.value}
         message={modalConfig.message}
@@ -1279,7 +1026,7 @@ export default function App() {
             </div> 
             <div className="flex items-center gap-2 sm:gap-4 text-xs font-mono"> 
                <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-slate-900 border border-slate-800"> 
-                  {apiStatus === 'loading' ? <RefreshCw size={12} className="animate-spin text-cyan-500"/> : apiStatus === 'error' ? <WifiOff size={12} className="text-red-500"/> : <Wifi size={12} className="text-emerald-500"/>} 
+                  {apiStatus === 'loading' ? <RefreshCw size={12} className="animate-spin text-cyan-500"/> : apiStatus === 'error' ? <FileText size={12} className="text-red-500"/> : <Brain size={12} className="text-emerald-500"/>} 
                   <span className={`hidden sm:inline font-bold ${apiStatus==='error'?'text-red-400':apiStatus==='loading'?'text-cyan-400':'text-emerald-400'}`}>{apiStatus === 'loading' ? 'SYNC...' : apiStatus === 'error' ? 'OFFLINE' : 'ONLINE'}</span> 
                </div> 
 
@@ -1291,7 +1038,7 @@ export default function App() {
                    className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1.5 rounded text-slate-400 hover:text-white transition cursor-pointer"  
                    title="Toggle History Sidebar" 
                  > 
-                   <Sidebar size={14}/> <span className="hidden sm:inline">HISTORY</span> 
+                   <History size={14}/> <span className="hidden sm:inline">HISTORY</span> 
                  </button> 
                )} 
             </div> 
@@ -1447,13 +1194,11 @@ export default function App() {
             {view === 'playground' && (
                 isPremium ? (
                   <div className="h-full flex overflow-hidden relative">
-                    {/* 1. SIDEBAR FILE MANAGER (VS Code Style) */}
+                    {/* 1. SIDEBAR FILE MANAGER (FIXED) */}
                     <div className={`${isFileManagerOpen ? 'w-48 md:w-56 translate-x-0' : 'w-0 -translate-x-full opacity-0'} bg-slate-950 border-r border-slate-800 transition-all duration-300 flex flex-col shrink-0`}>
                         <div className="p-3 border-b border-slate-800 flex justify-between items-center">
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2"><FolderOpen size={14}/> Explorer</span>
                             <div className="flex gap-1">
-                                <button onClick={handleNewFile} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white" title="New File"><FilePlus size={14}/></button>
-                                <button onClick={handleNewFolder} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white" title="New Folder"><FolderPlus size={14}/></button>
                                 <button onClick={() => setIsFileManagerOpen(false)} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><SidebarClose size={14}/></button>
                             </div>
                         </div>
@@ -1465,18 +1210,10 @@ export default function App() {
                                         {file.name}
                                     </div>
                                     <div className="hidden group-hover:flex gap-1">
-                                        <button onClick={(e) => { e.stopPropagation(); handleRenameFile(file.id, file.name); }} className="text-slate-500 hover:text-white"><Edit2 size={12}/></button>
-                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteFile(file.id, file.name); }} className="text-slate-500 hover:text-red-400"><Trash2 size={12}/></button>
                                         <button onClick={(e) => { e.stopPropagation(); setActiveFileIndex(index); handleSaveAsFile(); }} className="text-slate-500 hover:text-emerald-400"><Download size={12}/></button>
                                     </div>
                                 </div>
                             ))}
-                        </div>
-                        <div className="p-3 border-t border-slate-800">
-                             <div className="flex gap-2 justify-center">
-                                <label className="p-2 bg-slate-900 hover:bg-slate-800 rounded-lg cursor-pointer text-slate-400 hover:text-white border border-slate-800" title="Import JSON"><FilePlus size={14}/><input type="file" accept=".json" className="hidden" onChange={handlePlaygroundFileImport}/></label>
-                                <button onClick={handlePlaygroundExport} className="p-2 bg-slate-900 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white border border-slate-800" title="Export JSON"><Download size={14}/></button>
-                             </div>
                         </div>
                     </div>
 
@@ -1495,7 +1232,7 @@ export default function App() {
                             <div className="flex items-center justify-between bg-slate-900 p-2 border-b border-slate-800">
                                 <div className="flex items-center gap-2 px-2">
                                     <FileCode size={14} className="text-slate-400"/>
-                                    <span className="text-xs font-bold text-slate-200">{files[activeFileIndex]?.name || 'Untitled'}</span>
+                                    <span className="text-xs font-bold text-slate-200">{files[activeFileIndex]?.name || 'Loading...'}</span>
                                     {unsavedChanges && <Circle size={8} className="text-white fill-white animate-pulse"/>}
                                     <span className="flex items-center gap-1 text-[10px] text-slate-500 ml-2">
                                         {isLocalSyncing ? <CloudOff size={10} className="animate-pulse text-amber-500"/> : <Cloud size={10} className="text-emerald-500"/>}
@@ -1543,7 +1280,7 @@ export default function App() {
                                         </button>
                                     )}
                                     {isFullScreen && (
-                                         <button onClick={() => setIsFullScreen(false)} className="ml-2 p-1.5 bg-red-900/50 hover:bg-red-900 text-red-400 rounded text-xs px-3 font-bold border border-red-500/30">EXIT FULLSCREEN</button>
+                                          <button onClick={() => setIsFullScreen(false)} className="ml-2 p-1.5 bg-red-900/50 hover:bg-red-900 text-red-400 rounded text-xs px-3 font-bold border border-red-500/30">EXIT FULLSCREEN</button>
                                     )}
                                 </div>
                             </div>
@@ -1575,7 +1312,7 @@ export default function App() {
                     }} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">UNLOCK APEX</button></div></div>
                 )
             )}
- 
+
             {view === 'settings' && ( 
                <div className="p-6 md:p-12 max-w-4xl mx-auto"> 
                    <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2"><Settings/> {tText('settings')}</h2> 
@@ -1585,7 +1322,7 @@ export default function App() {
                    </div> 
                    <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6"><h3 className="text-white font-bold mb-4 flex items-center gap-2"><Globe size={18} className="text-cyan-400"/> Language</h3><div className="flex flex-wrap gap-3">{Object.entries(LANGUAGES).map(([code, data])=>(<button key={code} onClick={()=>updateLanguage(code)} className={`px-4 py-2 rounded-xl border text-sm flex items-center gap-2 ${langCode===code?'bg-cyan-500/20 border-cyan-500 text-cyan-300':'bg-slate-950 border-slate-700 text-slate-400 hover:border-slate-500'}`}><span>{data.flag}</span> {data.label}</button>))}</div></div> 
                    <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6"><h3 className="text-white font-bold mb-4 flex items-center gap-2"><Key size={18} className="text-amber-400"/> {tText('customKey')}</h3><p className="text-xs text-slate-400 mb-4">{tText('apiKeyDesc')}</p><div className="flex gap-2"><input type="password" value={customApiKey} onChange={(e)=>setCustomApiKey(e.target.value)} placeholder="AIzaSy..." className="flex-1 bg-slate-950 border border-slate-700 text-white p-3 rounded-xl text-sm font-mono focus:border-cyan-500 outline-none"/><button onClick={handleSaveCustomKey} className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 rounded-xl font-bold text-sm">SAVE</button></div></div> 
-                   <div className="mt-12 border-t border-slate-800 pt-6"><h4 className="text-xs text-slate-600 font-mono mb-2 uppercase tracking-widest flex items-center gap-2"><Bug size={12}/> {tText('devOverride')}</h4><div className="flex gap-2 max-w-xs"><input type="password" value={devPin} onChange={(e)=>setDevPin(e.target.value)} placeholder="Enter PIN..." className="flex-1 bg-slate-950 border border-slate-800 text-slate-300 p-2 rounded-xl text-xs focus:border-red-500 outline-none transition-colors"/><button onClick={handleDevUnlock} className="bg-slate-800 hover:bg-red-900 hover:text-red-200 text-slate-400 px-4 rounded-xl text-xs font-bold transition-colors">{tText('access')}</button></div></div> 
+                   <div className="mt-12 border-t border-slate-800 pt-6"><h4 className="text-xs text-slate-600 font-mono mb-2 uppercase tracking-widest flex items-center gap-2"><Brain size={12}/> {tText('devOverride')}</h4><div className="flex gap-2 max-w-xs"><input type="password" value={devPin} onChange={(e)=>setDevPin(e.target.value)} placeholder="Enter PIN..." className="flex-1 bg-slate-950 border border-slate-800 text-slate-300 p-2 rounded-xl text-xs focus:border-red-500 outline-none transition-colors"/><button onClick={handleDevUnlock} className="bg-slate-800 hover:bg-red-900 hover:text-red-200 text-slate-400 px-4 rounded-xl text-xs font-bold transition-colors">{tText('access')}</button></div></div> 
                </div> 
             )} 
  
@@ -1608,7 +1345,7 @@ export default function App() {
                             
                            <div className="mt-6 p-4 bg-slate-900 border border-slate-800 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 hover:border-cyan-500/50 transition"> 
                                <div className="flex items-center gap-3"> 
-                                  <div className="bg-slate-800 p-2 rounded-full border border-slate-700"><Github className="text-white" size={24}/></div> 
+                                  <div className="bg-slate-800 p-2 rounded-full border border-slate-700"><CheckCircle className="text-white" size={24}/></div> 
                                   <div> 
                                      <h4 className="text-white font-bold text-sm">Open Source Repository</h4> 
                                      <p className="text-xs text-slate-500">Aleocrophic-CodeFixerX-SPA</p> 
@@ -1621,7 +1358,7 @@ export default function App() {
                          </section> 
  
                          <section className="bg-slate-900 p-8 rounded-3xl border border-slate-800 mt-8"> 
-                            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><Heart className="text-pink-500 fill-pink-500 animate-pulse" size={20}/> {tText('specialThanks')}</h3> 
+                            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><Sparkles className="text-pink-500 fill-pink-500 animate-pulse" size={20}/> {tText('specialThanks')}</h3> 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> 
                                <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-4 hover:border-cyan-500/30 transition"> 
                                  <div className="w-12 h-12 bg-cyan-900 rounded-full flex items-center justify-center font-bold text-cyan-400 border border-cyan-700">RD</div> 
@@ -1636,9 +1373,9 @@ export default function App() {
                                      <div className="w-full h-full bg-pink-950 flex items-center justify-center text-pink-300 font-bold text-xs">TH</div> 
                                    ) : ( 
                                      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj8rY5XbTjGXe6z_pUj7VqN2M0L8O6K9P1Q2S3T4U5V6W7X8Y9Z0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2/s1600/download%20(5).jpeg"  
-                                             alt="TH"  
-                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform"  
-                                             onError={() => setHoshinoImgError(true)} 
+                                              alt="TH"  
+                                              className="w-full h-full object-cover group-hover:scale-110 transition-transform"  
+                                              onError={() => setHoshinoImgError(true)} 
                                      /> 
                                    )} 
                                  </div> 
