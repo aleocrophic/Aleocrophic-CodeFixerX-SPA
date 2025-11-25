@@ -61,7 +61,7 @@ const LANGUAGES = {
       roleUser: 'User', roleAI: 'CodeFixerX', buyKey: 'BUY KEY NOW', dontHaveKey: "DON'T HAVE A KEY?", 
       originTitle: 'Origin of Aleocrophic', specialThanks: 'Special Thanks', coreInfra: 'Core Infrastructure', 
       toggleHistory: 'Toggle History', sourceInput: 'SOURCE INPUT', getKey: 'Get API Key', saveEnter: 'Save & Enter', 
-      apiKeyDesc: 'REQUIRED. Your personal Gemini API Key. Stored strictly locally on your device.', 
+      apiKeyDesc: 'REQUIRED. Your personal Gemini API Key. Stored locally or synced securely if logged in.', 
       enterApiFirst: 'System Locked. API Key Required.', 
       apiGateMsg: 'To prevent API abuse and flagging, a personal Gemini API Key is now mandatory to access the system.', 
       validateKey: 'VALIDATE & PROCEED', 
@@ -76,7 +76,7 @@ const LANGUAGES = {
         infraFrontend: "React 18 + Tailwind + Vite. Optimized for speed.", 
         infraBackend: "Google Firebase (Auth & Firestore). Serverless and secure.", 
         infraAI: "Google Gemini 2.5 Flash. High-Speed Reasoning Engine." 
-      } 
+      }  
     }  
   }, 
   id: {  
@@ -93,7 +93,7 @@ const LANGUAGES = {
       roleUser: 'Pengguna', roleAI: 'CodeFixerX', buyKey: 'BELI KUNCI SEKARANG', dontHaveKey: "BELUM PUNYA KUNCI?", 
       originTitle: 'Asal Usul Aleocrophic', specialThanks: 'Terima Kasih Khusus', coreInfra: 'Infrastruktur Inti', 
       toggleHistory: 'Buka Riwayat', sourceInput: 'SUMBER KODE', getKey: 'Dapatkan Key', saveEnter: 'Simpan & Masuk', 
-      apiKeyDesc: 'WAJIB. API Key Gemini pribadi Anda. Disimpan secara lokal di perangkat ini.', 
+      apiKeyDesc: 'WAJIB. API Key Gemini pribadi Anda. Disimpan lokal atau di-sync jika login.', 
       enterApiFirst: 'Sistem Terkunci. Butuh API Key.', 
       apiGateMsg: 'Untuk mencegah penyalahgunaan API dan flagging, Kunci API Gemini pribadi sekarang wajib untuk mengakses sistem.', 
       validateKey: 'VALIDASI & LANJUT', 
@@ -149,7 +149,6 @@ const LANGUAGES = {
   es: { label: 'Español', flag: '🇪🇸', ui: { dashboard: 'Tablero', chat: 'Chat', playground: 'CodePlayground', portalLabel: 'Portal', processing: 'Procesando...', analyze: 'Analizar', input: 'Código', output: 'Salida', settings: 'Ajustes', copy: 'Copiar', newChat: 'Nuevo', expanding: 'Expandiendo...' } },
 }; 
 
-// Fallback for missing keys in other langs to prevent crash
 ['ar', 'ru', 'de', 'es'].forEach(lang => {
     if (!LANGUAGES[lang].ui.portalContent) LANGUAGES[lang].ui.portalContent = LANGUAGES.en.ui.portalContent;
     if (!LANGUAGES[lang].ui.expanding) LANGUAGES[lang].ui.expanding = "Expanding Prompt...";
@@ -163,7 +162,6 @@ const MODULES = [
   { id: 'explain', name: 'Code Explainer', icon: <FileCode />, premium: false, desc: 'Deep explanations.', systemPrompt: "You are the Interactive Code Explainer. Break down the provided code into simple, digestible parts. Explain the logic flow, variable purposes, and algorithmic approach. Use analogies where appropriate. Do not just rewrite the code, explain *why* it works." }, 
   { id: 'pair', name: 'Pair Programmer', icon: <User />, premium: false, desc: 'Real-time collab.', systemPrompt: "You are an AI Pair Programmer. Act as a senior developer colleague. Suggest completions, refactorings, or alternative approaches to the user's current code snippet. Maintain a collaborative and helpful tone." }, 
    
-  // --- APEX EXCLUSIVE (Indices 6-11) --- 
   { id: 'legacy', name: 'Legacy Resurrection', icon: <History />, premium: true, desc: 'Modernize old stacks.', systemPrompt: "You are the Legacy Code Resurrection Engine. Your task is to modernize outdated code (e.g., COBOL, old PHP, jQuery, VB6) into modern standards (e.g., React, Go, Rust, Python 3.10+). Preserve business logic but upgrade the syntax, libraries, and security practices." }, 
   { id: 'cicd', name: 'CI/CD Integrator', icon: <Cpu />, premium: true, desc: 'Pipeline automation.', systemPrompt: "You are the CI/CD Integrator. Generate robust pipeline configurations (GitHub Actions YAML, GitLab CI, Jenkinsfile, Dockerfile) for the provided code. Ensure automated testing, linting, security scanning, and deployment steps are included." }, 
   { id: 'custom', name: 'Custom Commander', icon: <Terminal />, premium: true, desc: 'Execute commands.', systemPrompt: "You are the Custom Command Executor. Follow the specific instructions provided by the user regarding the code. You are versatile and adaptable. If the user asks for a specific refactor pattern (e.g., SOLID, DRY, KISS), apply it rigorously." }, 
@@ -279,12 +277,16 @@ const CodeBlock = ({ lang, code, copyLabel, copiedLabel }) => {
  
 // --- 4. MAIN APP --- 
 export default function App() {  
+  // -- LAZY STATE INITIALIZATION FOR PERSISTENCE (Anti-Amnesia on Refresh) --
+  // We initialize state DIRECTLY from localStorage to prevent flicker
   const [user, setUser] = useState(null); 
-  const [view, setView] = useState('language'); 
-  const [langCode, setLangCode] = useState('en'); 
-  const [isPremium, setIsPremium] = useState(false); 
+  const [view, setView] = useState(() => localStorage.getItem('cfx_view') || 'language'); 
+  const [langCode, setLangCode] = useState(() => localStorage.getItem('cfx_lang') || 'en'); 
+  const [isPremium, setIsPremium] = useState(() => localStorage.getItem('cfx_is_premium') === 'true'); 
+  const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('cfx_api_key') || ''); 
+  const [gateApiKey, setGateApiKey] = useState(() => localStorage.getItem('cfx_api_key') || ''); // Pre-fill gate key if exists
+  const [aiModel, setAiModel] = useState(() => localStorage.getItem('cfx_ai_model') || AI_MODELS[0].id); 
   const [currentModule, setCurrentModule] = useState(MODULES[0]); 
-  const [aiModel, setAiModel] = useState(AI_MODELS[0].id); 
   const [apiStatus, setApiStatus] = useState('idle'); 
     
   const [isAuthChecking, setIsAuthChecking] = useState(true); 
@@ -318,8 +320,6 @@ export default function App() {
   
   const [sidebarOpen, setSidebarOpen] = useState(false);  
   const [premiumKey, setPremiumKey] = useState(''); 
-  const [customApiKey, setCustomApiKey] = useState(''); 
-  const [gateApiKey, setGateApiKey] = useState(''); 
   const [notif, setNotif] = useState(null); 
   const [portalTab, setPortalTab] = useState('about');  
   const [generatedApiKey, setGeneratedApiKey] = useState("GUEST"); 
@@ -342,9 +342,15 @@ export default function App() {
   const notify = (msg, type = 'info') => { setNotif({msg, type}); setTimeout(() => setNotif(null), 3000); }; 
 
   // --- ACTION HANDLERS (DUAL SYNC: LOCAL + CLOUD) ---
+  const handleViewChange = (newView) => {
+      setView(newView);
+      localStorage.setItem('cfx_view', newView);
+  }
+
   const updateLanguage = async (code) => {
       setLangCode(code);
       localStorage.setItem('cfx_lang', code);
+      // Cloud Sync
       if (user && !user.isAnonymous) {
           try {
               await setDoc(getUserDoc(user.uid, 'account', 'profile'), { language: code }, { merge: true });
@@ -354,7 +360,12 @@ export default function App() {
 
   const handleLangSelect = (code) => {
       updateLanguage(code);
-      setView('apikey_gate');
+      // Skip api gate if we already have a key
+      if (customApiKey && customApiKey.length > 10) {
+        handleViewChange('dashboard');
+      } else {
+        handleViewChange('apikey_gate');
+      }
   }
 
   const changeAiModel = async (modelId) => { 
@@ -374,8 +385,7 @@ export default function App() {
       return; 
     } 
     localStorage.setItem('cfx_api_key', customApiKey); 
-    // Option: You can sync this to cloud if you want, but typically API keys are kept local for security
-    // If requested to sync EVERYTHING:
+    // Secure Cloud Sync for convenience across devices
     if(user && !user.isAnonymous) {
         try {
             await setDoc(getUserDoc(user.uid, 'account', 'profile'), { apiKey: customApiKey }, { merge: true });
@@ -386,6 +396,7 @@ export default function App() {
     setApiStatus('idle'); 
   } 
  
+  // --- AUTH & INITIALIZATION SIDE EFFECT ---
   useEffect(() => { 
     const initAuth = async () => {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -393,21 +404,7 @@ export default function App() {
         }
     };
     initAuth();
-
-    const savedKey = localStorage.getItem('cfx_api_key'); 
-    const savedModel = localStorage.getItem('cfx_ai_model'); 
-    const savedPremium = localStorage.getItem('cfx_is_premium');  
       
-    if (savedKey && savedKey.trim().length > 10) { 
-        setCustomApiKey(savedKey); 
-    } 
- 
-    if (savedModel) setAiModel(savedModel); 
-      
-    if (savedPremium === 'true') { 
-        setIsPremium(true); 
-    } 
-        
     const handleResize = () => { 
           if (window.innerWidth < 1024) { 
               setSidebarOpen(false); 
@@ -423,12 +420,15 @@ export default function App() {
  
     const unsub = onAuthStateChanged(auth, async (u) => {  
       setUser(u);  
+      
       if (u) { 
         if (u.isAnonymous) { 
+            // GUEST MODE - Rely on LocalStorage
             setIsPremium(false); 
             localStorage.removeItem('cfx_is_premium'); 
             setGeneratedApiKey("GUEST"); 
         } else { 
+            // LOGGED IN - Sync with Firestore
             if (!isDevMode) setIsDevMode(false); 
             setGeneratedApiKey(`CFX-${u.uid.substring(0,6).toUpperCase()}`); 
               
@@ -437,7 +437,7 @@ export default function App() {
               const docSnap = await getDoc(docRef); 
               
               if (docSnap.exists()) { 
-                // --- CLOUD TO LOCAL SYNC ---
+                // --- CLOUD TO LOCAL SYNC (Cloud is Master) ---
                 const data = docSnap.data(); 
                 
                 if (data.language && LANGUAGES[data.language]) {
@@ -460,20 +460,22 @@ export default function App() {
 
                 if (data.apiKey) {
                     setCustomApiKey(data.apiKey);
+                    setGateApiKey(data.apiKey);
                     localStorage.setItem('cfx_api_key', data.apiKey);
                 }
 
                 notify("Profile Synced from Cloud ☁️", "success");
 
               } else {
-                 // --- LOCAL TO CLOUD SYNC (New Google User) ---
+                 // --- LOCAL TO CLOUD SYNC (First Time Login / New User) ---
+                 // Push local settings to cloud to persist them
                  const initialData = {
                      language: langCode,
-                     isPremium: isPremium, // Assuming default false, but good to explicit
+                     isPremium: isPremium,
                      aiModel: aiModel,
+                     apiKey: customApiKey, // Optional: Sync key
                      createdAt: serverTimestamp()
                  };
-                 if (customApiKey) initialData.apiKey = customApiKey;
 
                  await setDoc(docRef, initialData, { merge: true });
                  notify("Local Settings Saved to Cloud ☁️", "success");
@@ -483,10 +485,13 @@ export default function App() {
             } 
         } 
       } else { 
-        setIsPremium(false); 
-        localStorage.removeItem('cfx_is_premium'); 
-        setGeneratedApiKey("GUEST"); 
+        // LOGGED OUT
+        // We do NOT clear localStorage here to preserve guest settings for UX
+        // Unless we specifically want to reset. 
+        // setIsPremium(false); // Optional
       } 
+      
+      // Stop the loading spinner once auth is resolved
       setIsAuthChecking(false); 
     }); 
     return () => { unsub(); window.removeEventListener('resize', handleResize); }; 
@@ -524,7 +529,6 @@ export default function App() {
               if (Array.isArray(parsed) && parsed.length > 0) {
                   setFiles(parsed);
                   hasLocalData = true;
-                  notify("Loaded from Local Storage", "success");
               }
           } catch (e) { console.error("Local load failed", e); }
       }
@@ -565,7 +569,10 @@ export default function App() {
       localStorage.setItem('cfx_api_key', gateApiKey.trim()); 
       setCustomApiKey(gateApiKey.trim()); 
       notify("Security Check Passed! 🛡️", "success"); 
-      setView('login'); 
+      
+      // If user is already in a flow (e.g. was viewing settings), go back there.
+      // Otherwise go to Login.
+      handleViewChange('login'); 
   }; 
  
   const handleLogin = async () => { 
@@ -573,7 +580,7 @@ export default function App() {
       const provider = new GoogleAuthProvider(); 
       await signInWithPopup(auth, provider);  
       notify("Identity Verified! 🌸", "success");  
-      setView('dashboard');
+      handleViewChange('dashboard');
     } catch (e) {  
       console.error("Popup Auth Error:", e); 
       if (e.code === 'auth/unauthorized-domain' || e.code === 'auth/popup-blocked') { 
@@ -581,7 +588,7 @@ export default function App() {
          try { 
              await signInAnonymously(auth); 
              notify("Logged in Anonymously.", "success"); 
-             setView('dashboard');
+             handleViewChange('dashboard');
          } catch (anonErr) { notify("Critical Auth Failure.", "error"); } 
       } else { notify("Login Failed: " + e.message, "error"); } 
     } 
@@ -593,7 +600,7 @@ export default function App() {
           setIsPremium(false);
           localStorage.removeItem('cfx_is_premium');
           notify("Masuk sebagai Guest. Fitur terbatas! 🔒", "info");
-          setView('dashboard'); 
+          handleViewChange('dashboard'); 
       } catch (e) { 
           console.error("Anon auth failed", e); 
           notify("Gagal masuk guest", "error");
@@ -619,7 +626,7 @@ export default function App() {
     // If user is a GUEST and trying to upgrade -> Redirect to Login first
     if (user && user.isAnonymous && !isDevMode) { 
         notify("Please Login with Google to Upgrade! 🔒", "error"); 
-        setView('login');
+        handleViewChange('login');
         return; 
     } 
  
@@ -628,7 +635,7 @@ export default function App() {
       setIsPremium(true); 
       localStorage.setItem('cfx_is_premium', 'true'); 
       notify("APEX UNLOCKED", "success"); 
-      setView('dashboard'); 
+      handleViewChange('dashboard'); 
        
       if (user && !user.isAnonymous) {
           try { 
@@ -646,7 +653,7 @@ export default function App() {
         setIsDevMode(true); 
         setGeneratedApiKey("RDZ-DEV-ROOT"); 
         notify("⚠️ DEVELOPER MODE ACTIVE", "success"); 
-        setView('dashboard'); 
+        handleViewChange('dashboard'); 
         setDevPin(''); 
     } else { 
         notify("ACCESS DENIED 💀", "error"); 
@@ -703,7 +710,7 @@ export default function App() {
     const apiKeyToUse = customApiKey; 
     if (!apiKeyToUse) { 
         notify("CRITICAL: API Key Missing. Security Protocol Engaged.", "error"); 
-        setView('apikey_gate'); 
+        handleViewChange('apikey_gate'); 
         return; 
     } 
  
@@ -784,7 +791,7 @@ export default function App() {
     } catch (e) {  
         notify(`AI Error: ${e.message}`, "error");  
         setApiStatus('error'); 
-        if (e.message.includes("API KEY")) setView('apikey_gate'); 
+        if (e.message.includes("API KEY")) handleViewChange('apikey_gate'); 
     } finally { setLoading(false); setExpanding(false); } 
   }; 
  
@@ -792,7 +799,7 @@ export default function App() {
     const apiKeyToUse = customApiKey; 
     if (!apiKeyToUse) { 
         notify("CRITICAL: API Key Missing.", "error"); 
-        setView('apikey_gate'); 
+        handleViewChange('apikey_gate'); 
         return; 
     } 
  
@@ -841,7 +848,7 @@ export default function App() {
     } catch(e) {  
         notify("Chat Error: " + e.message, "error");  
         setApiStatus('error'); 
-        if (e.message.includes("API KEY")) setView('apikey_gate'); 
+        if (e.message.includes("API KEY")) handleViewChange('apikey_gate'); 
     } finally { setChatLoading(false); } 
   }; 
  
@@ -1042,7 +1049,17 @@ export default function App() {
       }
   };
  
-  if (isAuthChecking) return (<div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4"><div className="relative mb-8"><div className="absolute inset-0 bg-cyan-500/30 blur-xl rounded-full animate-pulse"></div><Cpu size={64} className="text-cyan-400 relative z-10 animate-bounce"/></div><h2 className="text-2xl font-bold text-white mb-2 tracking-wider">INITIALIZING NEURAL LINK</h2></div>); 
+  // LOADING SCREEN (Prevents Flicker)
+  if (isAuthChecking) return (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4">
+        <div className="relative mb-8">
+            <div className="absolute inset-0 bg-cyan-500/30 blur-xl rounded-full animate-pulse"></div>
+            <Cpu size={64} className="text-cyan-400 relative z-10 animate-bounce"/>
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2 tracking-wider">SYNCING NEURAL LINK...</h2>
+        <p className="text-slate-500 text-sm">Recovering memory shards</p>
+    </div>
+  ); 
  
   if (view === 'language') return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
@@ -1064,7 +1081,7 @@ export default function App() {
 
   if (view === 'apikey_gate') return ( 
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"> 
-       <button onClick={() => setView('language')} className="absolute top-6 left-6 text-slate-400 hover:text-white flex gap-2 z-20"><ChevronRight className="rotate-180"/> Back</button>
+       <button onClick={() => handleViewChange('language')} className="absolute top-6 left-6 text-slate-400 hover:text-white flex gap-2 z-20"><ChevronRight className="rotate-180"/> Back</button>
        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80')] bg-cover opacity-10 blur-sm"></div> 
        <div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-red-500/50 max-w-md w-full text-center shadow-2xl relative animate-fadeIn"> 
          <div className="w-20 h-20 bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6 ring-2 ring-red-500/50 animate-pulse"><Shield size={40} className="text-red-500"/></div> 
@@ -1089,7 +1106,7 @@ export default function App() {
  
   if (view === 'login') return ( 
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"> 
-       <button onClick={() => setView('apikey_gate')} className="absolute top-6 left-6 text-slate-400 hover:text-white flex gap-2 z-20"><ChevronRight className="rotate-180"/> Back</button> 
+       <button onClick={() => handleViewChange('apikey_gate')} className="absolute top-6 left-6 text-slate-400 hover:text-white flex gap-2 z-20"><ChevronRight className="rotate-180"/> Back</button> 
        <div className="z-10 bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-slate-700 max-w-sm w-full text-center shadow-2xl relative"> 
          <div className="w-20 h-20 bg-cyan-900/30 rounded-full flex items-center justify-center mx-auto mb-6"><Cpu size={40} className="text-cyan-400"/></div> 
          <h2 className="text-2xl font-bold text-white mb-2">{tText('login')}</h2> 
@@ -1115,29 +1132,29 @@ export default function App() {
             <div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-lg ${isPremium ? 'bg-amber-500' : 'bg-cyan-600'}`}>{isPremium ? <Sparkles className="text-white"/> : <Code className="text-white"/>}</div><div><h2 className="font-bold leading-none tracking-tight">CodeFixerX</h2><span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{isPremium ? 'Apex' : 'Lite'}</span></div></div> 
             <button onClick={() => setSidebarOpen(false)} className="md:hidden text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800"><X/></button> 
          </div> 
-         <div className="px-4 pt-4 flex gap-2 border-b border-slate-800 pb-4"><button onClick={() => setView('dashboard')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${view==='dashboard'?'bg-slate-800 text-cyan-400':'text-slate-500 hover:text-slate-300'}`}>{tText('dashboard')}</button><button onClick={() => setView('settings')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${view==='settings'?'bg-slate-800 text-cyan-400':'text-slate-500 hover:text-slate-300'}`}><Settings size={12} className="inline mb-0.5"/> {tText('settings')}</button></div> 
+         <div className="px-4 pt-4 flex gap-2 border-b border-slate-800 pb-4"><button onClick={() => handleViewChange('dashboard')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${view==='dashboard'?'bg-slate-800 text-cyan-400':'text-slate-500 hover:text-slate-300'}`}>{tText('dashboard')}</button><button onClick={() => handleViewChange('settings')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${view==='settings'?'bg-slate-800 text-cyan-400':'text-slate-500 hover:text-slate-300'}`}><Settings size={12} className="inline mb-0.5"/> {tText('settings')}</button></div> 
          <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar"> 
            <div className="text-[10px] font-bold text-slate-500 uppercase px-2 mb-2 mt-2">{tText('modules')}</div> 
            {MODULES.map((m) => { 
              const isLocked = m.premium && !isPremium; 
-             return (<button key={m.id} onClick={() => { if(!isLocked){setCurrentModule(m); setView('dashboard'); if(window.innerWidth < 768) setSidebarOpen(false);} else notify("Locked 🔒 Upgrade!", "error"); }} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition text-left ${currentModule.id===m.id && view==='dashboard' ? (isPremium?'bg-amber-500/20 text-amber-300 border border-amber-500/20':'bg-cyan-500/20 text-cyan-300 border border-cyan-500/20') : 'text-slate-400 hover:bg-slate-800'} ${isLocked ? 'opacity-50 cursor-not-allowed':''}`}><div className={`${isLocked ? 'text-slate-600' : (m.premium ? 'text-amber-400' : 'text-cyan-400')}`}>{m.icon}</div><span className="flex-1 truncate text-xs font-medium">{m.name}</span>{isLocked && <Lock size={12} className="text-slate-600"/>}</button>); 
+             return (<button key={m.id} onClick={() => { if(!isLocked){setCurrentModule(m); handleViewChange('dashboard'); if(window.innerWidth < 768) setSidebarOpen(false);} else notify("Locked 🔒 Upgrade!", "error"); }} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition text-left ${currentModule.id===m.id && view==='dashboard' ? (isPremium?'bg-amber-500/20 text-amber-300 border border-amber-500/20':'bg-cyan-500/20 text-cyan-300 border border-cyan-500/20') : 'text-slate-400 hover:bg-slate-800'} ${isLocked ? 'opacity-50 cursor-not-allowed':''}`}><div className={`${isLocked ? 'text-slate-600' : (m.premium ? 'text-amber-400' : 'text-cyan-400')}`}>{m.icon}</div><span className="flex-1 truncate text-xs font-medium">{m.name}</span>{isLocked && <Lock size={12} className="text-slate-600"/>}</button>); 
            })} 
            <div className="text-[10px] font-bold text-slate-500 uppercase px-2 mb-2 mt-6">{tText('tools')}</div> 
-           <button onClick={() => {setView('chat'); if(window.innerWidth < 768) setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='chat' ? (isPremium ? 'bg-purple-500/20 text-purple-300 border border-purple-500/20' : 'text-slate-400 hover:bg-slate-800') : 'text-slate-400 hover:bg-slate-800'}`}><MessageSquare size={16} className={isPremium?"text-purple-400":""}/> {tText('chat')} (Apex) {!isPremium && <Lock size={12}/>}</button> 
-           <button onClick={() => { if(isPremium) {setView('playground'); if(window.innerWidth < 768) setSidebarOpen(false);} else notify("Locked 🔒 Upgrade!", "error");}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='playground' ? (isPremium ? 'bg-pink-500/20 text-pink-300 border border-pink-500/20' : '') : 'text-slate-400 hover:bg-slate-800'}`}><MonitorPlay size={16} className={isPremium?"text-pink-400":""}/> {tText('playground')} (Apex) {!isPremium && <Lock size={12}/>}</button> 
+           <button onClick={() => {handleViewChange('chat'); if(window.innerWidth < 768) setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='chat' ? (isPremium ? 'bg-purple-500/20 text-purple-300 border border-purple-500/20' : 'text-slate-400 hover:bg-slate-800') : 'text-slate-400 hover:bg-slate-800'}`}><MessageSquare size={16} className={isPremium?"text-purple-400":""}/> {tText('chat')} (Apex) {!isPremium && <Lock size={12}/>}</button> 
+           <button onClick={() => { if(isPremium) {handleViewChange('playground'); if(window.innerWidth < 768) setSidebarOpen(false);} else notify("Locked 🔒 Upgrade!", "error");}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='playground' ? (isPremium ? 'bg-pink-500/20 text-pink-300 border border-pink-500/20' : '') : 'text-slate-400 hover:bg-slate-800'}`}><MonitorPlay size={16} className={isPremium?"text-pink-400":""}/> {tText('playground')} (Apex) {!isPremium && <Lock size={12}/>}</button> 
 
            <div className="text-[10px] font-bold text-slate-500 uppercase px-2 mb-2 mt-6">{tText('system')}</div> 
-           <button onClick={() => {setView('portal'); if(window.innerWidth < 768) setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-400 hover:bg-slate-800 transition ${view==='portal'?'bg-indigo-500/20 text-indigo-300':''}`}><BookOpen size={16}/> {tText('portalLabel')}</button> 
+           <button onClick={() => {handleViewChange('portal'); if(window.innerWidth < 768) setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-400 hover:bg-slate-800 transition ${view==='portal'?'bg-indigo-500/20 text-indigo-300':''}`}><BookOpen size={16}/> {tText('portalLabel')}</button> 
          </div> 
          <div className="p-4 border-t border-slate-800 bg-slate-900"> 
            {(!isPremium || isDevMode) && (
              <button 
                onClick={() => {
                  if (isDevMode || (user && !user.isAnonymous)) {
-                   setView('premium');
+                   handleViewChange('premium');
                  } else {
                    notify("Eits! Login Google dulu bosku! 🔒", "error");
-                   setView('login');
+                   handleViewChange('login');
                  }
                }} 
                className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs font-bold rounded-lg transition shadow-lg shadow-amber-500/20 mb-2 flex items-center justify-center gap-2"
@@ -1147,13 +1164,13 @@ export default function App() {
            )} 
            {user || isDevMode ? (
              <>
-               <div className="flex items-center gap-3 px-2 mb-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${isDevMode ? 'bg-red-900 border-red-500 text-red-200' : 'bg-cyan-900 border-cyan-700 text-cyan-200'}`}>{isDevMode ? 'DEV' : (user.email ? user.email[0].toUpperCase() : 'G')}</div><div className="flex-1 overflow-hidden"><div className="text-xs font-bold truncate">{isDevMode ? 'Developer' : (user.displayName || 'Guest User')}</div><div className="text-[10px] text-slate-500">{isDevMode ? 'System Root' : 'Online'}</div></div><button onClick={() => { signOut(auth); setView('login'); }}><LogOut size={16} className="text-slate-500 hover:text-red-400"/></button></div>
+               <div className="flex items-center gap-3 px-2 mb-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${isDevMode ? 'bg-red-900 border-red-500 text-red-200' : 'bg-cyan-900 border-cyan-700 text-cyan-200'}`}>{isDevMode ? 'DEV' : (user.email ? user.email[0].toUpperCase() : 'G')}</div><div className="flex-1 overflow-hidden"><div className="text-xs font-bold truncate">{isDevMode ? 'Developer' : (user.displayName || 'Guest User')}</div><div className="text-[10px] text-slate-500">{isDevMode ? 'System Root' : 'Online'}</div></div><button onClick={() => { signOut(auth); handleViewChange('login'); }}><LogOut size={16} className="text-slate-500 hover:text-red-400"/></button></div>
                
                {(!isPremium || isDevMode) && (
                  <a href="https://lynk.id/zetago-aurum/yjzz3v78oq13" target="_blank" rel="noreferrer" className="w-full py-2 mt-2 bg-slate-800 hover:bg-slate-700 border border-amber-500/50 text-amber-400 text-[10px] font-bold rounded-lg flex items-center justify-center gap-2 transition group"><ShoppingCart size={12} className="group-hover:scale-110 transition-transform"/> {tText('buyKey')}</a> 
                )}
              </>
-           ) : (<button onClick={() => setView('login')} className="w-full flex justify-center gap-2 bg-slate-800 py-3 rounded-xl text-sm font-bold hover:bg-slate-700 border border-slate-700"><LogIn size={16}/> {tText('login')}</button>)} 
+           ) : (<button onClick={() => handleViewChange('login')} className="w-full flex justify-center gap-2 bg-slate-800 py-3 rounded-xl text-sm font-bold hover:bg-slate-700 border border-slate-700"><LogIn size={16}/> {tText('login')}</button>)} 
          </div> 
       </aside> 
  
@@ -1169,7 +1186,7 @@ export default function App() {
                   {apiStatus === 'loading' ? <RefreshCw size={12} className="animate-spin text-cyan-500"/> : apiStatus === 'error' ? <WifiOff size={12} className="text-red-500"/> : <Wifi size={12} className="text-emerald-500"/>} 
                   <span className={`hidden sm:inline font-bold ${apiStatus==='error'?'text-red-400':apiStatus==='loading'?'text-cyan-400':'text-emerald-400'}`}>{apiStatus === 'loading' ? 'SYNC...' : apiStatus === 'error' ? 'OFFLINE' : 'ONLINE'}</span> 
                </div> 
- 
+
                <div className="hidden md:flex items-center gap-2 text-slate-500"><span className={`w-2 h-2 rounded-full ${isPremium ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span> ACTIVE</div> 
                {view !== 'settings' && view !== 'premium' && <button onClick={handleNewSession} className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1.5 rounded text-cyan-400 transition cursor-pointer"><RefreshCw size={12}/> <span className="hidden sm:inline">{tText('newChat')}</span></button>} 
                {(view === 'dashboard' || view === 'chat') && ( 
@@ -1316,10 +1333,10 @@ export default function App() {
                  <div className="flex items-center justify-center h-full p-6"><div className="max-w-md w-full bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-slate-700 text-center shadow-2xl"><Lock size={40} className="text-slate-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">Premium Feature</h2><p className="text-slate-400 text-sm mb-6">Free Chat is available for Apex users only.</p>
                  <button onClick={() => {
                     if ((user && !user.isAnonymous) || isDevMode) {
-                        setView('premium');
+                        handleViewChange('premium');
                     } else {
                         notify("Eits! Login Google dulu bosku! 🔒", "error");
-                        setView('login');
+                        handleViewChange('login');
                     }
                  }} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">UNLOCK APEX</button></div></div> 
                ) 
@@ -1448,10 +1465,10 @@ export default function App() {
                     <div className="flex items-center justify-center h-full p-6"><div className="max-w-md w-full bg-slate-900/90 backdrop-blur p-8 rounded-3xl border border-slate-700 text-center shadow-2xl"><MonitorPlay size={40} className="text-slate-500 mx-auto mb-4"/><h2 className="text-2xl font-bold text-white mb-2">CodePlayground Locked</h2><p className="text-slate-400 text-sm mb-6">Live preview, React support, and file management are Apex features.</p>
                     <button onClick={() => {
                         if ((user && !user.isAnonymous) || isDevMode) {
-                            setView('premium');
+                            handleViewChange('premium');
                         } else {
                             notify("Eits! Login Google dulu bosku! 🔒", "error");
-                            setView('login');
+                            handleViewChange('login');
                         }
                     }} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 font-bold rounded-xl">UNLOCK APEX</button></div></div>
                 )
@@ -1464,7 +1481,7 @@ export default function App() {
                      <h3 className="text-white font-bold mb-4 flex items-center gap-2"><Brain size={18} className="text-purple-400"/> {tText('model')}</h3> 
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{AI_MODELS.map((model)=>(<button key={model.id} onClick={()=>changeAiModel(model.id)} className={`p-4 rounded-xl border text-left transition-all ${aiModel===model.id?'bg-purple-500/20 border-purple-500':'bg-slate-950 border-slate-700 hover:border-slate-500'}`}><div className={`font-bold text-sm mb-1 ${aiModel===model.id?'text-purple-300':'text-slate-300'}`}>{model.name}</div><div className="text-xs text-slate-500">{model.desc}</div></button>))}</div> 
                    </div> 
-                   <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6"><h3 className="text-white font-bold mb-4 flex items-center gap-2"><Globe size={18} className="text-cyan-400"/> Language</h3><div className="flex flex-wrap gap-3">{Object.entries(LANGUAGES).map(([code, data])=>(<button key={code} onClick={()=>{setLangCode(code);localStorage.setItem('cfx_lang',code);}} className={`px-4 py-2 rounded-xl border text-sm flex items-center gap-2 ${langCode===code?'bg-cyan-500/20 border-cyan-500 text-cyan-300':'bg-slate-950 border-slate-700 text-slate-400 hover:border-slate-500'}`}><span>{data.flag}</span> {data.label}</button>))}</div></div> 
+                   <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6"><h3 className="text-white font-bold mb-4 flex items-center gap-2"><Globe size={18} className="text-cyan-400"/> Language</h3><div className="flex flex-wrap gap-3">{Object.entries(LANGUAGES).map(([code, data])=>(<button key={code} onClick={()=>updateLanguage(code)} className={`px-4 py-2 rounded-xl border text-sm flex items-center gap-2 ${langCode===code?'bg-cyan-500/20 border-cyan-500 text-cyan-300':'bg-slate-950 border-slate-700 text-slate-400 hover:border-slate-500'}`}><span>{data.flag}</span> {data.label}</button>))}</div></div> 
                    <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6"><h3 className="text-white font-bold mb-4 flex items-center gap-2"><Key size={18} className="text-amber-400"/> {tText('customKey')}</h3><p className="text-xs text-slate-400 mb-4">{tText('apiKeyDesc')}</p><div className="flex gap-2"><input type="password" value={customApiKey} onChange={(e)=>setCustomApiKey(e.target.value)} placeholder="AIzaSy..." className="flex-1 bg-slate-950 border border-slate-700 text-white p-3 rounded-xl text-sm font-mono focus:border-cyan-500 outline-none"/><button onClick={handleSaveCustomKey} className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 rounded-xl font-bold text-sm">SAVE</button></div></div> 
                    <div className="mt-12 border-t border-slate-800 pt-6"><h4 className="text-xs text-slate-600 font-mono mb-2 uppercase tracking-widest flex items-center gap-2"><Bug size={12}/> {tText('devOverride')}</h4><div className="flex gap-2 max-w-xs"><input type="password" value={devPin} onChange={(e)=>setDevPin(e.target.value)} placeholder="Enter PIN..." className="flex-1 bg-slate-950 border border-slate-800 text-slate-300 p-2 rounded-xl text-xs focus:border-red-500 outline-none transition-colors"/><button onClick={handleDevUnlock} className="bg-slate-800 hover:bg-red-900 hover:text-red-200 text-slate-400 px-4 rounded-xl text-xs font-bold transition-colors">{tText('access')}</button></div></div> 
                </div> 
