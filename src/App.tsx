@@ -13,17 +13,30 @@ import {
   Maximize, Minimize, EyeOff, Layout
 } from 'lucide-react';
 
-// --- 1. FIREBASE CONFIGURATION ---
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {}; 
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+// --- 1. FIREBASE CONFIGURATION (SECURED BY RAYHAN) ---
+// Config ini sudah dipatenkan. Jangan diubah kecuali Bos Rayhan minta! 🔒
+const firebaseConfig = {
+  apiKey: "AIzaSyBpXhfpTR7KGfW5ESH_Z-9Wc8QyJ9YHxv8",
+  authDomain: "remchat-fd4ea.firebaseapp.com",
+  projectId: "remchat-fd4ea",
+  storageBucket: "remchat-fd4ea.firebasestorage.app",
+  messagingSenderId: "369353956112",
+  appId: "1:369353956112:web:7aff645b1724ec80bfa395",
+  measurementId: "G-QTHRQNXJKF"
+};
+
+// App ID for Firestore Data Isolation (tetap pakai env jika ada, atau default)
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'remchat-production';
 
 let app, auth, db;
 try {
+    // Init dengan Config Resmi Bos Rayhan
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+    console.log("🔥 FIREBASE CONNECTED: REMCHAT SYSTEM ONLINE");
 } catch (e) {
-    console.warn("🔥 FIREBASE OFFLINE MODE.", e);
+    console.warn("⚠️ FIREBASE CONNECTION ISSUE (OFFLINE MODE ACTIVATED)", e);
 }
 
 // --- FIREBASE HELPERS ---
@@ -404,7 +417,13 @@ render(<LandingPage />);`;
         if (localHist) setHistory(JSON.parse(localHist));
     } catch(e) {}
 
-    // 3. INIT AUTH
+    // 3. INIT AUTH (OFFLINE FAILSAFE)
+    // If Auth object is missing (AdBlock/Network Error), skip auth flow.
+    if (!auth) {
+        console.warn("AUTH SERVICE MISSING. SKIPPING INIT.");
+        return;
+    }
+
     const initAuth = async () => {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
             try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e) {}
@@ -436,6 +455,19 @@ render(<LandingPage />);`;
     handleResize(); window.addEventListener('resize', handleResize); 
     return () => { unsub(); window.removeEventListener('resize', handleResize); }; 
   }, [isDevMode]); 
+
+  // --- OFFLINE MODE FALLBACK (V9.0) ---
+  useEffect(() => {
+      // If Firebase failed to init (auth is null), we manually trigger the flow check based on localStorage
+      // to prevent "Blank Screen" stuck on loading.
+      if (!auth) {
+          const hasLang = localStorage.getItem('cfx_lang');
+          const hasKey = localStorage.getItem('cfx_api_key');
+          if (!hasLang) setView('language');
+          else if (!hasKey) setView('apikey_gate');
+          else setView('dashboard'); // Force Guest Mode
+      }
+  }, []);
 
   // --- RESTORED FUNCTIONS ---
   const handleNewSession = () => {
@@ -628,7 +660,7 @@ render(<LandingPage />);`;
            {currentModules.map((m) => { const isLocked = m.premium && !isPremium; return (<button key={m.id} onClick={() => { if(!isLocked){setCurrentModuleId(m.id); setView('dashboard'); if(window.innerWidth < 768) setSidebarOpen(false);} else notify("Locked 🔒 Upgrade!", "error"); }} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition text-left ${currentModuleId===m.id && view==='dashboard' ? (isPremium?'bg-amber-500/20 text-amber-300 border border-amber-500/20':'bg-indigo-500/20 text-indigo-300 border border-indigo-500/20') : 'text-slate-400 hover:bg-slate-800'} ${isLocked ? 'opacity-50 cursor-not-allowed':''}`}><div className={`${isLocked ? 'text-slate-600' : (m.premium ? 'text-amber-400' : 'text-cyan-400')}`}>{m.icon}</div><span className="flex-1 truncate text-xs font-medium">{m.name}</span>{isLocked && <Lock size={12} className="text-slate-600"/>}</button>); })} 
            <div className="text-[10px] font-bold text-slate-500 uppercase px-2 mb-2 mt-6">{tText('tools')}</div> 
            <button onClick={() => {setView('chat'); if(window.innerWidth < 768) setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='chat' ? (isPremium ? 'bg-purple-500/20 text-purple-300 border border-purple-500/20' : 'text-slate-400 hover:bg-slate-800') : 'text-slate-400 hover:bg-slate-800'}`}><MessageSquare size={16} className={isPremium?"text-purple-400":""}/> {tText('chat')} (Apex) {!isPremium && <Lock size={12}/>}</button> 
-           <button onClick={() => { if(isPremium) {setView('runner'); if(window.innerWidth < 768) setSidebarOpen(false);} else notify("Locked 🔒 Upgrade!", "error");}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='runner' ? (isPremium ? 'bg-pink-500/20 text-pink-300 border border-pink-500/20' : '') : 'text-slate-400 hover:bg-slate-800'}`}><Laptop2 size={16} className={isPremium?"text-pink-400":""}/> {tText('runner')} (Apex) {!isPremium && <Lock size={12}/>}</button> 
+           <button onClick={() => { if(isPremium) {setView('runner'); if(window.innerWidth < 768) setSidebarOpen(false);} else notify("Locked 🔒 Upgrade!", "error");}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition ${view==='runner' ? (isPremium ? 'bg-pink-500/20 text-pink-300 border border-pink-500/20' : 'text-slate-400 hover:bg-slate-800') : 'text-slate-400 hover:bg-slate-800'}`}><Laptop2 size={16} className={isPremium?"text-pink-400":""}/> {tText('runner')} (Apex) {!isPremium && <Lock size={12}/>}</button> 
            <div className="text-[10px] font-bold text-slate-500 uppercase px-2 mb-2 mt-6">{tText('system')}</div> 
            <button onClick={() => {setView('portal'); if(window.innerWidth < 768) setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-400 hover:bg-slate-800 transition ${view==='portal'?'bg-indigo-500/20 text-indigo-300':''}`}><BookOpen size={16}/> {tText('portalLabel')}</button> 
          </div> 
